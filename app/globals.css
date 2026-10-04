@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #1B1D24;
+  --paper: #F3EEE4;
+  --night: #0E1014;
+  --red: #A8242A;
+  --red-hover: #BD3037;
+  --red-active: #861A1F;
+  --serif: var(--font-cormorant), "Cormorant", serif;
+  --sans: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  --mono: var(--font-plex-mono), "IBM Plex Mono", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--night);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+html.dc-cursor,
+html.dc-cursor * {
+  cursor: none !important;
+}
+
+::selection {
+  background: var(--red);
+  color: var(--paper);
+}
+
+@property --peel {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
 }
