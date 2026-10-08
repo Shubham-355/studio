@@ -404,4 +404,134 @@ export class HomeEngine {
     if (!skyIn && this.tbx) { this.S(bk, 'visibility', 'visible'); bk._on = true; const b = this.tbx; b.setTransform(K, 0, 0, K, 0, 0); b.clearRect(0, 0, W, H); sky(b); b.fillStyle = skyc[2]; b.fillRect(0, hy, W, H); }
     else this.S(bk, 'visibility', 'hidden');
   }
+
+  /* ---------- 6 · the desert arcade ---------- */
+  w6(t) {
+    const W = this.W, H = this.H, q = this.q6, n = this.n; if (!q) return;
+    const hy = this.hy6, ap = sm(17.6, 18.2, t), s6 = Math.exp(Math.log(.14) * (1 - ap));
+    this.S(q.cam, 'transform', ap < 1 ? `translate(${(W / 2 * (1 - s6)).toFixed(1)}px,${(hy * (1 - s6)).toFixed(1)}px) scale(${s6.toFixed(4)})` : 'none');
+    let mk = 'none'; if (ap < 1) { const f = lin(.862, 1, s6), rx = mx(.56 * W * s6, 2.6 * W, f * f), ry = mx(.56 * H * s6, 2.6 * H, f * f); mk = `radial-gradient(ellipse ${rx.toFixed(0)}px ${ry.toFixed(0)}px at ${(W / 2).toFixed(0)}px ${hy.toFixed(0)}px, #000 62%, transparent 100%)`; }
+    this.S(q.world, 'webkitMaskImage', mk); this.S(q.world, 'maskImage', mk);
+    const c = pathv(t, CPTS), F = this.F6, dt = Math.min(.1, Math.max(0, this.now - (this._n6 || this.now))); this._n6 = this.now;
+    this.S(q.plate, 'transform', `scale(${(1 + (c + 2) * .011).toFixed(4)})`);
+    q.plate.style.transformOrigin = `50% ${(hy + H * .08) / (H * 1.16) * 100}%`;
+    this.fEls.forEach((el, i) => {
+      const dz = CZ[i] - c, sh = this.pshEls[i], co = this.companies[i], fs = this.fst[i]; if (!fs) return;
+      if (dz < .3) { this.S(el, 'visibility', 'hidden'); this.S(sh, 'visibility', 'hidden'); this.mv['card' + i] = 0; return; }
+      const s = F / dz, k = s * this.pw6 / 300, X = W / 2 + this.px6[i] * s, Yb = hy + s;
+      this.S(el, 'visibility', 'visible'); this.S(sh, 'visibility', 'visible');
+      this.S(el, 'transform', `translate(${(X - 150 * k).toFixed(1)}px,${(Yb - 600 * k).toFixed(1)}px) scale(${k.toFixed(4)})`); this.S(el, 'zIndex', String(Math.round(1000 - dz * 10)));
+      this.S(sh, 'transform', `translate(${X.toFixed(1)}px,${(Yb - 22 * k).toFixed(1)}px) scale(${(k * 2.4).toFixed(4)},${k.toFixed(4)})`);
+      // Thoughts orbit loosely far away, then resolve into one object as the camera nears.
+      const R = sm(4.9, 3.2, dz), hcY = co.stand ? 99 : 227, tY = co.stand ? -26 : 102, N = fs.th.length;
+      fs.ph += dt * ((1 - R) * 1.1 + .04);
+      fs.th.forEach((te, j) => { const a = j / N * Math.PI * 2 + fs.ph * (.7 + (j % 3) * .25) * (j % 2 ? 1 : -1), rad = 80 + Math.sin(fs.ph * 1.7 + j * 1.3) * 34, ej = sm(j * .025, .5 + j * .035, R);
+        const px = mx(150 + Math.cos(a) * rad * 1.25, 150, ej) - 28, py = mx(hcY - 12 + Math.sin(a) * rad * .8, tY, ej) - 28;
+        this.S(te, 'transform', `translate(${px.toFixed(1)}px,${py.toFixed(1)}px) rotate(${((fs.ph * 1.5 + j) * (1 - ej)).toFixed(2)}rad) scale(${mx(1, .15, ej).toFixed(3)})`); this.S(te, 'opacity', (1 - sm(.75, 1, ej)).toFixed(3)); });
+      const rs = sm(.55, 1, R); fs.hv = mx(fs.hv, this.fHover[i] ? 1 : 0, .06);
+      this.S(fs.res, 'opacity', sm(.45, .8, R).toFixed(3));
+      this.S(fs.turn, 'transform', `translateY(${(Math.sin(this.now * 1.1 + i) * 4).toFixed(1)}px) rotateY(${(Math.sin(this.now * .7) * (4 + fs.hv * 30)).toFixed(1)}deg) scale(${(mx(.3, 1, rs) * (1 + fs.hv * .08)).toFixed(3)})`);
+      if (fs.orbs.length) { fs.orb += dt * (.4 + fs.hv * 1.6); fs.orbs.forEach((p, j) => { const a = fs.orb * (1.6 - j * .4) + j * 2.1, rx = j ? 70 : 46, ry = j ? 20 : 13; this.S(p, 'transform', `translate(${(90 + Math.cos(a) * rx - 12).toFixed(1)}px,${(90 + Math.sin(a) * ry - 12).toFixed(1)}px)`); this.S(p, 'zIndex', Math.sin(a) > 0 ? '2' : '0'); }); }
+      this.S(fs.head, 'transform', `rotate(${((1 - R) * 7 - R * 4).toFixed(2)}deg)`);
+      this.S(fs.body, 'transform', `rotate(${((1 - R) * .8).toFixed(2)}deg) scaleY(${(1 - (1 - R) * .014).toFixed(4)})`);
+      this.mv['card' + i] = sm(3.9, 3.1, dz) * sm(1.0, 1.6, dz);
+      if (!n) this.pos['card' + i] = this.px6[i] < 0 ? [X + 150 * k + 24, Yb - 400 * k] : [X - 150 * k - 344, Yb - 400 * k];
+    });
+    const dzD = DOORZ - c;
+    if (dzD > .05) { const s = F / dzD, kd = s / 200, X = W / 2, Yb = hy + s; this.S(q.door, 'visibility', 'visible'); this.S(q.door, 'transform', `translate(${(X - 110 * kd).toFixed(1)}px,${(Yb - 400 * kd).toFixed(1)}px) scale(${kd.toFixed(4)})`); this.S(q.door, 'zIndex', String(Math.round(1000 - dzD * 10))); this.gap = [X - 94 * kd, Yb - 384 * kd, X + 94 * kd, Yb]; }
+    else this.S(q.door, 'visibility', 'hidden');
+    this.S(q.train, 'transform', `translate(${(((this.now * 22) % (W * 1.5)) - W * .25).toFixed(1)}px,${(hy - 10).toFixed(1)}px)`);
+  }
+
+  /* ---------- 7 · the quiet room ---------- */
+  w7(t) {
+    const W = this.W, H = this.H, q = this.q7; if (!q) return;
+    const g = this.gap; q.world.style.clipPath = t < 22.9 && g ? `polygon(${g[0].toFixed(1)}px ${g[1].toFixed(1)}px,${g[2].toFixed(1)}px ${g[1].toFixed(1)}px,${g[2].toFixed(1)}px ${g[3].toFixed(1)}px,${g[0].toFixed(1)}px ${g[3].toFixed(1)}px)` : 'none';
+    const e6 = sm(21.9, 22.9, t), dol = lin(22.9, 24.1, t), e7 = sm(24.1, 25.1, t), C = [W / 2, H / 2];
+    const z0 = mx(1.3, 1, e6) * (1 + dol * .05), pane = this.pane;
+    const w0 = [C[0] + (pane.x - C[0]) * z0, C[1] + (pane.y - C[1]) * z0], Sm = Math.pow(pane.z / 1.05, e7);
+    const z = z0 * Sm, A = [0, 1].map(k => w0[k] + (C[k] * (1 - z0) - w0[k]) * Sm + (C[k] - w0[k]) * e7);
+    this.cam7 = `translate(${A[0].toFixed(1)}px,${A[1].toFixed(1)}px) scale(${z.toFixed(4)})`;
+    this.S(q.cam, 'transform', this.cam7);
+    const w = this.win0; this.win = [A[0] + w[0] * z, A[1] + w[1] * z, A[0] + w[2] * z, A[1] + w[3] * z];
+  }
+
+  /* ---------- 8 · the night sea ---------- */
+  w8(t) {
+    const W = this.W, H = this.H, q = this.q8, g = this.g8, P = window.Painter; if (!q) return;
+    const w = this.win; q.world.style.clipPath = t < 25.1 && w ? `polygon(${w[0].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[3].toFixed(1)}px,${w[0].toFixed(1)}px ${w[3].toFixed(1)}px)` : 'none';
+    const e7 = sm(24.1, 25.1, t), z = mx(1.22, 1, e7), foot = sm(27.7, 28.5, t), ty = -H * .36 * foot - H * .06 * (1 - e7);
+    this.S(q.cam, 'transform', `translate(${(W / 2 * (1 - z)).toFixed(1)}px,${(H / 2 * (1 - z) + ty).toFixed(1)}px) scale(${z.toFixed(4)})`);
+    this.S(q.moon, 'transform', `translate(${(this.moon0[0] + (this.mx || 0) * 12).toFixed(1)}px,${(this.moon0[1] + (this.my || 0) * 8).toFixed(1)}px)`);
+    const qo = sm(26.2, 26.85, t), cz = sm(27.55, 28.05, t);
+    if (qo > 0 && cz < .999) {
+      const k = (.08 + .92 * qo) * (1 - cz * .94); if (k !== this._k8) { this._k8 = k; const inn = this.ctear.at(g.cx, g.cy, g.rx * k, g.ry * k, 0), out = this.ctear.at(g.cx, g.cy, g.rx * k, g.ry * k, 1);
+        q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(out)}")`; q.rim.style.clipPath = `path(evenodd, "${P.toPath(out)} ${P.toPath(inn)}")`; }
+      if (qo > .4 && !this._tore2) { this._tore2 = true; this.paper(); }
+    } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; q.rim.style.clipPath = 'circle(0px)'; if (qo <= 0) this._tore2 = false; }
+    const rq = sm(.6, 1, qo), ks = g.ks * mx(.7, 1, rq) * (1 - cz * .6), rx0 = g.cx - 330 * ks + cz * 80, ry0 = g.cy - 60 * ks - cz * 50, vis = qo > .6 && cz < .4;
+    if (q.tsh) { this.S(q.tsh, 'visibility', qo > .3 && cz < .9 ? 'visible' : 'hidden'); this.S(q.tsh, 'transform', `translate(${(g.cx + 20 * ks).toFixed(1)}px,${(g.cy - 40 * ks).toFixed(1)}px) scale(${(g.rx / 150 * (.08 + .92 * qo) * (1 - cz * .9)).toFixed(3)})`); }
+    this.S(q.reach, 'visibility', vis ? 'visible' : 'hidden'); this.S(q.reach, 'transform', `translate(${rx0.toFixed(1)}px,${ry0.toFixed(1)}px) scale(${ks.toFixed(3)})`);
+    const ox = W / 2 * (1 - z), oy = H / 2 * (1 - z) + ty, th = this.thumbEl;
+    if (th) { this.S(th, 'visibility', vis ? 'visible' : 'hidden'); this.S(th, 'transform', `translate(${(ox + rx0 * z).toFixed(1)}px,${(oy + ry0 * z).toFixed(1)}px) scale(${(ks * z).toFixed(4)})`); }
+    const gx = ox + (rx0 + 60 * ks) * z, gy = oy + (ry0 + 296 * ks) * z, cw = this.cardW || 320;
+    const cx = this.n ? Math.max(12, gx - cw / 2) : gx - 22, cy = gy - 12;
+    this.cardT = `translate(${cx.toFixed(1)}px,${cy.toFixed(1)}px) rotate(${this.n ? -3 : 4}deg) perspective(700px) rotateY(${this.n ? 8 : 12}deg) rotateX(5deg)`;
+    this.mv.ccard = sm(26.55, 26.9, t) * (1 - sm(27.4, 27.58, t));
+    this.S(q.refl, 'transform', `translateX(${(Math.sin(this.now * .7) * 5).toFixed(1)}px)`);
+  }
+
+  /* ---------- things carried between worlds ---------- */
+  dovePos(k, t) {
+    const B = this.B, t0 = 4.2 + k * .09, u = lin(t0, t0 + .95, t); if (!B || u <= 0 || u >= 1) return null;
+    const a = [-2.55, -1.85, -1.15, -.45, .35][k], R = Math.max(this.W, this.H) * 1.05, e = Math.pow(u, 1.7);
+    return [B.x + Math.cos(a) * R * e, B.y + Math.sin(a) * R * e * .8 - u * this.H * .1, .3 + u * u * 3.4, Math.cos(a) < 0 ? -1 : 1];
+  }
+  carry(t) {
+    this.dvEls.forEach((el, k) => { const p = this.dovePos(k, t); if (!p) { this.S(el, 'visibility', 'hidden'); [...el.children].forEach(c => this.S(c, 'visibility', 'hidden')); return; } const up = ((this.now * 7 + k * .37) | 0) % 2;
+      this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) scale(${(p[2] * p[3]).toFixed(3)},${p[2].toFixed(3)})`); this.S(el, 'filter', p[2] > 2.2 ? `blur(${((p[2] - 2.2) * 1.5).toFixed(1)}px)` : 'none');
+      const cs = el.children; if (cs[0]) this.S(cs[0], 'visibility', up ? 'visible' : 'hidden'); if (cs[1]) this.S(cs[1], 'visibility', up ? 'hidden' : 'visible'); });
+    const sc = this.sandCtx, sEl = this.$('[data-sand]');
+    if (sc && t > 16.95 && t < 18.2 && !this.red()) {
+      const I = sm(16.95, 17.3, t) * (1 - sm(17.9, 18.2, t)), w = sc.canvas.width, h = sc.canvas.height; this.S(sEl, 'visibility', 'visible'); sc.clearRect(0, 0, w, h);
+      const N = this.n ? 60 : 140; for (let i = 0; i < N; i++) { const r1 = (i * 0.6180339) % 1, r2 = (i * 0.4142135) % 1, sp = .4 + r2 * .8; const x = w - (((r1 + this.now * sp * .5) % 1) * (w + 80)) + 40, y = h * (.2 + r2 * .8) + Math.sin(this.now * 2 + i) * 6, L = 14 + r2 * 40; sc.strokeStyle = `rgba(${210 + (i % 3) * 12},${160 + (i % 4) * 10},${100 + (i % 5) * 6},${(.25 + r1 * .45) * I})`; sc.lineWidth = .8 + r2 * 1.6; sc.beginPath(); sc.moveTo(x, y); sc.lineTo(x + L, y - L * .08); sc.stroke(); }
+    } else if (sEl && sEl._visibility !== 'hidden') { this.S(sEl, 'visibility', 'hidden'); sc && sc.clearRect(0, 0, sc.canvas.width, sc.canvas.height); }
+    const wc = this.q7 && this.q7.wincam; if (wc) { const v = t >= 21.9 && t < 25.1 && this.cam7; this.S(wc, 'visibility', v ? 'visible' : 'hidden'); if (v) { this.S(wc, 'transform', this.cam7); wc.parentElement.style.clipPath = this.wEl[6].style.clipPath; } }
+  }
+
+  /* ---------- copy and chrome ---------- */
+  introK() { if (!this._introT0) return 0; return lin(0, 1.6, (performance.now() - this._introT0) / 1000); }
+  copy(t) {
+    const ik = this.introK();
+    for (const b of this.blocks || []) {
+      let v = b.m ? (this.mv[b.id] || 0) : sm(b.a, b.a + .16, t) * (1 - sm(b.b - .16, b.b, t));
+      if (b.hero) v *= ik;
+      if (b.id === 'ccard') { if (this.cardT) this.S(b.el, 'transform', this.cardT); }
+      else if (b.m && !this.n) { const p = this.pos[b.id]; if (p) this.S(b.el, 'transform', `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px)`); }
+      if (Math.abs(v - b.v) < .003 && !(v === 0 && b.v !== 0) && !(v === 1 && b.v !== 1)) continue; b.v = v;
+      b.el.style.visibility = v > 0 ? 'visible' : 'hidden'; b.el.style.pointerEvents = v > .6 ? 'auto' : 'none';
+      const N = b.w.length || 1;
+      b.w.forEach((w, i) => { const x = cl((v - i / N * .5) / .5); w.style.opacity = x.toFixed(3); w.style.transform = x >= 1 ? 'none' : `translateY(${((1 - x) * 14).toFixed(1)}px)`; w.style.filter = x >= 1 ? 'none' : `blur(${((1 - x) * 8).toFixed(1)}px)`; });
+    }
+    this.pos = {};
+  }
+  ui(t) {
+    const wi = this.worldAt(t);
+    if (wi !== this._wi) {
+      this._wi = wi; const c = INK[wi] ? '#1B1D24' : '#F3EEE4';
+      const nav = this.$('[data-nav]'); if (nav) { nav.style.color = c; nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
+      this.bed(wi); if (this.props.notes || this.q('notes') === '1') this.setState({ world: wi });
+    }
+    const pr = this.$('[data-mprog]'); if (pr) this.S(pr, 'transform', `scaleX(${(t / TEND).toFixed(4)})`);
+    const nc = this.$('[data-navcta]'); if (nc) { const on = t > .5; this.S(nc, 'opacity', on ? '1' : '0'); this.S(nc, 'translate', on ? '0px 0' : '24px 0'); this.S(nc, 'pointerEvents', on ? 'auto' : 'none'); }
+  }
+  // three.js scenes only live while their world is on screen.
+  mounts(t) {
+    if (!window.Scene3D || this.q('nogl')) return;
+    const M = [['apple5', 1.4, 5.5], ['sandboard', 4.4, 17.3], ['roomqueen', 21.3, 25.2]];
+    M.forEach(([k, a, b]) => { const el = this.$(`[data-3d="${k}"]`); if (!el) return; const on = t > a && t < b;
+      if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn(e); return null; });
+      else if (!on && el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } });
+  }
+  disposeAll() { this.$$('[data-3d]').forEach(el => { if (el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } }); }
 }
