@@ -256,4 +256,152 @@ export class HomeEngine {
     this.st.apple5.active = t > 1.4 && t < 5.5; this.st.sandboard.active = t > 4.4 && t < 17.3; this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2;
     this.travel(t); this.carry(t); this.copy(t); this.ui(t); this.mounts(t);
   }
+
+  /* ---------- 1 · the sky with an eye ---------- */
+  w1(t) {
+    const g = this.g1, q = this.q1, P = window.Painter, W = this.W, H = this.H; if (!g || !q) return;
+    const a = sm(.45, 1.0, t), s = 1 + a * a * 7, b = lin(.95, 1.45, t), zb = sm(0, 1, b);
+    if (a < .999) {
+      if (s !== this._s1) { this._s1 = s; const inn = this.tear.at(g.cx, g.cy, g.rx * s, g.ry * s, 0), out = this.tear.at(g.cx, g.cy, g.rx * s, g.ry * s, 1);
+        q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H}H0Z ${P.toPath(out)}")`; if (this.rimCtx) P.tearRim6(this.rimCtx, inn, out, this.tear, g.cx, g.cy, this.dpr1); }
+      this.S(q.wrap, 'visibility', 'visible');
+    } else this.S(q.wrap, 'visibility', 'hidden');
+    if (a > .4 && !this._tore1) { this._tore1 = true; this.paper(); } if (a < .1) this._tore1 = false;
+    const fs = (1 + a * .5) * Math.pow(g.fsEnd / 1.5, zb), sh = sm(0, .7, b);
+    this.S(q.face, 'transform', `translate(${((W / 2 - g.P0.x) * sh).toFixed(1)}px,${((H / 2 - g.P0.y) * sh).toFixed(1)}px) scale(${fs.toFixed(4)})`);
+    this.S(q.face, 'visibility', b > .985 ? 'hidden' : 'visible');
+    const f = 1 - sm(.8, .95, t);
+    this.S(q.eye, 'transform', `translate(${((this.mx || 0) * g.ex * f).toFixed(1)}px,${((this.my || 0) * g.ey * f).toFixed(1)}px)`);
+    this._pk = mx(this._pk ?? 1, this._hov && t < .4 ? .8 : 1, .07); this.S(q.pupil, 'transform', `scale(${mx(1, this._pk, f).toFixed(3)})`);
+    this.S(q.glint, 'opacity', (1 - sm(.3, .6, b)).toFixed(3));
+    this.S(q.scrim, 'opacity', (1 - sm(.3, .9, a)).toFixed(3));
+    this.S(q.near, 'transform', `translateX(${(Math.sin(this.now * .05) * 24).toFixed(1)}px) scale(${(1 + a * 2.6).toFixed(3)})`);
+  }
+
+  /* ---------- 2 · the apple on the board ---------- */
+  w2(t) {
+    const W = this.W, H = this.H, q = this.q2; if (!q) return;
+    const r1 = sm(1.45, 1.95, t), d = lin(4.45, 5.45, t);
+    let cs = 1, cx = 0, cy = 0, clip = 'none';
+    if (t < 1.95) { const R = Math.max(.5, r1 * this.cover); clip = `circle(${R.toFixed(1)}px at ${W / 2}px ${H / 2}px)`; cs = mx(1.12, 1, r1); cx = W / 2 * (1 - cs); cy = H / 2 * (1 - cs);
+      this.S(q.glint, 'visibility', r1 > .02 && r1 < .98 ? 'visible' : 'hidden'); this.S(q.glint, 'transform', `translate(${(W / 2 - R * .42).toFixed(1)}px,${(H / 2 - R * .5).toFixed(1)}px) rotate(-24deg) scale(${(R / 300).toFixed(3)})`);
+    } else this.S(q.glint, 'visibility', 'hidden');
+    const stA = this.st.apple5, A = this.appleBox;
+    if (stA.bx != null && (t <= 4.45 || !this._Bset)) { this.B = { x: A.x + stA.bx * A.w, y: A.y + stA.by * A.h }; this._Bset = true; }
+    let S = 1; if (d > 0) { S = Math.pow(this.smax(), sm(0, 1, d)); cs = S; cx = this.B.x * (1 - S); cy = this.B.y * (1 - S); }
+    this.S(q.world, 'clipPath', clip);
+    this.S(q.cam, 'transform', `translate(${cx.toFixed(1)}px,${cy.toFixed(1)}px) scale(${cs.toFixed(4)})`);
+    const u = sm(1.45, 4.45, t);
+    this.S(q.plate, 'transform', `scale(${(1 + u * .2).toFixed(4)})`);
+    this.S(q.fg, 'transform', `translateY(${(u * H * .08).toFixed(1)}px) scale(${(1 + u * .9).toFixed(4)})`);
+    const ap = sm(1.45, 3.3, t), s = 1 / mx(7, 1, ap), sp = 1 / mx(2.2, 1, ap), Ox = A.x + A.w * .5, Oy = A.y + A.h * .78;
+    const tx = (W / 2 - Ox) * (1 - sp), ty = (H * .5 - Oy) * (1 - sp);
+    this.S(q.apple, 'transform', `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${s.toFixed(4)})`);
+    const b1 = sm(3.35, 3.6, t), b2 = sm(3.65, 3.9, t), b3 = sm(3.95, 4.2, t);
+    stA.bk = [b2, b1, b3]; stA.bite = Math.max(.001, (b1 + b2 + b3) / 3);
+    if (b1 > .5 && !this._bit1) { this._bit1 = 1; this.crunch(); } if (b2 > .5 && !this._bit2) { this._bit2 = 1; this.crunch(); } if (b3 > .5 && !this._bit3) { this._bit3 = 1; this.crunch(); } if (b1 < .2) this._bit1 = this._bit2 = this._bit3 = 0;
+    const C3 = this.cam3(t), ox = A.x + A.w * .5 * (1 - s) + tx, oy = A.y + A.h * .78 * (1 - s) + ty;
+    stA.portal = [cx + cs * ox, cy + cs * oy, cs * s * A.w, cs * s * A.h, C3.cx, C3.cy, C3.cs * W, C3.cs * H];
+  }
+
+  /* ---------- 3 · the beach ---------- */
+  w3(t) {
+    const W = this.W, H = this.H, q = this.q3, S = this.S6, n = this.n; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
+    const d = lin(4.45, 5.45, t), C = this.cam3(t);
+    if (d < 1) { const e = sm(0, 1, d), Sx = Math.pow(this.smax(), e), rC = this.rb * Sx * mx(.15, .7, e), B = this.B; this.S(q.world, 'clipPath', `circle(${rC.toFixed(1)}px at ${B.x.toFixed(1)}px ${B.y.toFixed(1)}px)`); }
+    else this.S(q.world, 'clipPath', 'none');
+    this.S(q.cam, 'transform', `translate(${C.cx.toFixed(1)}px,${C.cy.toFixed(1)}px) scale(${C.cs.toFixed(4)})`);
+    const c = this.cam6(t), s = c.f / S.F, vh = c.cy - c.f * Math.tan(c.ph);
+    this.S(q.sky, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${(W / 2 - s * W / 2 - s * .04 * W).toFixed(2)},${(vh - s * S.hy - s * .04 * H).toFixed(2)})`);
+    const hm = (el, pose) => { if (!el) return; const z1 = Math.max(c.z, pose.z) + 1.6, pts = [[c.x - 1.5, z1], [c.x + 1.5, z1], [c.x + 1.5, z1 + 6], [c.x - 1.5, z1 + 6]];
+      this.S(el, 'transform', P.homog(pts.map(([X, Z]) => { const p = pr(pose, X, 0, Z); return [p[0] + .1 * W, p[1]]; }), pts.map(([X, Z]) => pr(c, X, 0, Z)))); };
+    hm(q.g0, S.pose0); hm(q.g1, S.poseE); this.S(q.g1, 'opacity', sm(.35, .8, sm(5.55, 11.2, t)).toFixed(3));
+    const spr = (el, o, u, nw, ax, ay) => { if (!el) return; const p = pr(c, o.X, 0, o.Z); if (p[2] < .25 || c.ph > .45) { this.S(el, 'visibility', 'hidden'); return; } const k = c.f / p[2] * u / nw;
+      this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${(p[0] - ax * k).toFixed(1)}px,${(p[1] - ay * k).toFixed(1)}px) scale(${k.toFixed(4)})`); this.S(el, 'zIndex', String(Math.round(1000 - p[2] * 40)));
+      this.S(el, 'filter', p[2] < 1.2 ? `blur(${((1.2 - p[2]) * 4 / k).toFixed(2)}px)` : 'none'); };
+    spr(q.umb, S.umb, 360 / 278, 360, 160, 412); spr(q.chair, S.chair, 1, 300, 150, 211);
+    if (q.sx) { const k = q.surf._k; P.surf6(q.sx, Object.assign({}, c, { f: c.f * k, cx: c.cx * k, cy: c.cy * k }), S, this.now, 0, k, q.surf.width, q.surf.height); }
+    const gOn = t > 5.5 && t < 12.9 && c.ph < .3;
+    q.gulls.forEach((el, i) => { if (!gOn) { this.S(el, 'visibility', 'hidden'); return; } const a = this.now * (.05 + i * .012) + i * 2.1, x = W * (n ? .3 + i * .2 : .26 + i * .13) + Math.sin(a) * W * (n ? .12 : .07), y = Math.max(n ? 132 : 124, H * (.1 + i * .045)) + Math.sin(a * 1.7) * 10 - (vh - S.hy), s2 = (n ? .45 : .6) + i * .12, fl = .7 + Math.sin(this.now * 3.2 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
+      this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
+  }
+  drawBall(t) {
+    const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = t > 4.45 && t < 17.3;
+    this.S(q.ball, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
+    const k = q.ball._k, P = window.Painter, pr = P.cam6.proj; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, q.ball.width, q.ball.height);
+    let c, ox = 0, oy = 0; if (t < 14.05) c = this.cam6(t); else { c = S.camO; ox = -sm(16.9, 17.25, t) * 1.06 * this.W; oy = 1.2 * this.H * sm(16.6, 16.9, t); }
+    const C3 = this.cam3(t); x.setTransform(k * C3.cs, 0, 0, k * C3.cs, k * (C3.cx + ox), k * (C3.cy + oy));
+    this.S(q.ball, 'clipPath', t < 5.45 ? q.world.style.clipPath : 'none');
+    const b = this.ball6At(t), r = S.br, sn = S.sun, cp = pr(c, b.X, r, b.Z); if (cp[2] < .15) return;
+    const L = Math.hypot(sn[0], sn[1]), ux = sn[0] / L, uz = sn[1] / L, sx0 = b.X + sn[0] * r, sz0 = b.Z + sn[1] * r;
+    x.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, la = Math.cos(a) * r * 1.7, lc = Math.sin(a) * r, p = pr(c, sx0 + ux * la - uz * lc, 0, sz0 + uz * la + ux * lc); i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]); } x.closePath();
+    x.filter = 'blur(2px)'; x.fillStyle = 'rgba(70,84,128,.34)'; x.fill(); x.filter = 'none';
+    const R = c.f * r / cp[2], g = pr(c, b.X, 0, b.Z); x.fillStyle = 'rgba(46,48,70,.35)'; x.beginPath(); x.ellipse(g[0], g[1], R * .55, Math.max(1, R * .16), 0, 0, 7); x.fill();
+    P.ball6(x, cp[0], cp[1], R, b.rho, this.ballTex);
+  }
+  w4() { /* the underwater hall is not part of this cut */ }
+
+  /* ---------- 5 · the board in the sand ---------- */
+  w5(t) {
+    const W = this.W, H = this.H, q = this.q5, S = this.S6; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
+    const e = sm(TB1, 14.05, t), back = sm(16.6, 16.9, t), pan = sm(16.9, 17.25, t), ty = -1.2 * H * (1 - back), C = this.cam3(t);
+    this.S(q.clip, 'clipPath', t < 5.45 && this.q3 ? this.q3.world.style.clipPath : 'none');
+    this.S(q.wcam, 'transform', C.cs !== 1 ? `translate(${C.cx.toFixed(1)}px,${C.cy.toFixed(1)}px) scale(${C.cs.toFixed(4)})` : 'none');
+    this.S(q.tall, 'transform', `translate(${(-pan * 1.06 * W).toFixed(1)}px,${ty.toFixed(1)}px)`);
+    if (e < .999) { const c = this.cam6(t); this.S(q.world, 'transform', P.homog(S.board.map(([X, Z]) => pr(S.camO, X, 0, Z)), S.board.map(([X, Z]) => pr(c, X, 0, Z))));
+      const R = Math.max(1, sm(.3, .85, e) * 1.35 * Math.hypot(W, H)), m = `${this.w5mask}, radial-gradient(circle ${R.toFixed(0)}px at ${this.w5c[0].toFixed(0)}px ${this.w5c[1].toFixed(0)}px, #000 55%, transparent 100%)`;
+      this.S(q.world, 'maskImage', m); this.S(q.world, 'webkitMaskImage', m); }
+    else { this.S(q.world, 'transform', 'none'); this.S(q.world, 'maskImage', 'none'); this.S(q.world, 'webkitMaskImage', 'none'); }
+    const p = lin(14.25, 16.55, t), sb = this.st.sandboard; sb.p = p; sb.pk = sm(13.1, 13.9, t);
+    if (q.sx5) { const k = q.s5._k; P.surf6(q.sx5, Object.assign({}, S.camO, { f: S.camO.f * k, cx: S.camO.cx * k, cy: S.camO.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.s5.width, q.s5.height); }
+    const f = Math.min(1, p / .86) * 4;
+    for (let k = 0; k < 5; k++) { let v = 1 - sm(.3, .45, Math.abs(f - k)); if (k === 0 && t < 14.25) v = sm(13.9, 14.1, t); if (k === 4 && f >= 4) v = 1; if (t > 16.6 || t < 13.9) v = 0; this.mv['stg' + k] = v; }
+    if (!this.n && sb.sx != null) { const P0 = [sb.sx * W + 110, Math.min(ty + 1.2 * H + sb.sy * H - 150, H - 250)]; for (let k = 0; k < 5; k++) this.pos['stg' + k] = P0; }
+  }
+  // Low run inland over dune layers between the board and the desert arcade.
+  travel(t) {
+    const f = this.tf, bk = this.tb, x = this.tfx; if (!f || !bk || !x) return;
+    const on = t > 16.88 && t < 18.25;
+    if (!on) { if (f._on !== false) { f._on = false; f.style.visibility = 'hidden'; bk.style.visibility = 'hidden'; } return; }
+    f._on = true; f.style.visibility = 'visible';
+    const W = this.W, H = this.H, n = this.n, K = this.tk, TR = 4.4;
+    const pan = sm(16.9, 17.25, t), dx = (1 - pan) * 1.06 * W, s = lin(17.2, 17.95, t), warm = sm(17.0, 17.9, t), sink = sm(17.8, 18.2, t) * H * 1.3;
+    const hy = mx(H * .46, H * .56, sm(17.2, 17.7, t)), F = n ? W * 1.5 : H * 1.05, hc = .5 + .14 * Math.pow(Math.sin(s * Math.PI * 2.5), 2);
+    const skyIn = t < 17.6, w2 = warm < .5 ? warm * 2 : (warm - .5) * 2, m3 = (a, b, c) => warm < .5 ? this.mixc(a, b, w2) : this.mixc(b, c, w2), skyc = [m3('#5B98D6', '#9FB2C4', '#B8674E'), m3('#86BCE4', '#E6CBA2', '#DB8E5C'), m3('#DCEEF0', '#F3DDB4', '#EAAF70')];
+    const sky = c => { const gr = c.createLinearGradient(0, 0, 0, hy); gr.addColorStop(0, skyc[0]); gr.addColorStop(.55, skyc[1]); gr.addColorStop(1, skyc[2]); c.fillStyle = gr; c.fillRect(-W, 0, 3 * W, hy + 2);
+      const sx = W * .22, sy = mx(H * .1, hy - H * .12, warm), sg = c.createRadialGradient(sx, sy, 0, sx, sy, W * .3); sg.addColorStop(0, 'rgba(255,246,222,.85)'); sg.addColorStop(.1, 'rgba(255,232,196,.35)'); sg.addColorStop(1, 'rgba(255,232,196,0)'); c.fillStyle = sg; c.fillRect(-W, 0, 3 * W, hy); };
+    x.setTransform(K, 0, 0, K, 0, 0); x.clearRect(0, 0, W, H); x.save(); x.translate(dx, 0);
+    if (skyIn) sky(x);
+    x.fillStyle = this.mixc('#EFE2C6', '#DDB070', warm); x.fillRect(-W, hy + sink - 1, 3 * W, H * 2);
+    const hz = skyc[2], D = [];
+    for (let j = 0; j < 9; j++) { const z = .8 + j * .85 - s * TR; if (z > .16) D.push({ z, j, t: 0 }); }
+    this.tsp.forEach(o => { const z = o.z - s * TR; if (z > .14 && z < 7) D.push({ z, o, t: 1 }); });
+    for (let r = 0; r < 12; r++) { const z = .22 + (((r * .15 - s * TR) % 1.8) + 1.8) % 1.8; D.push({ z, r, t: 2 }); }
+    D.sort((a, b) => b.z - a.z);
+    const X0 = -.3 * W - 20, X1 = W + 20;
+    D.forEach(d => {
+      const z = d.z, S = F / z;
+      if (d.t === 0) {
+        const j = d.j, A = .2 + ((j * 37) % 10) / 10 * .25, ph = j * 1.7, haze = Math.min(1, z / 7);
+        const col = this.mixc('#F2E4C4', '#E8B676', warm);
+        const pts = []; for (let xs = X0; xs <= X1; xs += 14) { const xw = (xs - W / 2) / S, ht = A * (.55 + .3 * Math.sin(xw * .9 + ph) + .15 * Math.sin(xw * 2.3 + ph * 2)); pts.push([xs, hy + (hc - ht) * S + sink]); }
+        let top = 1e9; pts.forEach(p => { if (p[1] < top) top = p[1]; }); if (top > H + 10) return;
+        x.beginPath(); x.moveTo(X0, H * 3); pts.forEach(p => x.lineTo(p[0], p[1])); x.lineTo(X1, H * 3); x.closePath();
+        const gr = x.createLinearGradient(0, top, 0, top + S * .5 + 40); gr.addColorStop(0, this.mixc2(col, hz, haze * .75)); gr.addColorStop(1, this.mixc2(this.mixc('#CDB38A', '#B97A4C', warm), hz, haze * .6)); x.fillStyle = gr; x.fill();
+        x.strokeStyle = `rgba(255,246,226,${(.75 * (1 - haze)).toFixed(2)})`; x.lineWidth = Math.max(1, S * .006); x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.stroke();
+        if (z < 3.2) { x.strokeStyle = `rgba(140,100,64,${(.22 * (1 - z / 3.2)).toFixed(2)})`; x.lineWidth = Math.max(1, S * .004); for (let r = 1; r < 5; r++) { x.beginPath(); pts.forEach((p, i) => { const yy = p[1] + r * S * .05 + Math.sin(p[0] * .02 + r) * S * .012; i ? x.lineTo(p[0], yy) : x.moveTo(p[0], yy); }); x.stroke(); } }
+      } else if (d.t === 1) {
+        const o = d.o, sp = this.tspr[o.k]; if (!sp) return; const wpx = o.u * S, hpx = wpx * sp.height / sp.width, xs = W / 2 + o.x * S, yb = hy + hc * S + sink; if (yb - hpx > H + 10) return;
+        x.drawImage(sp, xs - wpx / 2, yb - hpx, wpx, hpx);
+      } else {
+        const yb = hy + hc * S + sink; if (yb > H + 20) return; x.strokeStyle = `rgba(150,110,72,${(.32 * Math.min(1, 1 / z)).toFixed(2)})`; x.lineWidth = Math.max(1, S * .006);
+        x.beginPath(); for (let xs = X0; xs <= X1; xs += 24) { const yy = yb + Math.sin(xs * .01 + d.r * 2) * S * .02; xs === X0 ? x.moveTo(xs, yy) : x.lineTo(xs, yy); } x.stroke();
+      }
+    });
+    x.fillStyle = 'rgba(120,86,56,.45)'; for (let i = 0; i < 60; i++) { const yy = H * (.72 + (((i * .618 + s * 5) % 1)) * .3) + sink, xx = ((i * .414) % 1) * W * 1.3 - .3 * W; x.fillRect(xx, yy, 1.5 + (i % 3), 1.5 + (i % 3)); }
+    x.restore();
+    if (dx > 0) { x.globalCompositeOperation = 'destination-out'; const g = x.createLinearGradient(dx - .3 * W, 0, dx, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(.04, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(dx - .3 * W, 0, .3 * W, H); x.fillStyle = '#000'; x.fillRect(-10, 0, Math.max(0, dx - .3 * W + 16), H); x.globalCompositeOperation = 'source-over'; }
+    if (!skyIn && this.tbx) { this.S(bk, 'visibility', 'visible'); bk._on = true; const b = this.tbx; b.setTransform(K, 0, 0, K, 0, 0); b.clearRect(0, 0, W, H); sky(b); b.fillStyle = skyc[2]; b.fillRect(0, hy, W, H); }
+    else this.S(bk, 'visibility', 'hidden');
+  }
 }
