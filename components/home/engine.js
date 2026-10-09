@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions -- short-circuit calls are the house style here */
 /* Scroll-driven painted homepage. The scroll position maps to a timeline t (0 → TEND);
    each world paints itself onto canvases once, then every frame only moves cameras. */
 import { loadPainter } from "@/lib/painter";
@@ -46,18 +47,19 @@ export class HomeEngine {
 
   $(s, r) { return (r || document).querySelector(s); }
   $$(s, r) { return Array.from((r || document).querySelectorAll(s)); }
-  q(k) { try { return new URLSearchParams(location.search).get(k); } catch (e) { return null; } }
+  q(k) { try { return new URLSearchParams(location.search).get(k); } catch { return null; } }
   red() { return this.props.motion === false || matchMedia('(prefers-reduced-motion: reduce)').matches; }
   S(el, p, v) { if (el && el['_' + p] !== v) { el['_' + p] = v; el.style[p] = v; } }
 
   start() {
     if (this.q('noloader') || this.q('t') || this.q('at')) this.setState({ loader: false });
+    const nq = this.q('notes'); if (nq != null) this.setState({ notes: nq === '1' });
     this._onResize = () => { const n = innerWidth < 820; if (n !== this.state.narrow) { this.setState({ narrow: n }); return; } this.host.forceUpdate(); clearTimeout(this._rt); this._rt = setTimeout(() => this.relayout(true), 250); };
     addEventListener('resize', this._onResize);
     this._alive = true; this.t = 0; this.mv = {}; this.pos = {};
     loadPainter().then(() => this.waitLibs()).then(() => { if (this._alive) this.boot(); }).catch(e => console.error(e));
   }
-  narrowChanged() { requestAnimationFrame(() => { this.disposeAll(); this.relayout(true); }); }
+  narrowChanged() { if (!this.W) return; requestAnimationFrame(() => { this.disposeAll(); this.relayout(true); }); }
   destroy() {
     this._alive = false; removeEventListener('resize', this._onResize);
     this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lt); clearInterval(this._fx); this._ac && this._ac.close();
@@ -534,4 +536,91 @@ export class HomeEngine {
       else if (!on && el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } });
   }
   disposeAll() { this.$$('[data-3d]').forEach(el => { if (el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } }); }
+
+  /* ---------- loader / blink ---------- */
+  // The studio name is torn in half along a ragged line and the halves slide apart.
+  runLoader() {
+    const P = window.Painter, red = this.red();
+    const line = P.tornLine(77), pts = line.map(([x, y]) => `calc(50% + ${x.toFixed(1)}px) ${y}%`), rimW = line.map((_, i) => 4 + ((i * 37) % 7));
+    const L = this.$('[data-lhalf="l"]'), R = this.$('[data-lhalf="r"]'); if (!L || !R) { this._introT0 = performance.now(); return; }
+    L.style.clipPath = `polygon(0 0,${pts.join(',')},0 100%)`; R.style.clipPath = `polygon(${pts.join(',')},100% 100%,100% 0)`;
+    this.$('[data-lrim]', L).style.clipPath = `polygon(${pts.join(',')},${line.map(([x, y], i) => `calc(50% + ${(x - rimW[i]).toFixed(1)}px) ${y}%`).reverse().join(',')})`;
+    this.$('[data-lrim]', R).style.clipPath = `polygon(${pts.join(',')},${line.map(([x, y], i) => `calc(50% + ${(x + rimW[i]).toFixed(1)}px) ${y}%`).reverse().join(',')})`;
+    if (red) { this.$('[data-loader]').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, delay: 500, fill: 'forwards' }); setTimeout(() => this.setState({ loader: false }), 1250); this._introT0 = performance.now() + 900; return; }
+    this.$$('[data-lword]').forEach(w => { w.style.webkitMaskImage = w.style.maskImage = 'linear-gradient(90deg,#000 42%,rgba(0,0,0,.35) 50%,transparent 58%)'; w.style.webkitMaskSize = w.style.maskSize = '260% 100%'; w.animate([{ maskPosition: '100% 0', webkitMaskPosition: '100% 0' }, { maskPosition: '0% 0', webkitMaskPosition: '0% 0' }], { duration: 900, easing: 'cubic-bezier(.5,.1,.3,1)', fill: 'both' }); });
+    const o = { duration: 760, delay: 980, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' };
+    L.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(-62%) rotate(-3deg)', opacity: .2 }], o);
+    R.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(62%) rotate(3deg)', opacity: .2 }], o);
+    this._introT0 = performance.now() + 1150; setTimeout(() => this.setState({ loader: false }), 1780);
+  }
+  blink() {
+    const lid = this.q1 && this.q1.lid, g = this.g1;
+    if (lid && g && !this.red() && (this.t || 0) < .8) lid.animate([{ transform: `translateY(${-g.lidUp}px)`, easing: 'cubic-bezier(.55,0,.85,.45)' }, { transform: 'translateY(0px)', offset: .26 }, { transform: 'translateY(0px)', offset: .34, easing: 'cubic-bezier(.25,.55,.35,1)' }, { transform: `translateY(${-g.lidUp}px)` }], { duration: 430 });
+    this._blinkT = setTimeout(() => this.blink(), 4000 + Math.random() * 3000);
+  }
+
+  /* ---------- cursor ---------- */
+  // A small dot that becomes a magnifying lens over anything interactive; buttons pull toward it.
+  initCursor() {
+    const pm = e => { const g = this.g1; if (!g) return; this.mx = cl((e.clientX - g.P0.x) / (this.W * .5), -1, 1); this.my = cl((e.clientY - g.P0.y) / (this.H * .5), -1, 1); };
+    addEventListener('pointermove', pm, { passive: true });
+    if (!matchMedia('(pointer: fine)').matches || this._cursorCleanup) { this._cursorCleanup = () => removeEventListener('pointermove', pm); return; }
+    const pos = document.createElement('div'), ring = document.createElement('div');
+    Object.assign(pos.style, { position: 'fixed', left: '0', top: '0', zIndex: '9999', pointerEvents: 'none' });
+    Object.assign(ring.style, { width: '8px', height: '8px', marginLeft: '-4px', marginTop: '-4px', borderRadius: '50%', background: '#1B1D24', boxShadow: '0 0 0 1.5px rgba(243,238,228,.9)', transition: `width 600ms ${EASE},height 600ms ${EASE},margin 600ms ${EASE},background 600ms ease,box-shadow 600ms ease,backdrop-filter 600ms ease` });
+    pos.appendChild(ring); document.body.appendChild(pos); document.documentElement.classList.add('dc-cursor');
+    let x = -80, y = -80, tx = -80, ty = -80, alive = true;
+    const lensOn = { width: '64px', height: '64px', marginLeft: '-32px', marginTop: '-32px', background: 'radial-gradient(circle at 35% 30%,rgba(255,255,255,.35),rgba(255,255,255,0) 45%),repeating-linear-gradient(0deg,rgba(27,29,36,.07) 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,rgba(27,29,36,.06) 0 1px,transparent 1px 5px)', boxShadow: 'inset 0 0 0 1.5px rgba(27,29,36,.85),inset 0 -6px 12px rgba(0,0,0,.18),0 0 0 1px rgba(243,238,228,.8)', backdropFilter: 'contrast(1.25) saturate(1.35) brightness(1.06)', WebkitBackdropFilter: 'contrast(1.25) saturate(1.35) brightness(1.06)' };
+    const lensOff = { width: '8px', height: '8px', marginLeft: '-4px', marginTop: '-4px', background: '#1B1D24', boxShadow: '0 0 0 1.5px rgba(243,238,228,.9)', backdropFilter: 'none', WebkitBackdropFilter: 'none' };
+    const move = e => {
+      tx = e.clientX; ty = e.clientY; if (this.red()) return;
+      this.$$('[data-magnet]').forEach(m => { const r = m.getBoundingClientRect(); if (!r.width) return; const cx = r.left + r.width / 2 - (m._dx || 0), cy = r.top + r.height / 2 - (m._dy || 0), dx = tx - cx, dy = ty - cy, R = Math.max(r.width, r.height) / 2 + 40, k = Math.hypot(dx, dy) < R ? .25 : 0; m._dx = dx * k; m._dy = dy * k; m.style.transform = `translate(${m._dx.toFixed(1)}px,${m._dy.toFixed(1)}px)`; });
+    };
+    const over = e => { const hit = e.target.closest && e.target.closest('a,button,[data-hover],article'); this._hov = !!(hit && hit.closest('a,button')); Object.assign(ring.style, hit ? lensOn : lensOff); };
+    const loop = () => { if (!alive) return; x += (tx - x) * .18; y += (ty - y) * .18; pos.style.transform = `translate3d(${x}px,${y}px,0)`; requestAnimationFrame(loop); };
+    addEventListener('mousemove', move); addEventListener('mouseover', over); loop();
+    this._cursorCleanup = () => { alive = false; removeEventListener('pointermove', pm); removeEventListener('mousemove', move); removeEventListener('mouseover', over); pos.remove(); document.documentElement.classList.remove('dc-cursor'); };
+  }
+
+  /* ---------- founders ---------- */
+  founderHover(i, on) {
+    this.fHover[i] = on; const fs = this.fst && this.fst[i]; if (!fs || !fs.panel) return;
+    fs.panel.style.opacity = on ? '1' : '0'; fs.panel.style.transform = on ? 'translateX(0)' : `translateX(${i % 2 ? 20 : -20}px)`; if (on) this.paper(.35);
+  }
+  forceOpen(o) { const m = /^f(\d)$/.exec(o || ''); if (m) setTimeout(() => this.founderHover(+m[1], true), 600); }
+
+  /* ---------- sound ---------- */
+  // Everything is synthesised from one buffer of pink noise; each world sets its own bed.
+  toggleSound() {
+    if (!this._ac) {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      const ac = new AC(), len = ac.sampleRate * 4, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = .99765 * b0 + w * .099; b1 = .963 * b1 + w * .2965; b2 = .57 * b2 + w * 1.0526; d[i] = (b0 + b1 + b2 + w * .1848) * .12; }
+      const src = () => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; return s; };
+      const master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
+      const w = src(), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; const bg = ac.createGain(); bg.gain.value = .5; w.connect(lp).connect(bg).connect(master);
+      const wl = ac.createOscillator(), wlg = ac.createGain(); wl.frequency.value = .06; wlg.gain.value = 160; wl.connect(wlg).connect(lp.frequency);
+      const s = src(), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 560; bp.Q.value = .6; const sg = ac.createGain(); sg.gain.value = 0; const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = .09; lg.gain.value = 0; lfo.connect(lg).connect(sg.gain); s.connect(bp).connect(sg).connect(master);
+      w.start(); s.start(0, 1.3); wl.start(); lfo.start();
+      Object.assign(this, { _ac: ac, _master: master, _noise: buf, _lp: lp, _bg: bg, _sg: sg, _lg: lg });
+      this._fx = setInterval(() => { if (!this.state.sound) return; const wi = this._wi; if (wi === 6) this.tick(); if ((wi === 2 || wi === 4) && Math.random() < .45) this.gull(); }, 1000);
+    }
+    const on = !this.state.sound; this._ac.resume();
+    this._master.gain.setTargetAtTime(on ? .55 : 0, this._ac.currentTime, .6);
+    this.$$('[data-bar]').forEach((b, i) => { b._a && b._a.cancel(); b._a = null; if (on && !this.red()) b._a = b.animate([{ transform: 'scaleY(.3)' }, { transform: 'scaleY(1)' }, { transform: 'scaleY(.5)' }, { transform: 'scaleY(.3)' }], { duration: 1400 + i * 260, iterations: Infinity, easing: 'ease-in-out' }); });
+    this.setState({ sound: on }, () => this.bed(this._wi || 0));
+  }
+  bed(wi) { if (!this._ac) return; const b = BEDS[wi] || BEDS[0], T = this._ac.currentTime; this._lp.frequency.setTargetAtTime(b.f, T, 1.2); this._bg.gain.setTargetAtTime(b.g, T, 1.2); this._sg.gain.setTargetAtTime(b.s * .5, T, 1.2); this._lg.gain.setTargetAtTime(b.s * .45, T, 1.2); }
+  tick() { const ac = this._ac, s = ac.createBufferSource(); s.buffer = this._noise; const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 2600; const g = ac.createGain(), t = ac.currentTime; g.gain.setValueAtTime(.35, t); g.gain.exponentialRampToValueAtTime(.001, t + .03); s.connect(f).connect(g).connect(this._master); s.start(t, Math.random() * 3); s.stop(t + .05); }
+  gull() { const ac = this._ac, o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = 'triangle'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(1050, t + .28); o.frequency.setValueAtTime(1450, t + .34); o.frequency.exponentialRampToValueAtTime(1000, t + .62); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.03, t + .04); g.gain.linearRampToValueAtTime(.0, t + .3); g.gain.linearRampToValueAtTime(.025, t + .38); g.gain.linearRampToValueAtTime(0, t + .66); o.connect(g).connect(this._master); o.start(t); o.stop(t + .7); }
+  paper(vol = 1) {
+    if (!this.state.sound || !this._ac) return;
+    const ac = this._ac, s = ac.createBufferSource(); s.buffer = this._noise; const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1800;
+    const g = ac.createGain(), t = ac.currentTime; g.gain.setValueAtTime(0, t); for (let i = 0; i < 8; i++) g.gain.linearRampToValueAtTime((.15 + Math.random() * .35) * vol, t + .03 + i * .04); g.gain.linearRampToValueAtTime(0, t + .4);
+    s.connect(f).connect(g).connect(ac.destination); s.start(t, Math.random() * 3); s.stop(t + .45);
+  }
+  crunch() { if (!this.state.sound || !this._ac) return; const ac = this._ac, s = ac.createBufferSource(); s.buffer = this._noise; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 1.2; const g = ac.createGain(), t = ac.currentTime; g.gain.setValueAtTime(0, t); for (let i = 0; i < 5; i++) g.gain.linearRampToValueAtTime(.3 + Math.random() * .4, t + .02 + i * .03); g.gain.linearRampToValueAtTime(0, t + .22); s.connect(f).connect(g).connect(ac.destination); s.start(t, Math.random() * 3); s.stop(t + .25); }
+
+  /* ---------- navigation ---------- */
+  go(to, e) { e && e.preventDefault && e.preventDefault(); if (this.state.menu) this.setState({ menu: false }); scrollTo({ top: VI(JUMP[to] ?? 0) * (this.H || innerHeight), behavior: this.red() ? 'auto' : 'smooth' }); }
 }
