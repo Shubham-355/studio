@@ -92,6 +92,9 @@ export class HomeEngine {
     this.fst = this.fEls.map(el => ({ ph: 0, hv: 0, orb: 0, th: this.$$('[data-th]', el), res: this.$('[data-res]', el), turn: this.$('[data-turn]', el), head: this.$('[data-head]', el), body: this.$('[data-body]', el), orbs: this.$$('[data-orb]', el), panel: this.$('[data-panel]', el) }));
     this.$$('[data-kscale]').forEach(el => el.style.zoom = this.n ? '1.1' : String(Math.min(1.45, this.H / 620)));
     const sand = this.$('[data-sand]'); if (sand) { sand.width = Math.round(this.W / 2); sand.height = Math.round(this.H / 2); this.sandCtx = sand.getContext('2d'); }
+    this._ballT = this._travT = null;
+    this.m3d = { apple5: this.$('[data-3d="apple5"]'), sandboard: this.$('[data-3d="sandboard"]'), roomqueen: this.$('[data-3d="roomqueen"]') }; this._nogl = !!this.q('nogl');
+    this.ch = { nav: this.$('[data-nav]'), prog: this.$('[data-mprog]'), cta: this.$('[data-navcta]'), sand: this.$('[data-sand]') };
     if (repaint) this.queuePaint();
   }
   layout1() {
@@ -223,18 +226,22 @@ export class HomeEngine {
     const at = parseFloat(this.q('at')), aw = isNaN(at) ? -1 : this.worldAt(at);
     this.pq = []; J.forEach(([w, k, fn]) => { if (aw >= 0 && Math.abs(w - aw) > 1 && !(aw === 1 && w === 2)) return; this.$$(`[data-paint="${k}"]`).forEach(cv => this.pq.push({ w, cv, fn })); });
     const token = (this._pt = (this._pt || 0) + 1);
-    const idle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 100 }) : f => setTimeout(f, 16);
-    const step = () => {
+    // Plates near the visible world get a deadline; far ones wait for genuinely idle time so they never stall a scroll.
+    const idle = (f, urgent) => window.requestIdleCallback ? requestIdleCallback(f, urgent ? { timeout: 100 } : undefined) : setTimeout(f, urgent ? 16 : 120);
+    const step = deadline => {
       if (token !== this._pt || !this._alive || !this.pq.length) return;
       const cur = this.worldAt(this.t || 0); let bi = 0, bd = 99; this.pq.forEach((j, i) => { const d = Math.abs(j.w - cur) + (j.w < cur ? .5 : 0); if (d < bd) { bd = d; bi = i; } });
+      const urgent = bd <= 1.5, moving = Math.abs(this._tgt - this.t) > .01;
+      if (!urgent && (moving || (deadline && !deadline.didTimeout && deadline.timeRemaining() < 8))) { idle(step, false); return; }
       const j = this.pq.splice(bi, 1)[0], cv = j.cv;
       cv.getBoundingClientRect = () => ({ width: cv.offsetWidth, height: cv.offsetHeight, left: 0, top: 0, right: cv.offsetWidth, bottom: cv.offsetHeight });
       const wd = cv.closest('[data-world]'), hid = wd && wd.style.display === 'none'; if (hid) wd.style.display = '';
       try { j.fn(cv); } catch (e) { console.warn(e); } delete cv.getBoundingClientRect; if (hid) wd.style.display = 'none';
       if (j.w === 2 && !this.pq.some(x => x.w === 2)) { try { this.comp3(); } catch (e) { console.warn(e); } }
-      idle(step);
+      const nxt = this.pq.length ? Math.min(...this.pq.map(x => Math.abs(x.w - this.worldAt(this.t || 0)))) : 9;
+      if (this.pq.length) idle(step, nxt <= 1.5); else if (window.Scene3D && !this.q('nogl')) window.Scene3D.load();
     };
-    idle(step);
+    idle(step, true);
   }
 
   /* ---------- frame loop ---------- */
@@ -243,7 +250,7 @@ export class HomeEngine {
     requestAnimationFrame(this._loopF); clearTimeout(this._lt); this._lt = setTimeout(this._loopF, 120);
     if (!this.W) return;
     if (this._at == null) { const a = parseFloat(this.q('at')); this._at = isNaN(a) ? false : a; if (this._at !== false) { this.t = this._at; this._introT0 = performance.now() - 5000; } }
-    const tgt = this._at !== false ? this._at : V(cl(scrollY / this.H, 0, VI(TEND)));
+    const tgt = this._tgt = this._at !== false ? this._at : V(cl(scrollY / this.H, 0, VI(TEND)));
     if (this.red()) { const b = this.beat(tgt); if (b !== this._beat) { if (this._beat != null) this.fadeSwap(); this._beat = b; } this.t = b; }
     else { const d = tgt - this.t; this.t = Math.abs(d) < .0008 ? tgt : this.t + d * .085; this._beat = null; }
     this.now = performance.now() / 1000;
@@ -329,7 +336,7 @@ export class HomeEngine {
   }
   drawBall(t) {
     const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = t > 4.45 && t < 17.3;
-    this.S(q.ball, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
+    this.S(q.ball, 'visibility', on ? 'visible' : 'hidden'); if (!on || this._ballT === t) return; this._ballT = t;
     const k = q.ball._k, P = window.Painter, pr = P.cam6.proj; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, q.ball.width, q.ball.height);
     let c, ox = 0, oy = 0; if (t < 14.05) c = this.cam6(t); else { c = S.camO; ox = -sm(16.9, 17.25, t) * 1.06 * this.W; oy = 1.2 * this.H * sm(16.6, 16.9, t); }
     const C3 = this.cam3(t); x.setTransform(k * C3.cs, 0, 0, k * C3.cs, k * (C3.cx + ox), k * (C3.cy + oy));
@@ -365,7 +372,7 @@ export class HomeEngine {
     const f = this.tf, bk = this.tb, x = this.tfx; if (!f || !bk || !x) return;
     const on = t > 16.88 && t < 18.25;
     if (!on) { if (f._on !== false) { f._on = false; f.style.visibility = 'hidden'; bk.style.visibility = 'hidden'; } return; }
-    f._on = true; f.style.visibility = 'visible';
+    f._on = true; f.style.visibility = 'visible'; if (this._travT === t) return; this._travT = t;
     const W = this.W, H = this.H, n = this.n, K = this.tk, TR = 4.4;
     const pan = sm(16.9, 17.25, t), dx = (1 - pan) * 1.06 * W, s = lin(17.2, 17.95, t), warm = sm(17.0, 17.9, t), sink = sm(17.8, 18.2, t) * H * 1.3;
     const hy = mx(H * .46, H * .56, sm(17.2, 17.7, t)), F = n ? W * 1.5 : H * 1.05, hc = .5 + .14 * Math.pow(Math.sin(s * Math.PI * 2.5), 2);
@@ -493,7 +500,7 @@ export class HomeEngine {
     this.dvEls.forEach((el, k) => { const p = this.dovePos(k, t); if (!p) { this.S(el, 'visibility', 'hidden'); [...el.children].forEach(c => this.S(c, 'visibility', 'hidden')); return; } const up = ((this.now * 7 + k * .37) | 0) % 2;
       this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) scale(${(p[2] * p[3]).toFixed(3)},${p[2].toFixed(3)})`); this.S(el, 'filter', p[2] > 2.2 ? `blur(${((p[2] - 2.2) * 1.5).toFixed(1)}px)` : 'none');
       const cs = el.children; if (cs[0]) this.S(cs[0], 'visibility', up ? 'visible' : 'hidden'); if (cs[1]) this.S(cs[1], 'visibility', up ? 'hidden' : 'visible'); });
-    const sc = this.sandCtx, sEl = this.$('[data-sand]');
+    const sc = this.sandCtx, sEl = this.ch.sand;
     if (sc && t > 16.95 && t < 18.2 && !this.red()) {
       const I = sm(16.95, 17.3, t) * (1 - sm(17.9, 18.2, t)), w = sc.canvas.width, h = sc.canvas.height; this.S(sEl, 'visibility', 'visible'); sc.clearRect(0, 0, w, h);
       const N = this.n ? 60 : 140; for (let i = 0; i < N; i++) { const r1 = (i * 0.6180339) % 1, r2 = (i * 0.4142135) % 1, sp = .4 + r2 * .8; const x = w - (((r1 + this.now * sp * .5) % 1) * (w + 80)) + 40, y = h * (.2 + r2 * .8) + Math.sin(this.now * 2 + i) * 6, L = 14 + r2 * 40; sc.strokeStyle = `rgba(${210 + (i % 3) * 12},${160 + (i % 4) * 10},${100 + (i % 5) * 6},${(.25 + r1 * .45) * I})`; sc.lineWidth = .8 + r2 * 1.6; sc.beginPath(); sc.moveTo(x, y); sc.lineTo(x + L, y - L * .08); sc.stroke(); }
@@ -521,17 +528,18 @@ export class HomeEngine {
     const wi = this.worldAt(t);
     if (wi !== this._wi) {
       this._wi = wi; const c = INK[wi] ? '#1B1D24' : '#F3EEE4';
-      const nav = this.$('[data-nav]'); if (nav) { nav.style.color = c; nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
+      const nav = this.ch.nav; if (nav) { nav.style.color = c; nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
       this.bed(wi); if (this.props.notes || this.q('notes') === '1') this.setState({ world: wi });
     }
-    const pr = this.$('[data-mprog]'); if (pr) this.S(pr, 'transform', `scaleX(${(t / TEND).toFixed(4)})`);
-    const nc = this.$('[data-navcta]'); if (nc) { const on = t > .5; this.S(nc, 'opacity', on ? '1' : '0'); this.S(nc, 'translate', on ? '0px 0' : '24px 0'); this.S(nc, 'pointerEvents', on ? 'auto' : 'none'); }
+    const pr = this.ch.prog; if (pr) this.S(pr, 'transform', `scaleX(${(t / TEND).toFixed(4)})`);
+    const nc = this.ch.cta; if (nc) { const on = t > .5; this.S(nc, 'opacity', on ? '1' : '0'); this.S(nc, 'translate', on ? '0px 0' : '24px 0'); this.S(nc, 'pointerEvents', on ? 'auto' : 'none'); }
   }
-  // three.js scenes only live while their world is on screen.
+  // three.js scenes live around the stretch where their world is on screen: mounted early so shaders compile
+  // before they are needed, and kept a little longer so scrolling across a boundary does not rebuild them.
   mounts(t) {
-    if (!window.Scene3D || this.q('nogl')) return;
+    if (!window.Scene3D || this._nogl) return;
     const M = [['apple5', 1.4, 5.5], ['sandboard', 4.4, 17.3], ['roomqueen', 21.3, 25.2]];
-    M.forEach(([k, a, b]) => { const el = this.$(`[data-3d="${k}"]`); if (!el) return; const on = t > a && t < b;
+    M.forEach(([k, a, b]) => { const el = this.m3d[k]; if (!el) return; const on = el._sc ? t > a - .8 && t < b + .8 : t > a - .5 && t < b + .3;
       if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn(e); return null; });
       else if (!on && el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } });
   }
@@ -566,19 +574,25 @@ export class HomeEngine {
     addEventListener('pointermove', pm, { passive: true });
     if (!matchMedia('(pointer: fine)').matches || this._cursorCleanup) { this._cursorCleanup = () => removeEventListener('pointermove', pm); return; }
     const pos = document.createElement('div'), ring = document.createElement('div');
-    Object.assign(pos.style, { position: 'fixed', left: '0', top: '0', zIndex: '9999', pointerEvents: 'none' });
+    Object.assign(pos.style, { position: 'fixed', left: '0', top: '0', zIndex: '9999', pointerEvents: 'none', willChange: 'transform' });
     Object.assign(ring.style, { width: '8px', height: '8px', marginLeft: '-4px', marginTop: '-4px', borderRadius: '50%', background: '#1B1D24', boxShadow: '0 0 0 1.5px rgba(243,238,228,.9)', transition: `width 600ms ${EASE},height 600ms ${EASE},margin 600ms ${EASE},background 600ms ease,box-shadow 600ms ease,backdrop-filter 600ms ease` });
     pos.appendChild(ring); document.body.appendChild(pos); document.documentElement.classList.add('dc-cursor');
     let tx = -80, ty = -80;
     pos.style.transform = 'translate3d(-80px,-80px,0)';
     const lensOn = { width: '64px', height: '64px', marginLeft: '-32px', marginTop: '-32px', background: 'radial-gradient(circle at 35% 30%,rgba(255,255,255,.35),rgba(255,255,255,0) 45%),repeating-linear-gradient(0deg,rgba(27,29,36,.07) 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,rgba(27,29,36,.06) 0 1px,transparent 1px 5px)', boxShadow: 'inset 0 0 0 1.5px rgba(27,29,36,.85),inset 0 -6px 12px rgba(0,0,0,.18),0 0 0 1px rgba(243,238,228,.8)', backdropFilter: 'contrast(1.25) saturate(1.35) brightness(1.06)', WebkitBackdropFilter: 'contrast(1.25) saturate(1.35) brightness(1.06)' };
     const lensOff = { width: '8px', height: '8px', marginLeft: '-4px', marginTop: '-4px', background: '#1B1D24', boxShadow: '0 0 0 1.5px rgba(243,238,228,.9)', backdropFilter: 'none', WebkitBackdropFilter: 'none' };
+    let queued = false;
+    const magnets = () => {
+      queued = false; const ms = this.$$('[data-magnet]'), rs = ms.map(m => m.getBoundingClientRect());
+      ms.forEach((m, i) => { const r = rs[i]; if (!r.width) return; const cx = r.left + r.width / 2 - (m._dx || 0), cy = r.top + r.height / 2 - (m._dy || 0), dx = tx - cx, dy = ty - cy, R = Math.max(r.width, r.height) / 2 + 40, k = Math.hypot(dx, dy) < R ? .25 : 0, nx = dx * k, ny = dy * k;
+        if (nx === (m._dx || 0) && ny === (m._dy || 0)) return; m._dx = nx; m._dy = ny; m.style.transform = nx || ny ? `translate(${nx.toFixed(1)}px,${ny.toFixed(1)}px)` : ''; });
+    };
     const move = e => {
-      tx = e.clientX; ty = e.clientY; pos.style.transform = `translate3d(${tx}px,${ty}px,0)`; if (this.red()) return;
-      this.$$('[data-magnet]').forEach(m => { const r = m.getBoundingClientRect(); if (!r.width) return; const cx = r.left + r.width / 2 - (m._dx || 0), cy = r.top + r.height / 2 - (m._dy || 0), dx = tx - cx, dy = ty - cy, R = Math.max(r.width, r.height) / 2 + 40, k = Math.hypot(dx, dy) < R ? .25 : 0; m._dx = dx * k; m._dy = dy * k; m.style.transform = `translate(${m._dx.toFixed(1)}px,${m._dy.toFixed(1)}px)`; });
+      tx = e.clientX; ty = e.clientY; pos.style.transform = `translate3d(${tx}px,${ty}px,0)`; if (this.red() || queued) return;
+      queued = true; requestAnimationFrame(magnets);
     };
     const over = e => { const hit = e.target.closest && e.target.closest('a,button,[data-hover],article'); this._hov = !!(hit && hit.closest('a,button')); Object.assign(ring.style, hit ? lensOn : lensOff); };
-    addEventListener('mousemove', move); addEventListener('mouseover', over);
+    addEventListener('mousemove', move, { passive: true }); addEventListener('mouseover', over, { passive: true });
     this._cursorCleanup = () => { removeEventListener('pointermove', pm); removeEventListener('mousemove', move); removeEventListener('mouseover', over); pos.remove(); document.documentElement.classList.remove('dc-cursor'); };
   }
 
