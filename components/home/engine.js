@@ -560,7 +560,7 @@ export class HomeEngine {
   }
 
   /* ---------- cursor ---------- */
-  // A small dot that becomes a magnifying lens over anything interactive; buttons pull toward it.
+  // A small dot that tracks the pointer exactly and becomes a magnifying lens over anything interactive; buttons pull toward it.
   initCursor() {
     const pm = e => { const g = this.g1; if (!g) return; this.mx = cl((e.clientX - g.P0.x) / (this.W * .5), -1, 1); this.my = cl((e.clientY - g.P0.y) / (this.H * .5), -1, 1); };
     addEventListener('pointermove', pm, { passive: true });
@@ -569,17 +569,17 @@ export class HomeEngine {
     Object.assign(pos.style, { position: 'fixed', left: '0', top: '0', zIndex: '9999', pointerEvents: 'none' });
     Object.assign(ring.style, { width: '8px', height: '8px', marginLeft: '-4px', marginTop: '-4px', borderRadius: '50%', background: '#1B1D24', boxShadow: '0 0 0 1.5px rgba(243,238,228,.9)', transition: `width 600ms ${EASE},height 600ms ${EASE},margin 600ms ${EASE},background 600ms ease,box-shadow 600ms ease,backdrop-filter 600ms ease` });
     pos.appendChild(ring); document.body.appendChild(pos); document.documentElement.classList.add('dc-cursor');
-    let x = -80, y = -80, tx = -80, ty = -80, alive = true;
+    let tx = -80, ty = -80;
+    pos.style.transform = 'translate3d(-80px,-80px,0)';
     const lensOn = { width: '64px', height: '64px', marginLeft: '-32px', marginTop: '-32px', background: 'radial-gradient(circle at 35% 30%,rgba(255,255,255,.35),rgba(255,255,255,0) 45%),repeating-linear-gradient(0deg,rgba(27,29,36,.07) 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,rgba(27,29,36,.06) 0 1px,transparent 1px 5px)', boxShadow: 'inset 0 0 0 1.5px rgba(27,29,36,.85),inset 0 -6px 12px rgba(0,0,0,.18),0 0 0 1px rgba(243,238,228,.8)', backdropFilter: 'contrast(1.25) saturate(1.35) brightness(1.06)', WebkitBackdropFilter: 'contrast(1.25) saturate(1.35) brightness(1.06)' };
     const lensOff = { width: '8px', height: '8px', marginLeft: '-4px', marginTop: '-4px', background: '#1B1D24', boxShadow: '0 0 0 1.5px rgba(243,238,228,.9)', backdropFilter: 'none', WebkitBackdropFilter: 'none' };
     const move = e => {
-      tx = e.clientX; ty = e.clientY; if (this.red()) return;
+      tx = e.clientX; ty = e.clientY; pos.style.transform = `translate3d(${tx}px,${ty}px,0)`; if (this.red()) return;
       this.$$('[data-magnet]').forEach(m => { const r = m.getBoundingClientRect(); if (!r.width) return; const cx = r.left + r.width / 2 - (m._dx || 0), cy = r.top + r.height / 2 - (m._dy || 0), dx = tx - cx, dy = ty - cy, R = Math.max(r.width, r.height) / 2 + 40, k = Math.hypot(dx, dy) < R ? .25 : 0; m._dx = dx * k; m._dy = dy * k; m.style.transform = `translate(${m._dx.toFixed(1)}px,${m._dy.toFixed(1)}px)`; });
     };
     const over = e => { const hit = e.target.closest && e.target.closest('a,button,[data-hover],article'); this._hov = !!(hit && hit.closest('a,button')); Object.assign(ring.style, hit ? lensOn : lensOff); };
-    const loop = () => { if (!alive) return; x += (tx - x) * .18; y += (ty - y) * .18; pos.style.transform = `translate3d(${x}px,${y}px,0)`; requestAnimationFrame(loop); };
-    addEventListener('mousemove', move); addEventListener('mouseover', over); loop();
-    this._cursorCleanup = () => { alive = false; removeEventListener('pointermove', pm); removeEventListener('mousemove', move); removeEventListener('mouseover', over); pos.remove(); document.documentElement.classList.remove('dc-cursor'); };
+    addEventListener('mousemove', move); addEventListener('mouseover', over);
+    this._cursorCleanup = () => { removeEventListener('pointermove', pm); removeEventListener('mousemove', move); removeEventListener('mouseover', over); pos.remove(); document.documentElement.classList.remove('dc-cursor'); };
   }
 
   /* ---------- founders ---------- */
