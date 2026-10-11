@@ -251,7 +251,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
           <canvas data-paint="moon" data-moon aria-hidden className={s.abs} />
           <div data-tsh style={{ position: "absolute", left: 0, top: 0, width: 300, height: 300, margin: "-150px 0 0 -150px", borderRadius: "50%", background: "radial-gradient(closest-side,rgba(14,10,12,.9),rgba(14,10,12,.55) 45%,rgba(14,10,12,0))", visibility: "hidden", pointerEvents: "none" }} />
           <canvas data-paint="reach3" data-reach aria-hidden className={s.abs} style={{ width: 360, height: 340, transformOrigin: "0 0", visibility: "hidden" }} />
-          <div data-reflect aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", top: "124%", textAlign: "center", fontFamily: "var(--serif)", fontStyle: "italic", fontWeight: 500, fontSize: reflSize, lineHeight: 0.8, letterSpacing: "-.03em", whiteSpace: "nowrap", color: "rgba(241,230,200,.5)", filter: "url(#ripple)" }}>
+          <div data-reflect aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", top: "124%", textAlign: "center", fontFamily: "var(--serif)", fontStyle: "italic", fontWeight: 500, fontSize: reflSize, lineHeight: 0.8, letterSpacing: "-.03em", whiteSpace: "nowrap", color: "rgba(241,230,200,.5)", filter: "url(#ripple)", willChange: "transform" }}>
             {studioName}
           </div>
         </div>

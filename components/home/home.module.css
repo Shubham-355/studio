@@ -10,7 +10,7 @@
   z-index: 90;
   pointer-events: none;
   opacity: 0.5;
-  mix-blend-mode: multiply;
+  /* Plain alpha instead of multiply: at these strengths it looks the same, and the whole viewport no longer has to be re-blended every frame. */
   background-image:
     repeating-linear-gradient(0deg, rgba(27, 29, 36, 0.035) 0 1px, transparent 1px 3px),
     repeating-linear-gradient(90deg, rgba(27, 29, 36, 0.03) 0 1px, transparent 1px 3px);
