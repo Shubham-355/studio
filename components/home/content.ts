@@ -50,7 +50,3 @@ export const THOUGHTS = [
   ["letter", "phone", "bubble"],
   ["thread", "number", "gear"],
 ];
-
-export function emailFor(name: string) {
-  return `hello@${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`;
-}

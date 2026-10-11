@@ -562,25 +562,6 @@
   text-wrap: balance;
 }
 
-.textBtn {
-  padding: 8px 0;
-  border: 0;
-  border-bottom: 1px solid rgba(243, 238, 228, 0.7);
-  background: transparent;
-  color: var(--paper);
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.textBtn:hover {
-  border-bottom-color: var(--paper);
-}
-
-.textBtn:focus-visible {
-  outline: 2px solid var(--paper);
-  outline-offset: 4px;
-}
-
 .contactCard {
   position: absolute;
   left: 0;

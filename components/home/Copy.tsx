@@ -6,14 +6,11 @@ export type Layout = Record<string, string>;
 
 type Props = {
   studioName: string;
-  email: string;
   narrow: boolean;
   heroRow: boolean;
   L: Layout;
-  copied: boolean;
   go: (to: "home" | "companies" | "how" | "contact", e?: MouseEvent) => void;
   onFounder: (i: number, on: boolean) => void;
-  copyEmail: () => void;
 };
 
 // Each data-w child fades and lifts in sequence as its block comes into view.
@@ -42,8 +39,7 @@ function Caption({ a, b, L, children }: { a: string; b: string; L: Layout; child
   );
 }
 
-export default function Copy({ studioName, email, narrow, heroRow, L, copied, go, onFounder, copyEmail }: Props) {
-  const mailto = `mailto:${email}`;
+export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: Props) {
   return (
     <main data-copylayer className={s.copyLayer}>
       <section
@@ -144,8 +140,7 @@ export default function Copy({ studioName, email, narrow, heroRow, L, copied, go
           <W>Bring</W> <W>the</W> <W>idea.</W> <W italic>We’ll build the company</W> <W italic>around it.</W>
         </h2>
         <div data-w className={s.ctaRow} style={{ flex: "initial" }}>
-          <a href={mailto} data-magnet className={`${s.pill} ${s.pillLg}`}>Start a company</a>
-          <button onClick={copyEmail} className={s.textBtn}>{copied ? "Copied to your clipboard" : "Or take the card"}</button>
+          <a href="#start" data-magnet className={`${s.pill} ${s.pillLg}`}>Start a company</a>
         </div>
       </section>
       <div data-copy="m" data-id="ccard" className={s.contactCard} style={{ width: L.cardW, transformOrigin: narrow ? "50% 0" : "0 0" }}>

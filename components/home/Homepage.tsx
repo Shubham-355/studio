@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore, type MouseEvent } from "react";
 import Copy, { type Layout } from "./Copy";
 import Stage from "./Stage";
-import { emailFor } from "./content";
 import { HomeEngine, NAMES, NOTES, SPACER_VH } from "./engine";
 import s from "./home.module.css";
 
-type State = { loader: boolean; sound: boolean; menu: boolean; copied: boolean; world: number; notes: boolean };
+type State = { loader: boolean; sound: boolean; menu: boolean; world: number; notes: boolean };
 type Target = "home" | "companies" | "how" | "contact";
 
 const NARROW: Layout = { heroB: "104px", t1: "auto", b1: "92px", w1: "100%", w2: "100%", capL: "20px", capR: "auto", capT: "76px", capB: "auto", mL: "20px", mR: "20px", mT: "auto", mB: "92px", tBeach: "84px", linkB: "40px", tRoom: "84px", wRoom: "100%", wC: "100%", tagT: "15px", tagW: "104px", tQuote: "96px", bContact: "92px", cardW: "220px", tFoot: "30vh", refl: "22vw" };
@@ -31,13 +30,12 @@ function Bars() {
 }
 
 export default function Homepage({ studioName, motion = true, notes = false }: { studioName: string; motion?: boolean; notes?: boolean }) {
-  const [state, setStateRaw] = useState<State>({ loader: true, sound: false, menu: false, copied: false, world: 0, notes });
+  const [state, setStateRaw] = useState<State>({ loader: true, sound: false, menu: false, world: 0, notes });
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
   const vw = useViewportWidth();
   const narrow = vw < 820;
   const stateRef = useRef(state);
   const engineRef = useRef<HomeEngine | null>(null);
-  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // The engine reads and writes state synchronously, like a class component would.
   const host = useMemo(
@@ -72,15 +70,8 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
   const founder = (i: number, on: boolean) => engineRef.current?.founderHover(i, on);
   const toggleSound = () => engineRef.current?.toggleSound();
   const toggleMenu = () => host.setState({ menu: !stateRef.current.menu });
-  const email = emailFor(studioName);
-  const copyEmail = () => {
-    navigator.clipboard?.writeText(email).catch(() => {});
-    host.setState({ copied: true });
-    clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => host.setState({ copied: false }), 2400);
-  };
 
-  const { loader, sound, menu, copied, world } = state;
+  const { loader, sound, menu, world } = state;
   const L = narrow ? NARROW : WIDE;
 
   return (
@@ -147,7 +138,7 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
       )}
 
       <Stage studioName={studioName} narrow={narrow} reflSize={L.refl} tagW={L.tagW} tagT={L.tagT} onFounder={founder} />
-      <Copy studioName={studioName} email={email} narrow={narrow} heroRow={vw >= 900} L={L} copied={copied} go={go} onFounder={founder} copyEmail={copyEmail} />
+      <Copy studioName={studioName} narrow={narrow} heroRow={vw >= 900} L={L} go={go} onFounder={founder} />
 
       <div data-spacer style={{ height: `${SPACER_VH}vh` }} />
 
