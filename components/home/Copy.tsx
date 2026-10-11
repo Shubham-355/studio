@@ -66,9 +66,6 @@ export default function Copy({ studioName, email, narrow, heroRow, L, copied, go
           </a>
         </div>
       </section>
-      <div data-copy data-a="-1" data-b=".55" data-hero data-herocap className={s.copy} style={{ left: 0, top: 0, maxWidth: 240 }}>
-        <span data-w className={s.caption}>Oil on canvas, 2026. Someone with an idea, looking in.</span>
-      </div>
 
       <section data-copy data-a="2.0" data-b="2.95" className={`${s.copy} ${s.wide}`} style={{ top: L.t1, bottom: L.b1 }}>
         <p className={s.lede} style={{ maxWidth: L.w1 }}>
@@ -152,7 +149,6 @@ export default function Copy({ studioName, email, narrow, heroRow, L, copied, go
         </div>
       </section>
       <div data-copy="m" data-id="ccard" className={s.contactCard} style={{ width: L.cardW, transformOrigin: narrow ? "50% 0" : "0 0" }}>
-        <span data-w style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: L.cardF, lineHeight: 1, overflowWrap: "anywhere" }}>{email}</span>
         <span data-w style={{ fontSize: 14, lineHeight: 1.45 }}>Write any time. A founder at the studio replies within a day.</span>
       </div>
       <canvas data-paint="thumb3" data-thumb aria-hidden style={{ position: "absolute", left: 0, top: 0, width: 360, height: 340, transformOrigin: "0 0", visibility: "hidden", pointerEvents: "none" }} />
@@ -174,7 +170,6 @@ export default function Copy({ studioName, email, narrow, heroRow, L, copied, go
           <a href="#">GitHub</a>
         </div>
         <div data-w className={s.footCol}>
-          <a href={mailto} style={{ textTransform: "none", letterSpacing: ".06em" }}>{email}</a>
           <span>© 2026</span>
         </div>
       </footer>
