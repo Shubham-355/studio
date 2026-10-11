@@ -1,4 +1,4 @@
-# Studio
+# Odysseys
 
 A scroll-driven homepage for a venture studio, painted entirely in the browser. Scrolling moves a camera through eight oil-painted worlds: a torn sky with an eye, an apple on a chessboard, a beach, a board in the sand, a desert arcade of founders, a quiet room and a night sea.
 

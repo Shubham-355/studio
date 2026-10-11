@@ -1,4 +1,4 @@
-export const STUDIO_NAME = "Studio";
+export const STUDIO_NAME = "Odysseys";
 
 export type Stage = { num: string; name: string; d: string };
 export type Company = {
