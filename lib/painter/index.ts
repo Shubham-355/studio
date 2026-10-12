@@ -18,6 +18,7 @@ export function loadPainter(): Promise<void> {
       await import("./worlds5.js");
       await import("./worlds6.js");
       await import("./eye6.js");
+      await import("./worlds7.js");
       await import("./scene3d.js");
     })();
   }
