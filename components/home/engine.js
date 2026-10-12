@@ -7,7 +7,7 @@ import { COMPANIES } from "./content";
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lin = (a, b, x) => cl((x - a) / (b - a)), sm = (a, b, x) => { const t = lin(a, b, x); return t * t * (3 - 2 * t); }, mx = (a, b, t) => a + (b - a) * t;
 const EASE = 'cubic-bezier(.2,.7,.2,1)';
 export const TEND = 28.6;
-const RANGE = [[0, 1.96], [1.45, 5.46], [4.45, 14.06], [-2, -1], [4.45, 17.26], [17.55, 22.91], [21.4, 25.11], [24.1, 99]];
+const RANGE = [[0, 1.96], [0.9, 5.46], [4.45, 14.06], [-2, -1], [4.45, 17.26], [17.55, 22.91], [21.4, 25.11], [24.1, 99]];
 const NAVT = [0, 1.75, 4.95, 13.0, 13.0, 17.9, 22.5, 24.6];
 const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
 const TB0 = 5.45, TB1 = 12.4, SL = 4.2, SR = (TB1 - TB0) / SL, DV = TB1 - TB0 - SL;
@@ -127,7 +127,7 @@ export class HomeEngine {
     const ab = this.$('[data-3d="apple5"]'); if (ab) Object.assign(ab.style, { left: A.x + 'px', top: A.y + 'px', width: A.w + 'px', height: A.h + 'px' });
     this.appleBox = A; this.rb = A.h * .1; this.B = { x: A.x + A.w * .62, y: A.y + A.h * .52 }; this._Bset = false;
     this.cover = Math.hypot(W / 2, H / 2) * 1.08;
-    this.q2 = { world: w2, cam: this.$('[data-cam]', w2), plate: this.$('[data-plate]', w2), fg: this.$('[data-fg]', w2), apple: ab, glint: this.$('[data-glint]', w2) };
+    this.q2 = { world: w2, cam: this.$('[data-cam]', w2), plate: this.$('[data-plate]', w2), fg: this.$('[data-fg]', w2), apple: ab, glint: this.$('[data-glint]', w2), pvig: this.$('[data-pvig]', w2) };
   }
   smax() { const B = this.B, W = this.W, H = this.H; const d = Math.max(Math.hypot(B.x, B.y), Math.hypot(W - B.x, B.y), Math.hypot(B.x, H - B.y), Math.hypot(W - B.x, H - B.y)); return 1.3 * d / this.rb; }
   layout3() {
@@ -156,7 +156,7 @@ export class HomeEngine {
   // Flattens the first beach frame into one texture; the apple's bite shows it through a portal.
   comp3() {
     const q = this.q3, W = this.W, H = this.H, S = this.S6, P = window.Painter; if (!q || !q.g0 || q.g0.width < 3 || !S) return;
-    const k = .5, c = this._comp || (this._comp = document.createElement('canvas')); c.width = Math.round(W * k); c.height = Math.round(H * k);
+    const k = Math.min(1.25, devicePixelRatio || 1), c = this._comp || (this._comp = document.createElement('canvas')); c.width = Math.round(W * k); c.height = Math.round(H * k);
     const x = c.getContext('2d'); x.setTransform(k, 0, 0, k, 0, 0);
     if (q.sky && q.sky.width > 2) x.drawImage(q.sky, -.04 * W, -.04 * H, 1.08 * W, 1.08 * H); x.drawImage(q.g0, -.1 * W, 0, 1.2 * W, H);
     const pr = P.cam6.proj, c0 = S.pose0;
@@ -219,7 +219,7 @@ export class HomeEngine {
       [1, 'shore5', cv => P.shore5(cv, { hy: .5 })], [1, 'shells5', cv => P.shells5(cv)], [1, 'dove', cv => P.dove(cv, cv.dataset.up === '1')],
       [2, 'b6sky', cv => P.beach6Sky(cv, this.S6)], [2, 'b6g0', cv => P.beach6Ground(cv, this.S6, 0)], [2, 'b6umb', cv => P.umb6(cv)], [2, 'b6chair', cv => P.chair6(cv)], [2, 'b6gull', cv => P.gull6(cv)], [2, 'b6g1', cv => P.beach6Ground(cv, this.S6, 1)],
       [4, 'b6tall', cv => P.beach6Tall(cv, this.S6)],
-      [5, 'desert', cv => P.desert(cv, { hy: .552, gap: n ? .22 : .13 })], [5, 'founder', cv => P.founder(cv, +cv.dataset.v)], [5, 'head', cv => P.head(cv, +cv.dataset.v)], [5, 'thought', cv => P.thought(cv, cv.dataset.kind)], [5, 'resolved', cv => P.resolved(cv, +cv.dataset.v)], [5, 'planet', cv => P.planet(cv, cv.dataset.col)],
+      [5, 'desert', cv => P.arcade7(cv, { hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 })], [5, 'founder', cv => P.founder7(cv, +cv.dataset.v)], [5, 'head', cv => P.head7(cv, +cv.dataset.v)], [5, 'thought', cv => P.thought7(cv, cv.dataset.kind)], [5, 'resolved', cv => P.resolved(cv, +cv.dataset.v)], [5, 'planet', cv => P.planet(cv, cv.dataset.col)],
       [6, 'room', cv => P.room(cv, R)],
       [7, 'night', cv => P.nightSea(cv, { hy: .413, mx: this.g8.mx })], [7, 'morning', cv => P.morning(cv)], [7, 'moon', cv => P.moon(cv)], [7, 'reach3', cv => P.reach3(cv)], [7, 'thumb3', cv => P.thumb3(cv)],
     ];
@@ -246,8 +246,8 @@ export class HomeEngine {
 
   /* ---------- frame loop ---------- */
   loop() {
-    if (!this._alive) return; const pn = performance.now(); if (this._lastF && pn - this._lastF < 8) return; this._lastF = pn;
-    requestAnimationFrame(this._loopF); clearTimeout(this._lt); this._lt = setTimeout(this._loopF, 120);
+    if (!this._alive) return; const pn = performance.now(); clearTimeout(this._lt); this._lt = setTimeout(this._loopF, 120); if (this._lastF && pn - this._lastF < 8) return; this._lastF = pn;
+    requestAnimationFrame(this._loopF);
     if (!this.W) return;
     if (this._at == null) { const a = parseFloat(this.q('at')); this._at = isNaN(a) ? false : a; if (this._at !== false) { this.t = this._at; this._introT0 = performance.now() - 5000; } }
     const tgt = this._tgt = this._at !== false ? this._at : V(cl(scrollY / this.H, 0, VI(TEND)));
@@ -262,7 +262,7 @@ export class HomeEngine {
   render(t) {
     this.mv = {};
     for (let k = 0; k < 8; k++) { const el = this.wEl[k]; if (!el) continue; const on = t >= RANGE[k][0] && t < RANGE[k][1]; if (el._on !== on) { el._on = on; el.style.visibility = on ? 'visible' : 'hidden'; el.style.display = on ? '' : 'none'; } if (on) this['w' + (k + 1)](t); }
-    this.st.apple5.active = t > 1.4 && t < 5.5; this.st.sandboard.active = t > 4.4 && t < 17.3; this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2;
+    this.st.apple5.active = t > .88 && t < 5.5; this.st.sandboard.active = t > 4.4 && t < 17.3; this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2;
     this.travel(t); this.carry(t); this.copy(t); this.ui(t); this.mounts(t);
   }
 
@@ -292,9 +292,14 @@ export class HomeEngine {
     const W = this.W, H = this.H, q = this.q2; if (!q) return;
     const r1 = sm(1.45, 1.95, t), d = lin(4.45, 5.45, t);
     let cs = 1, cx = 0, cy = 0, clip = 'none';
-    if (t < 1.95) { const R = Math.max(.5, r1 * this.cover); clip = `circle(${R.toFixed(1)}px at ${W / 2}px ${H / 2}px)`; cs = mx(1.12, 1, r1); cx = W / 2 * (1 - cs); cy = H / 2 * (1 - cs);
-      this.S(q.glint, 'visibility', r1 > .02 && r1 < .98 ? 'visible' : 'hidden'); this.S(q.glint, 'transform', `translate(${(W / 2 - R * .42).toFixed(1)}px,${(H / 2 - R * .5).toFixed(1)}px) rotate(-24deg) scale(${(R / 300).toFixed(3)})`);
-    } else this.S(q.glint, 'visibility', 'hidden');
+    // The apple world is seen through the pupil itself, tracking the face dolly, with a dark vignette that lifts as it opens.
+    const g = this.g1; if (t < 1.46 && g) { const a = sm(.45, 1, t), zb = sm(0, 1, lin(.95, 1.45, t)), sh = sm(0, .7, lin(.95, 1.45, t)), fs = (1 + a * .5) * Math.pow(g.fsEnd / 1.5, zb);
+      const px = g.P0.x + (W / 2 - g.P0.x) * sh, py = g.P0.y + (H / 2 - g.P0.y) * sh, R = Math.max(.5, g.pr * fs * .97);
+      clip = `circle(${R.toFixed(1)}px at ${px.toFixed(1)}px ${py.toFixed(1)}px)`; cs = mx(1.45, 1, zb); cx = px * (1 - cs); cy = py * (1 - cs);
+      const vg = 1 - sm(.35, 1, zb); this.S(q.pvig, 'visibility', vg > .01 ? 'visible' : 'hidden');
+      this.S(q.pvig, 'background', `radial-gradient(circle ${R.toFixed(0)}px at ${px.toFixed(0)}px ${py.toFixed(0)}px, rgba(14,18,26,${(.35 * vg).toFixed(3)}) 0%, rgba(14,18,26,${(.55 * vg).toFixed(3)}) 62%, rgba(8,10,14,${(.95 * vg).toFixed(3)}) 100%)`);
+      this.S(q.glint, 'visibility', zb < .9 ? 'visible' : 'hidden'); this.S(q.glint, 'opacity', (1 - sm(.5, .9, zb)).toFixed(3)); this.S(q.glint, 'transform', `translate(${(px - R * .42).toFixed(1)}px,${(py - R * .5).toFixed(1)}px) rotate(-24deg) scale(${(R / 300).toFixed(3)})`);
+    } else { this.S(q.glint, 'visibility', 'hidden'); this.S(q.pvig, 'visibility', 'hidden'); }
     const stA = this.st.apple5, A = this.appleBox;
     if (stA.bx != null && (t <= 4.45 || !this._Bset)) { this.B = { x: A.x + stA.bx * A.w, y: A.y + stA.by * A.h }; this._Bset = true; }
     let S = 1; if (d > 0) { S = Math.pow(this.smax(), sm(0, 1, d)); cs = S; cx = this.B.x * (1 - S); cy = this.B.y * (1 - S); }
@@ -303,7 +308,7 @@ export class HomeEngine {
     const u = sm(1.45, 4.45, t);
     this.S(q.plate, 'transform', `scale(${(1 + u * .2).toFixed(4)})`);
     this.S(q.fg, 'transform', `translateY(${(u * H * .08).toFixed(1)}px) scale(${(1 + u * .9).toFixed(4)})`);
-    const ap = sm(1.45, 3.3, t), s = 1 / mx(7, 1, ap), sp = 1 / mx(2.2, 1, ap), Ox = A.x + A.w * .5, Oy = A.y + A.h * .78;
+    const ap = 1, s = 1 / mx(7, 1, ap), sp = 1 / mx(2.2, 1, ap), Ox = A.x + A.w * .5, Oy = A.y + A.h * .78;
     const tx = (W / 2 - Ox) * (1 - sp), ty = (H * .5 - Oy) * (1 - sp);
     this.S(q.apple, 'transform', `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${s.toFixed(4)})`);
     const b1 = sm(3.35, 3.6, t), b2 = sm(3.65, 3.9, t), b3 = sm(3.95, 4.2, t);
@@ -317,8 +322,12 @@ export class HomeEngine {
   w3(t) {
     const W = this.W, H = this.H, q = this.q3, S = this.S6, n = this.n; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
     const d = lin(4.45, 5.45, t), C = this.cam3(t);
-    if (d < 1) { const e = sm(0, 1, d), Sx = Math.pow(this.smax(), e), rC = this.rb * Sx * mx(.15, .7, e), B = this.B; this.S(q.world, 'clipPath', `circle(${rC.toFixed(1)}px at ${B.x.toFixed(1)}px ${B.y.toFixed(1)}px)`); }
-    else this.S(q.world, 'clipPath', 'none');
+    // Through the doorway the beach shows only inside the bite holes, which grow with the zoom.
+    let m3 = 'none';
+    if (d < 1) { const e = sm(0, 1, d), Sx = Math.pow(this.smax(), e), bc = this.st.apple5.bc, A = this.appleBox, B = this.B, k = mx(.57, 1.25, e * e), cx2 = B.x * (1 - Sx), cy2 = B.y * (1 - Sx);
+      const cs2 = (bc && bc[1][2] > 0 ? bc : [[0, 0, 0], [(B.x - A.x) / A.w, (B.y - A.y) / A.h, this.rb / A.h], [0, 0, 0]]).filter(b => b[2] > 0);
+      m3 = cs2.map(b => { const x = cx2 + Sx * (A.x + b[0] * A.w), y = cy2 + Sx * (A.y + b[1] * A.h), r = Math.max(1, b[2] * A.h * Sx * k); return `radial-gradient(circle ${(r * 1.04).toFixed(1)}px at ${x.toFixed(1)}px ${y.toFixed(1)}px, #000 92%, transparent 100%)`; }).join(', ') || 'none'; }
+    this.m3 = m3; this.S(q.world, 'clipPath', 'none'); this.S(q.world, 'maskImage', m3); this.S(q.world, 'webkitMaskImage', m3);
     this.S(q.cam, 'transform', `translate(${C.cx.toFixed(1)}px,${C.cy.toFixed(1)}px) scale(${C.cs.toFixed(4)})`);
     const c = this.cam6(t), s = c.f / S.F, vh = c.cy - c.f * Math.tan(c.ph);
     this.S(q.sky, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${(W / 2 - s * W / 2 - s * .04 * W).toFixed(2)},${(vh - s * S.hy - s * .04 * H).toFixed(2)})`);
@@ -340,7 +349,7 @@ export class HomeEngine {
     const k = q.ball._k, P = window.Painter, pr = P.cam6.proj; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, q.ball.width, q.ball.height);
     let c, ox = 0, oy = 0; if (t < 14.05) c = this.cam6(t); else { c = S.camO; ox = -sm(16.9, 17.25, t) * 1.06 * this.W; oy = 1.2 * this.H * sm(16.6, 16.9, t); }
     const C3 = this.cam3(t); x.setTransform(k * C3.cs, 0, 0, k * C3.cs, k * (C3.cx + ox), k * (C3.cy + oy));
-    this.S(q.ball, 'clipPath', t < 5.45 ? q.world.style.clipPath : 'none');
+    { const mm = t < 5.45 ? (this.m3 || 'none') : 'none'; this.S(q.ball, 'maskImage', mm); this.S(q.ball, 'webkitMaskImage', mm); }
     const b = this.ball6At(t), r = S.br, sn = S.sun, cp = pr(c, b.X, r, b.Z); if (cp[2] < .15) return;
     const L = Math.hypot(sn[0], sn[1]), ux = sn[0] / L, uz = sn[1] / L, sx0 = b.X + sn[0] * r, sz0 = b.Z + sn[1] * r;
     x.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, la = Math.cos(a) * r * 1.7, lc = Math.sin(a) * r, p = pr(c, sx0 + ux * la - uz * lc, 0, sz0 + uz * la + ux * lc); i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]); } x.closePath();
@@ -354,7 +363,7 @@ export class HomeEngine {
   w5(t) {
     const W = this.W, H = this.H, q = this.q5, S = this.S6; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
     const e = sm(TB1, 14.05, t), back = sm(16.6, 16.9, t), pan = sm(16.9, 17.25, t), ty = -1.2 * H * (1 - back), C = this.cam3(t);
-    this.S(q.clip, 'clipPath', t < 5.45 && this.q3 ? this.q3.world.style.clipPath : 'none');
+    { const mm = t < 5.45 ? (this.m3 || 'none') : 'none'; this.S(q.clip, 'maskImage', mm); this.S(q.clip, 'webkitMaskImage', mm); }
     this.S(q.wcam, 'transform', C.cs !== 1 ? `translate(${C.cx.toFixed(1)}px,${C.cy.toFixed(1)}px) scale(${C.cs.toFixed(4)})` : 'none');
     this.S(q.tall, 'transform', `translate(${(-pan * 1.06 * W).toFixed(1)}px,${ty.toFixed(1)}px)`);
     if (e < .999) { const c = this.cam6(t); this.S(q.world, 'transform', P.homog(S.board.map(([X, Z]) => pr(S.camO, X, 0, Z)), S.board.map(([X, Z]) => pr(c, X, 0, Z))));
@@ -435,7 +444,7 @@ export class HomeEngine {
       const R = sm(4.9, 3.2, dz), hcY = co.stand ? 99 : 227, tY = co.stand ? -26 : 102, N = fs.th.length;
       fs.ph += dt * ((1 - R) * 1.1 + .04);
       fs.th.forEach((te, j) => { const a = j / N * Math.PI * 2 + fs.ph * (.7 + (j % 3) * .25) * (j % 2 ? 1 : -1), rad = 80 + Math.sin(fs.ph * 1.7 + j * 1.3) * 34, ej = sm(j * .025, .5 + j * .035, R);
-        const px = mx(150 + Math.cos(a) * rad * 1.25, 150, ej) - 28, py = mx(hcY - 12 + Math.sin(a) * rad * .8, tY, ej) - 28;
+        const px = mx(150 + Math.cos(a) * rad * 1.5, 150, ej) - 46, py = mx(hcY - 12 + Math.sin(a) * rad * .95, tY, ej) - 46;
         this.S(te, 'transform', `translate(${px.toFixed(1)}px,${py.toFixed(1)}px) rotate(${((fs.ph * 1.5 + j) * (1 - ej)).toFixed(2)}rad) scale(${mx(1, .15, ej).toFixed(3)})`); this.S(te, 'opacity', (1 - sm(.75, 1, ej)).toFixed(3)); });
       const rs = sm(.55, 1, R); fs.hv = mx(fs.hv, this.fHover[i] ? 1 : 0, .06);
       this.S(fs.res, 'opacity', sm(.45, .8, R).toFixed(3));
@@ -538,9 +547,9 @@ export class HomeEngine {
   // before they are needed, and kept a little longer so scrolling across a boundary does not rebuild them.
   mounts(t) {
     if (!window.Scene3D || this._nogl) return;
-    const M = [['apple5', 1.4, 5.5], ['sandboard', 4.4, 17.3], ['roomqueen', 21.3, 25.2]];
+    const M = [['apple5', .88, 5.5], ['sandboard', 4.4, 17.3], ['roomqueen', 21.3, 25.2]];
     M.forEach(([k, a, b]) => { const el = this.m3d[k]; if (!el) return; const on = el._sc ? t > a - .8 && t < b + .8 : t > a - .5 && t < b + .3;
-      if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn(e); return null; });
+      if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn('3d ' + k + ': ' + (e && (e.message || e.type) || e)); return null; });
       else if (!on && el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } });
   }
   disposeAll() { this.$$('[data-3d]').forEach(el => { if (el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } }); }
