@@ -127,7 +127,6 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
           <a href="#how-we-build" onClick={(e) => go("how", e)} className={s.menuLink}>How we build</a>
           <a href="#studio" className={s.menuLink}>Studio</a>
           <a href="#start" onClick={(e) => go("contact", e)} className={`${s.pill} ${s.pillMd} ${s.menuCta}`}>Start a company</a>
-          <div className={s.menuFoot}>Oil on canvas, 2026. The way out.</div>
         </div>
       )}
 

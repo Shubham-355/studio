@@ -68,7 +68,6 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
           <Words text="Every company we build starts as *one idea* and *one conversation.*" />
         </p>
       </section>
-      <Caption a="2.0" b="4.45" L={L}>Oil on canvas, 2026. An apple, alone on the board.</Caption>
 
       <section data-copy data-a="3.25" data-b="4.45" className={`${s.copy} ${s.wide}`} style={{ top: L.t1, bottom: L.b1, display: "flex", flexDirection: "column", gap: 24, maxWidth: L.w2, color: "var(--ink)" }}>
         <h2 className={s.display} style={{ fontSize: "clamp(44px,5.6vw,92px)" }}>
@@ -76,7 +75,6 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
         </h2>
         <p data-w className={s.body}>We find the brand, the product and the business model in it. Then we build each one.</p>
       </section>
-      <Caption a="5.6" b="12.2" L={L}>Oil on canvas, 2026. Inside the apple, it was summer.</Caption>
 
       <section id="how-we-build" data-copy data-a="13.85" data-b="16.7" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--ink)" }}>
         <h2 className={s.display} style={{ maxWidth: L.w2, fontSize: "clamp(40px,4.8vw,80px)", textShadow: "0 0 30px rgba(239,224,194,.9)" }}>
@@ -119,14 +117,12 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
       <div data-copy data-a="21.75" data-b="22.3" className={s.copy} style={{ left: 0, right: 0, bottom: L.linkB, display: "flex", justifyContent: "center" }}>
         <a data-w href="#companies" className={s.allLink}>All companies</a>
       </div>
-      <Caption a="18.3" b="22.3" L={L}>Oil on canvas, 2026. Four founders, late afternoon.</Caption>
 
       <section data-copy data-a="23.05" data-b="24.15" className={`${s.copy} ${s.wide}`} style={{ top: L.tRoom, bottom: "auto", color: "var(--ink)" }}>
         <h2 className={s.display} style={{ maxWidth: L.wRoom, fontSize: "clamp(44px,5.2vw,88px)", textShadow: "0 0 30px rgba(230,220,203,.9)" }}>
           <Words text="The company is yours. *All of it.*" />
         </h2>
       </section>
-      <Caption a="23.05" b="24.15" L={L}>Oil on canvas, 2026. A queen, indoors.</Caption>
 
       <figure data-copy data-a="25.25" data-b="26.25" className={`${s.copy} ${s.wide}`} style={{ top: L.tQuote, margin: 0, display: "flex", flexDirection: "column", gap: 24, color: "var(--paper)" }}>
         <blockquote className={s.quote} style={{ maxWidth: L.w1 }}>
@@ -147,7 +143,6 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
         <span data-w style={{ fontSize: 14, lineHeight: 1.45 }}>Write any time. A founder at the studio replies within a day.</span>
       </div>
       <canvas data-paint="thumb3" data-thumb aria-hidden style={{ position: "absolute", left: 0, top: 0, width: 360, height: 340, transformOrigin: "0 0", visibility: "hidden", pointerEvents: "none" }} />
-      <Caption a="26.45" b="27.6" L={L}>Oil on canvas, 2026. An invitation.</Caption>
 
       <footer data-copy data-a="27.75" data-b="99" className={`${s.copy} ${s.wide} ${s.footer}`} style={{ top: L.tFoot }}>
         <div data-w className={s.footCol} style={{ gap: 10 }}>

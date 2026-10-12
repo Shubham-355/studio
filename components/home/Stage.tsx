@@ -88,6 +88,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
           <canvas data-paint="shells5" data-fg aria-hidden style={plate({ left: "-10%", width: "120%", bottom: "-6%", height: "42%", transformOrigin: "50% 100%" })} />
         </div>
         <div data-glint style={{ position: "absolute", left: 0, top: 0, width: 280, height: 170, margin: "-85px 0 0 -140px", borderRadius: "50%", background: "radial-gradient(closest-side,rgba(255,255,255,.8),rgba(255,255,255,0))", pointerEvents: "none", visibility: "hidden" }} />
+        <div data-pvig aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden" }} />
       </div>
 
       {/* 3 · the beach */}
@@ -126,7 +127,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       <div data-world="6" className={s.world} style={{ zIndex: 6, background: "#E8A866" }}>
         <div data-cam className={s.cam}>
           <canvas data-paint="desert" data-plate aria-hidden style={plate({ left: "-8%", top: "-8%", width: "116%", height: "116%" })} />
-          <div data-train className={s.abs} style={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
+          <div data-train className={s.abs} style={{ display: "none", alignItems: "flex-end", gap: 2 }}>
             <div style={{ width: 10, height: 9, background: "#4B3A52", borderRadius: "2px 2px 0 0" }} />
             {[0, 1, 2].map((k) => <div key={k} style={{ width: 16, height: 6, background: "#4B3A52" }} />)}
           </div>
@@ -140,7 +141,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
                   <canvas data-paint="founder" data-v={c.v} data-body aria-hidden style={plate({ left: 0, top: c.stand ? 140 : 200, width: 300, height: 400, transformOrigin: "50% 100%" })} />
                   <canvas data-paint="head" data-v={c.v} data-head aria-hidden style={plate({ left: 105, top: c.stand ? 44 : 172, width: 90, height: 110, transformOrigin: "50% 88%" })} />
                   {th.map((k, j) => (
-                    <canvas key={j} data-paint="thought" data-kind={k} data-th aria-hidden className={s.abs} style={{ width: 56, height: 56, transformOrigin: "28px 28px" }} />
+                    <canvas key={j} data-paint="thought" data-kind={k} data-th aria-hidden className={s.abs} style={{ width: 92, height: 92, transformOrigin: "46px 46px" }} />
                   ))}
                   <div data-res style={plate({ left: 60, top: c.stand ? -116 : 12, width: 180, height: 180, opacity: 0, perspective: 600 })}>
                     <div data-turn className={s.fill} style={{ transformStyle: "preserve-3d" }}>
