@@ -290,7 +290,7 @@ export class HomeEngine {
   /* ---------- 2 · the apple on the board ---------- */
   w2(t) {
     const W = this.W, H = this.H, q = this.q2; if (!q) return;
-    const r1 = sm(1.45, 1.95, t), d = lin(4.45, 5.45, t);
+    const d = lin(4.45, 5.45, t);
     let cs = 1, cx = 0, cy = 0, clip = 'none';
     // The apple world is seen through the pupil itself, tracking the face dolly, with a dark vignette that lifts as it opens.
     const g = this.g1; if (t < 1.46 && g) { const a = sm(.45, 1, t), zb = sm(0, 1, lin(.95, 1.45, t)), sh = sm(0, .7, lin(.95, 1.45, t)), fs = (1 + a * .5) * Math.pow(g.fsEnd / 1.5, zb);
@@ -524,10 +524,12 @@ export class HomeEngine {
     for (const b of this.blocks || []) {
       let v = b.m ? (this.mv[b.id] || 0) : sm(b.a, b.a + .16, t) * (1 - sm(b.b - .16, b.b, t));
       if (b.hero) v *= ik;
+      // Floating cards only appear once their anchor has been placed this frame.
+      if (b.m && !this.n && b.id !== 'ccard' && !this.pos[b.id]) v = 0;
       if (b.id === 'ccard') { if (this.cardT) this.S(b.el, 'transform', this.cardT); }
-      else if (b.m && !this.n) { const p = this.pos[b.id]; if (p) this.S(b.el, 'transform', `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px)`); }
+      else if (b.m && !this.n) { const p = this.pos[b.id]; if (p) { const bh = b.h || (b.h = b.el.offsetHeight || 0), bw = b.ow || (b.ow = b.el.offsetWidth || 0), y = cl(p[1], 104, Math.max(104, this.H - bh - 20)), x = cl(p[0], 20, Math.max(20, this.W - bw - 76)); this.S(b.el, 'transform', `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`); } }
       if (Math.abs(v - b.v) < .003 && !(v === 0 && b.v !== 0) && !(v === 1 && b.v !== 1)) continue; b.v = v;
-      b.el.style.visibility = v > 0 ? 'visible' : 'hidden'; b.el.style.pointerEvents = v > .6 ? 'auto' : 'none';
+      b.el.style.visibility = v > 0 ? 'visible' : 'hidden'; b.el.style.pointerEvents = v > .6 ? 'auto' : 'none'; if (b.m) b.el.style.opacity = sm(0, .45, v).toFixed(3);
       const N = b.w.length || 1;
       b.w.forEach((w, i) => { const x = cl((v - i / N * .5) / .5); w.style.opacity = x.toFixed(3); w.style.transform = x >= 1 ? 'none' : `translateY(${((1 - x) * 14).toFixed(1)}px)`; w.style.filter = x >= 1 ? 'none' : `blur(${((1 - x) * 8).toFixed(1)}px)`; });
     }
