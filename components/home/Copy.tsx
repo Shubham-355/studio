@@ -45,7 +45,7 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
       <section
         data-copy
         data-a="-1"
-        data-b=".62"
+        data-b=".36"
         data-hero
         className={`${s.copy} ${s.wide} ${s.hero}`}
         style={{ bottom: L.heroB, flexDirection: heroRow ? "row" : "column", alignItems: heroRow ? "baseline" : "flex-start" }}
@@ -63,21 +63,21 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
         </div>
       </section>
 
-      <section data-copy data-a="2.0" data-b="2.95" className={`${s.copy} ${s.wide}`} style={{ top: L.t1, bottom: L.b1 }}>
-        <p className={s.lede} style={{ maxWidth: L.w1 }}>
+      <section data-copy data-a="1.62" data-b="2.55" className={`${s.copy} ${s.wide}`} style={{ top: L.tA, bottom: L.b1 }}>
+        <p className={s.lede} style={{ maxWidth: L.wA, fontSize: "clamp(36px,3.9vw,64px)" }}>
           <Words text="Every company we build starts as *one idea* and *one conversation.*" />
         </p>
       </section>
 
-      <section data-copy data-a="3.25" data-b="4.45" className={`${s.copy} ${s.wide}`} style={{ top: L.t1, bottom: L.b1, display: "flex", flexDirection: "column", gap: 24, maxWidth: L.w2, color: "var(--ink)" }}>
-        <h2 className={s.display} style={{ fontSize: "clamp(44px,5.6vw,92px)" }}>
+      <section data-copy data-a="2.58" data-b="3.24" className={`${s.copy} ${s.wide}`} style={{ top: L.tA, bottom: L.b1, display: "flex", flexDirection: "column", gap: 14, maxWidth: L.wA, color: "var(--ink)" }}>
+        <h2 className={s.display} style={{ fontSize: "clamp(34px,3.7vw,60px)" }}>
           <W>Your</W> <W>idea</W> <W>has</W> <W>a</W> <W italic className={s.accent}>whole company</W> <W>inside</W> <W>it.</W>
         </h2>
-        <p data-w className={s.body}>We find the brand, the product and the business model in it. Then we build each one.</p>
+        <p data-w className={s.body} style={{ maxWidth: "32ch", fontSize: 16, padding: "16px 26px", marginLeft: -26, background: "radial-gradient(closest-side,rgba(250,232,212,.94),rgba(250,232,212,.7) 60%,rgba(250,232,212,0))" }}>We find the brand, the product and the business model in it. Then we build each one.</p>
       </section>
 
-      <section id="how-we-build" data-copy data-a="13.85" data-b="16.7" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--ink)" }}>
-        <h2 className={s.display} style={{ maxWidth: L.w2, fontSize: "clamp(40px,4.8vw,80px)", textShadow: "0 0 30px rgba(239,224,194,.9)" }}>
+      <section id="how-we-build" data-copy data-a="13.85" data-b="16.76" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--ink)" }}>
+        <h2 className={s.display} style={{ maxWidth: L.wB, fontSize: "clamp(40px,4.8vw,80px)", textShadow: "0 0 30px rgba(239,224,194,.9)" }}>
           <Words text="A pawn that crosses the board becomes *a queen.*" />
         </h2>
       </section>
@@ -88,7 +88,7 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
           <span data-w className={s.stageText}>{g.d}</span>
         </div>
       ))}
-      <Caption a="13.85" b="16.7" L={L}>Oil on sand, 2026. Five moves to the last rank.</Caption>
+      <Caption a="13.85" b="16.76" L={L}>Oil on sand, 2026. Five moves to the last rank.</Caption>
 
       <section id="companies" data-copy data-a="18.3" data-b="19.1" className={`${s.copy} ${s.wide}`} style={{ top: L.t1, bottom: L.b1, color: "var(--ink)" }}>
         <h2 className={s.display} style={{ maxWidth: L.w1, fontSize: "clamp(44px,5.6vw,92px)", textShadow: "0 0 30px rgba(237,187,128,.8)" }}>
