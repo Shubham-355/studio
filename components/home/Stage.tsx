@@ -49,12 +49,14 @@ function KeepObject({ kind }: { kind: Keep["kind"] }) {
 }
 
 const plate = (st: CSSProperties = {}): CSSProperties => ({ position: "absolute", ...st });
+// The beach and the board share one warm grade so they sit in the same sunset as the apple.
+const WARM = "sepia(.28) saturate(1.06) hue-rotate(-9deg) brightness(1.02)";
 
 export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFounder }: Props) {
   return (
     <div data-stage className={s.stage}>
       {/* 1 · sky with an eye */}
-      <div data-world="1" className={s.world} style={{ zIndex: 1, background: "#0E1014", visibility: "visible" }}>
+      <div data-world="1" className={s.world} style={{ inset: "0 0 -60px 0", zIndex: 2, background: "#0E1014", visibility: "visible", overflow: "hidden", WebkitMaskImage: "linear-gradient(180deg,#000 calc(100% - 64px),transparent)", maskImage: "linear-gradient(180deg,#000 calc(100% - 64px),transparent)" }}>
         <div data-face className={s.abs} style={{ willChange: "transform" }}>
           <div data-eyeball className={s.abs}>
             <canvas data-paint="eyeball" aria-hidden className={s.abs} />
@@ -74,32 +76,28 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
         <div data-skywrap className={s.fill} style={{ filter: "drop-shadow(0 4px 6px rgba(38,20,12,.5)) drop-shadow(0 12px 22px rgba(38,20,12,.26))" }}>
           <canvas data-paint="sky1" data-skyplate aria-hidden className={s.full} />
           <div data-rim className={s.fill} style={{ background: "linear-gradient(140deg,#FDFBF6 0%,#EFE7D8 60%,#E3D8C4 100%)", clipPath: "circle(0px)" }} />
-          <canvas data-rimcv aria-hidden className={s.full} />
+          <canvas data-rimcv aria-hidden className={s.abs} style={{ width: "100%", height: "calc(100% - 60px)" }} />
         </div>
         <div data-navscrim aria-hidden style={{ position: "absolute", left: 0, right: 0, top: 0, height: 170, pointerEvents: "none", background: "linear-gradient(180deg,rgba(20,38,76,.5) 0%,rgba(20,38,76,.3) 45%,rgba(20,38,76,0) 100%)" }} />
-        <canvas data-paint="near1" data-near aria-hidden style={plate({ left: "-10%", top: "-10%", width: "120%", height: "120%" })} />
       </div>
 
-      {/* 2 · apple on the board */}
-      <div data-world="2" className={s.world} style={{ zIndex: 2, background: "#F2C7A5" }}>
-        <div data-cam className={s.cam}>
-          <canvas data-paint="shore5" data-plate aria-hidden style={plate({ left: "-8%", top: "-8%", width: "116%", height: "116%", transformOrigin: "50% 50%" })} />
-          <div data-3d="apple5" style={plate({ transformOrigin: "50% 78%" })} />
-          <canvas data-paint="shells5" data-fg aria-hidden style={plate({ left: "-10%", width: "120%", bottom: "-6%", height: "42%", transformOrigin: "50% 100%" })} />
-        </div>
-        <div data-glint style={{ position: "absolute", left: 0, top: 0, width: 280, height: 170, margin: "-85px 0 0 -140px", borderRadius: "50%", background: "radial-gradient(closest-side,rgba(255,255,255,.8),rgba(255,255,255,0))", pointerEvents: "none", visibility: "hidden" }} />
-        <div data-pvig aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden" }} />
+      {/* 2 · apple on the board, by the sea at sunset */}
+      <div data-world="2" className={s.world} style={{ zIndex: 1 }}>
+        <canvas data-paint="a8sky" data-plate aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
+        <canvas data-paint="a8cloud" data-a8cloud aria-hidden className={s.abs} />
+        <canvas data-a8sea aria-hidden className={s.abs} />
+        {[0, 1, 2].map((g) => (
+          <canvas key={g} data-paint="b6gull" data-gull2 aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px" }} />
+        ))}
       </div>
 
       {/* 3 · the beach */}
-      <div data-world="3" className={s.world} style={{ zIndex: 3, background: "#DAE8EC", overflow: "hidden" }}>
+      <div data-world="3" className={s.world} style={{ zIndex: 3, background: "#DAE8EC", overflow: "hidden", filter: WARM }}>
         <div data-cam className={s.cam}>
           <canvas data-paint="b6sky" data-sky6 aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
           <canvas data-paint="b6g0" data-g0 aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
           <canvas data-paint="b6g1" data-g1 aria-hidden className={s.abs} style={{ transformOrigin: "0 0", opacity: 0 }} />
           <canvas data-surf3 aria-hidden className={s.full} />
-          <canvas data-paint="b6umb" data-umb aria-hidden className={s.abs} style={{ width: 360, height: 420, transformOrigin: "0 0", visibility: "hidden" }} />
-          <canvas data-paint="b6chair" data-chair aria-hidden className={s.abs} style={{ width: 300, height: 220, transformOrigin: "0 0", visibility: "hidden" }} />
         </div>
         {[0, 1, 2].map((g) => (
           <canvas key={g} data-paint="b6gull" data-gull aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", visibility: "hidden" }} />
@@ -107,7 +105,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       </div>
 
       {/* 5 · the board in the sand, mapped onto the beach */}
-      <div data-w5clip className={s.fill} style={{ zIndex: 5, pointerEvents: "none" }}>
+      <div data-w5clip className={s.fill} style={{ zIndex: 5, pointerEvents: "none", filter: WARM }}>
         <div data-w5cam className={s.cam}>
           <div data-world="5" className={s.world} style={{ background: "#E0CCA4", transformOrigin: "0 0" }}>
             <div data-cam className={s.fill}>
@@ -121,12 +119,16 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
         </div>
       </div>
       <canvas data-ball6 aria-hidden className={s.full} style={{ zIndex: 5, pointerEvents: "none", visibility: "hidden" }} />
-      <canvas data-tback aria-hidden className={s.full} style={{ zIndex: 5, visibility: "hidden" }} />
+      <div data-applelayer className={s.fill} style={{ zIndex: 5, pointerEvents: "none", visibility: "hidden" }}>
+        <div data-3d="apple8" className={s.fill} />
+      </div>
+      <canvas data-paint="near1" data-near aria-hidden style={plate({ left: "-10%", top: "-10%", width: "120%", height: "120%", zIndex: 5, pointerEvents: "none" })} />
 
       {/* 6 · the desert arcade */}
       <div data-world="6" className={s.world} style={{ zIndex: 6, background: "#E8A866" }}>
         <div data-cam className={s.cam}>
           <canvas data-paint="desert" data-plate aria-hidden style={plate({ left: "-8%", top: "-8%", width: "116%", height: "116%" })} />
+          <canvas data-qfloor aria-hidden style={plate({ left: "-8%", top: "-8%", width: "116%", height: "116%", visibility: "hidden" })} />
           <div data-train className={s.abs} style={{ display: "none", alignItems: "flex-end", gap: 2 }}>
             <div style={{ width: 10, height: 9, background: "#4B3A52", borderRadius: "2px 2px 0 0" }} />
             {[0, 1, 2].map((k) => <div key={k} style={{ width: 16, height: 6, background: "#4B3A52" }} />)}
@@ -211,6 +213,8 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
         </div>
       </div>
 
+      <div data-qlayer className={s.fill} style={{ zIndex: 6, pointerEvents: "none", visibility: "hidden" }} />
+
       {/* 7 · the quiet room */}
       <div data-world="7" className={s.world} style={{ zIndex: 7, background: "#E6DCCB" }}>
         <div data-cam className={s.cam}>
@@ -260,14 +264,6 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
 
       {/* things that travel between worlds */}
       <div data-carry className={s.fill} style={{ zIndex: 20, pointerEvents: "none" }}>
-        {[0, 1, 2, 3, 4].map((d) => (
-          <div key={d} data-dove style={{ position: "absolute", left: 0, top: 0, width: 120, height: 80, margin: "-40px 0 0 -60px", visibility: "hidden" }}>
-            <canvas data-paint="dove" data-up="1" aria-hidden className={s.fill} style={{ width: 120, height: 80 }} />
-            <canvas data-paint="dove" data-up="0" aria-hidden className={s.fill} style={{ width: 120, height: 80, visibility: "hidden" }} />
-          </div>
-        ))}
-        <canvas data-tfront aria-hidden className={s.full} style={{ visibility: "hidden" }} />
-        <canvas data-sand aria-hidden className={s.full} style={{ visibility: "hidden" }} />
         <div data-winclip className={s.fill}>
           <div data-wincam className={s.cam} style={{ visibility: "hidden" }}>
             <div data-winframe style={{ position: "absolute", border: "14px solid #EFE6D6", boxShadow: "0 0 0 2px rgba(60,40,30,.25),inset 0 0 0 2px rgba(60,40,30,.25),0 14px 30px rgba(40,24,16,.25)" }}>
