@@ -2,6 +2,7 @@
 /* Scroll-driven painted homepage. The scroll position maps to a timeline t (0 -> TEND);
    each world paints itself onto canvases once, then every frame only moves cameras. */
 import { loadPainter } from "@/lib/painter";
+import { canPaintRemotely, paintRemote } from "@/lib/painter/remote";
 import { COMPANIES } from "./content";
 
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lin = (a, b, x) => cl((x - a) / (b - a)), sm = (a, b, x) => { const t = lin(a, b, x); return t * t * (3 - 2 * t); }, mx = (a, b, t) => a + (b - a) * t;
@@ -69,6 +70,8 @@ export class HomeEngine {
   boot() {
     if (!window.Painter || !window.Painter.desert) return;
     if (!document.getElementById('brushy')) document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="brushy" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="6" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="ripple" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.004 0.09" numOctaves="2" seed="8" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="14" xChannelSelector="R" yChannelSelector="G"/></filter></svg>');
+    // Read the serif family once now, while styles are clean; reading it mid-animation forces a full style recalc.
+    window.Painter._serif = getComputedStyle(document.documentElement).getPropertyValue('--font-cormorant').trim() || 'Cormorant';
     this.grain(); this.relayout(false); this.queuePaint();
     const qt = parseFloat(this.q('t')); if (!isNaN(qt) && qt >= 0 && qt <= TEND + 1) { scrollTo(0, VI(qt) * innerHeight); this.t = qt; this._introT0 = performance.now() - 5000; }
     if (this.state.loader) this.runLoader(); else if (!this._introT0) this._introT0 = performance.now() + 100;
@@ -210,23 +213,50 @@ export class HomeEngine {
       [6, 'room', cv => P.room(cv, R)],
       [7, 'night', cv => P.nightSea(cv, { hy: .413, mx: this.g8.mx })], [7, 'morning', cv => P.morning(cv)], [7, 'moon', cv => P.moon(cv)], [7, 'reach3', cv => P.reach3(cv)], [7, 'thumb3', cv => P.thumb3(cv)],
     ];
+    // The heavy plates (up to several seconds of brushwork each) are painted in a worker when the browser allows it.
+    // Each entry says which painter to call there and with what; non-plain inputs are rebuilt worker-side.
+    const B = { $beach: [this.W, this.H, n] }, RM = {
+      near1: () => ['cloudLayer', [{ seed: 5, spots: n ? [[.06, .92, .12], [.95, .95, .1]] : [[.03, .9, .08], [.97, .88, .07], [.99, .5, .05]] }]],
+      sky1: cv => ['sky', [{ seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: n ? 6 : 11, cy0: .17, cy1: .7, cs0: .05, cs1: .11 }]],
+      face: () => ['face6', [g.fw, g.fh]], eyeball: () => ['eyeball6', [g.fw, g.fh]], iris: () => ['iris6', [g.ir, n ? 1600 : 3200]],
+      eyeshade: () => ['eyeShade6', [g.fw, g.fh]], eyeglint: () => ['eyeGlint6', [g.fw, g.fh, g.ir]],
+      lid: () => ['lid6', [g.fw, g.fh]], skin: () => ['skinField6', [g.PW, g.PH, { $eye: [g.fw, g.fh] }, g.ox, g.oy]],
+      a8sky: () => ['apple8Sky', [this.g2]], a8cloud: () => ['apple8Clouds', [this.g2]], room: () => ['room', [R]], b6sky: () => ['beach6Sky', [B]], b6g0: () => ['beach6Ground', [B, 0]], b6g1: () => ['beach6Ground', [B, 1]], b6tall: () => ['beach6Tall', [B]],
+      desert: () => ['arcade7', [{ hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 }]], founder: cv => ['founder7', [+cv.dataset.v]],
+      night: () => ['nightSea', [{ hy: .413, mx: this.g8.mx }]], morning: () => ['morning', []],
+    }, AFTER = { lid: cv => { cv.style.transform = `translateY(${-g.lidUp}px)`; } };
+    const remote = canPaintRemotely() && !this.q('noworker');
     const at = parseFloat(this.q('at')), aw = isNaN(at) ? -1 : this.worldAt(at);
-    this.pq = []; J.forEach(([w, k, fn]) => { if (aw >= 0 && Math.abs(w - aw) > 1 && !(aw === 1 && w === 2)) return; this.$$(`[data-paint="${k}"]`).forEach(cv => this.pq.push({ w, cv, fn })); });
+    this.pq = []; J.forEach(([w, k, fn]) => { if (aw >= 0 && Math.abs(w - aw) > 1 && !(aw === 1 && w === 2)) return; this.$$(`[data-paint="${k}"]`).forEach(cv => this.pq.push({ w, cv, fn, rm: remote && RM[k], after: AFTER[k] })); });
     const token = (this._pt = (this._pt || 0) + 1);
     // Plates near the visible world get a deadline; far ones wait for genuinely idle time so they never stall a scroll.
     const idle = (f, urgent) => window.requestIdleCallback ? requestIdleCallback(f, urgent ? { timeout: 100 } : undefined) : setTimeout(f, urgent ? 16 : 120);
+    const nearest = lane => { const cur = this.worldAt(this.t || 0); let bi = -1, bd = 99; this.pq.forEach((j, i) => { if (!!j.rm !== lane) return; const d = Math.abs(j.w - cur) + (j.w < cur ? .5 : 0); if (d < bd) { bd = d; bi = i; } }); return [bi, bd]; };
+    const show = cv => { const wd = cv.closest('[data-world]'), hid = wd && wd.style.display === 'none'; if (hid) wd.style.display = ''; return () => { if (hid) wd.style.display = 'none'; }; };
+    const done = () => { if (!this.pq.length && window.Scene3D && !this._nogl) window.Scene3D.load(); };
+    // Worker lane: one plate at a time, nearest world first. A plate the worker cannot paint drops back to the main lane.
+    const remoteStep = () => {
+      if (token !== this._pt || !this._alive) return;
+      const [bi] = nearest(true); if (bi < 0) return done();
+      const j = this.pq.splice(bi, 1)[0], cv = j.cv, back = show(cv), cw = cv.offsetWidth, ch = cv.offsetHeight, [fn, args] = j.rm(cv); back();
+      paintRemote(cv, fn, args, cw, ch).then(ok => {
+        if (token !== this._pt) return;
+        if (ok) j.after && j.after(cv); else { j.rm = null; this.pq.push(j); idle(step, true); }
+        remoteStep();
+      });
+    };
     const step = deadline => {
-      if (token !== this._pt || !this._alive || !this.pq.length) return;
-      const cur = this.worldAt(this.t || 0); let bi = 0, bd = 99; this.pq.forEach((j, i) => { const d = Math.abs(j.w - cur) + (j.w < cur ? .5 : 0); if (d < bd) { bd = d; bi = i; } });
+      if (token !== this._pt || !this._alive) return;
+      const [bi, bd] = nearest(false); if (bi < 0) return done();
       if (bd > 1.5 && (this._moving || (deadline && !deadline.didTimeout && deadline.timeRemaining() < 8))) { idle(step, false); return; }
       const j = this.pq.splice(bi, 1)[0], cv = j.cv;
       cv.getBoundingClientRect = () => ({ width: cv.offsetWidth, height: cv.offsetHeight, left: 0, top: 0, right: cv.offsetWidth, bottom: cv.offsetHeight });
       const wd = cv.closest('[data-world]'), hid = wd && wd.style.display === 'none'; if (hid) wd.style.display = '';
       try { j.fn(cv); } catch (e) { console.warn('paint ' + (cv.dataset.paint || '') + ': ' + (e && e.message || String(e))); } delete cv.getBoundingClientRect; if (hid) wd.style.display = 'none';
-      const nxt = this.pq.length ? Math.min(...this.pq.map(x => Math.abs(x.w - this.worldAt(this.t || 0)))) : 9;
-      if (this.pq.length) idle(step, nxt <= 1.5); else if (window.Scene3D && !this._nogl) window.Scene3D.load();
+      const [nb, nd] = nearest(false);
+      if (nb >= 0) idle(step, nd <= 1.5); else done();
     };
-    idle(step, true);
+    idle(step, true); remoteStep();
   }
 
   /* ---------- frame loop ---------- */
@@ -493,6 +523,8 @@ export class HomeEngine {
   // before they are needed, and kept a little longer so scrolling across a boundary does not rebuild them.
   mounts(t) {
     if (!window.Scene3D || this._nogl) return;
+    // At the very top the apple is still hidden behind the eye: build it once the page has settled, or as soon as the reader scrolls.
+    if (!this._glReady) { if (t < .02 && !this._moving) { if (!this._glIdle) this._glIdle = (window.requestIdleCallback || setTimeout)(() => { this._glReady = true; }, { timeout: 2500 }); return; } this._glReady = true; }
     const M = [['apple8', -1, PB + .05], ['sandboard', 2.55, 18.3], ['roomqueen', 21.3, 25.2]];
     M.forEach(([k, a, b]) => { const el = this.m3d[k]; if (!el) return; const on = el._sc ? t > a - .8 && t < b + .8 : t > a - .5 && t < b + .3;
       if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn('3d ' + k + ': ' + (e && (e.message || e.type) || e)); return null; });
