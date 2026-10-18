@@ -127,8 +127,8 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       {/* 6 · the desert arcade */}
       <div data-world="6" className={s.world} style={{ zIndex: 6, background: "#E8A866" }}>
         <div data-cam className={s.cam}>
-          <canvas data-paint="desert" data-plate aria-hidden style={plate({ left: "-8%", top: "-8%", width: "116%", height: "116%" })} />
-          <canvas data-qfloor aria-hidden style={plate({ left: "-8%", top: "-8%", width: "116%", height: "116%", visibility: "hidden" })} />
+          <canvas data-paint="desert" data-plate aria-hidden style={plate({ left: "-8%", top: "-8%", width: "116%", height: "116%", visibility: "hidden" })} />
+          <div data-3d="arcade8" className={s.fill} />
           <div data-train className={s.abs} style={{ display: "none", alignItems: "flex-end", gap: 2 }}>
             <div style={{ width: 10, height: 9, background: "#4B3A52", borderRadius: "2px 2px 0 0" }} />
             {[0, 1, 2].map((k) => <div key={k} style={{ width: 16, height: 6, background: "#4B3A52" }} />)}
@@ -137,7 +137,6 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
             const th = Array.from({ length: 12 }, (_, j) => THOUGHTS[c.v][j % THOUGHTS[c.v].length]);
             return (
               <div key={c.name} style={{ display: "contents" }}>
-                <div data-pshadow className={s.abs} style={{ width: 300, height: 40, transformOrigin: "0 0", background: "linear-gradient(90deg,rgba(75,58,82,.62),rgba(75,58,82,0))", clipPath: "polygon(0 30%,100% 0,100% 55%,0 100%)" }} />
                 <div data-founder data-hover onMouseEnter={() => onFounder(i, true)} onMouseLeave={() => onFounder(i, false)} className={s.abs} style={{ width: 300, height: 600, transformOrigin: "0 0" }}>
                   {c.stand && <div style={{ position: "absolute", left: 78, width: 144, top: 540, height: 60, background: "linear-gradient(90deg,#F2D2A6,#D9A874 45%,#8E5A40)", boxShadow: "inset 0 4px 0 rgba(255,240,210,.5)" }} />}
                   <canvas data-paint="founder" data-v={c.v} data-body aria-hidden style={plate({ left: 0, top: c.stand ? 140 : 200, width: 300, height: 400, transformOrigin: "50% 100%" })} />
