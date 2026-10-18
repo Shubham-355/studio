@@ -13,11 +13,11 @@ Open http://localhost:3000.
 
 ## How it is put together
 
-- `lib/painter/` — procedural canvas painters (sky, sea, sand, eye, hands, torn paper) and the three.js scenes. They load client-side in order and extend `window.Painter` / `window.Scene3D`.
-- `components/home/engine.js` — maps scroll to a timeline `t`, paints each world once into its canvases, then moves cameras, masks and copy every frame.
-- `components/home/Stage.tsx` — the world markup the engine drives.
-- `components/home/Copy.tsx` — headings, cards, contact and footer that fade in on their stretch of the timeline.
-- `components/home/content.ts` — studio name, stages, companies and what the founder keeps.
+- `lib/painter/`: procedural canvas painters (sky, sea, sand, eye, hands, torn paper) and the three.js scenes. They load client-side in order and extend `window.Painter` / `window.Scene3D`.
+- `components/home/engine.js`: maps scroll to a timeline `t`, paints each world once into its canvases, then moves cameras, masks and copy every frame.
+- `components/home/Stage.tsx`: the world markup the engine drives.
+- `components/home/Copy.tsx`: headings, cards, contact and footer that fade in on their stretch of the timeline.
+- `components/home/content.ts`: studio name, stages, companies and what the founder keeps.
 
 ## Debug parameters
 
