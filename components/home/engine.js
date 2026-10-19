@@ -15,17 +15,20 @@ const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
 const PA = 3.2, PB = 4.4, TB1 = 12.4, GAP = TB1 - PB;
 const V1 = s => s <= PB ? s : s + GAP, VI1 = t => t <= PB ? t : t <= TB1 ? PB : t - GAP;
 const QA = 16.6, QB = 18.2, QL = 1.2, QK = (QB - QA) / QL, QD = QB - QA - QL;
-const V = s => { const u = V1(s); return u <= QA ? u : u <= QA + QL ? QA + (u - QA) * QK : u + QD; }, VI = t => VI1(t <= QA ? t : t <= QB ? QA + (t - QA) / QK : t - QD);
+// The sky tilt (0.08 to 1.58) gets 1.2 screens of scroll instead of 1.5.
+const V0 = s => s <= .08 ? s : s <= 1.28 ? .08 + (s - .08) * 1.25 : s + .3, VI0 = t => t <= .08 ? t : t <= 1.58 ? .08 + (t - .08) / 1.25 : t - .3;
+const V = s => { const u = V1(V0(s)); return u <= QA ? u : u <= QA + QL ? QA + (u - QA) * QK : u + QD; }, VI = t => VI0(VI1(t <= QA ? t : t <= QB ? QA + (t - QA) / QK : t - QD));
 const QS = .95, QY = .04, QZ = -3.5, QX = .5, YC = 1.335, QR = y => y <= 1.24 ? .22 : y >= 1.52 ? .34 : y < 1.36 ? mx(.22, .28, (y - 1.24) / .12) : mx(.28, .34, (y - 1.36) / .16);
 export const NAMES = ['The sky with an eye', 'The apple on the board', 'The beach', 'The underwater hall', 'The board in the sand', 'The desert arcade', 'The quiet room', 'The night sea'];
 const INK = [0, 1, 1, 0, 1, 1, 1, 0], SOFT = [0, 0, 1, 0, 1, 0, 1, 0];
 const CZ = [6, 11, 16, 21], DOORZ = 27;
+const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
 const AK = 1 / .14, ZE = -2 - 1 / QS;
 const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [21.95, 21.2], [22.9, 26.62]];
 const BEATS = [.05, 2.0, 2.95, 12.45].concat([14.3, 14.74, 15.24, 15.73, 16.23, 16.6, 17.65, 18.6, 19.35, 20.05, 20.75, 21.45, 22.1, 23.6, 25.7, 27.1, 28.4]);
 const BEDS = [{ f: 420, g: .5, s: .05 }, { f: 800, g: .26, s: .2 }, { f: 1100, g: .3, s: .65 }, { f: 170, g: .8, s: .04 }, { f: 1000, g: .28, s: .55 }, { f: 300, g: .45, s: 0 }, { f: 260, g: .04, s: 0 }, { f: 520, g: .32, s: .45 }];
 export const NOTES = [
-  'Scroll 0–1.58. The eye looks down first (0–0.2), then one camera pitch from the sky to the horizon: the torn sky and the eye slide up, near clouds pass at 1.35×, the sky warms toward the low sun. Horizon at 45% when settled.',
+  'Time 0–1.58 (1.2 screens of scroll). The eye looks down first, then one camera pitch from the sky to the horizon: the peach horizon glow rises at the bottom while the tear is still leaving the top. Three cloud layers: far 0.92×, mid 1×, near 1.45×. Horizon at 45% when settled.',
   'Apple on the checkerboard, one-point perspective, low sun on the left: cast shadows, contact shadows and the glossy reflection are computed on the real floor. One bite 2.62–2.76. Push 3.2–4.4: the camera travels along the ray into the bite; the beach is a live render behind it, flesh warms to sand.',
   'Lands on the beach frame with the ball rolling to rest in front of the 8×8 board. Rise 12.4–14.05 into the overhead view.',
   '',
@@ -39,7 +42,7 @@ export class HomeEngine {
   /** host: { props: { motion, notes }, getState(), setState(patch, cb?), forceUpdate() } */
   constructor(host) {
     this.host = host;
-    this.st = { apple8: {}, sandboard: { ext: true }, roomqueen: {}, arcade8: { ext: true } };
+    this.st = { apple8: { ext: true }, sandboard: { ext: true }, roomqueen: { ext: true }, arcade8: { ext: true } };
     this.fHover = [];
     this.companies = COMPANIES;
   }
@@ -58,12 +61,17 @@ export class HomeEngine {
     const nq = this.q('notes'); if (nq != null) this.setState({ notes: nq === '1' });
     this._onResize = () => { const n = innerWidth < 820; if (n !== this.state.narrow) { this.setState({ narrow: n }); return; } this.host.forceUpdate(); clearTimeout(this._rt); this._rt = setTimeout(() => this.relayout(true), 250); };
     addEventListener('resize', this._onResize);
+    // The loop idles once nothing moves; any input or a tab coming back wakes it.
+    this._onVis = () => { if (document.visibilityState !== 'hidden' && this._alive && this._loopF) { this._lastF = 0; this._lastR = 0; this._loopF(); } };
+    this._onAct = () => { this._act = performance.now(); };
+    document.addEventListener('visibilitychange', this._onVis); ACT.forEach(e => addEventListener(e, this._onAct, { passive: true }));
     this._alive = true; this.t = 0; this.mv = {}; this.pos = {};
     loadPainter().then(() => this.waitLibs()).then(() => { if (this._alive) this.boot(); }).catch(e => console.error(e));
   }
   narrowChanged() { if (!this.W) return; requestAnimationFrame(() => { this.disposeAll(); this.relayout(true); }); }
   destroy() {
     this._alive = false; removeEventListener('resize', this._onResize);
+    document.removeEventListener('visibilitychange', this._onVis); ACT.forEach(e => removeEventListener(e, this._onAct));
     this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lt); clearInterval(this._fx); this._ac && this._ac.close();
   }
   async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
@@ -126,15 +134,22 @@ export class HomeEngine {
   }
   layout2() {
     const W = this.W, H = this.H, n = this.n, w2 = this.wEl[1]; if (!w2) return;
-    const fov = n ? 42 : 30, F = H / 2 / Math.tan(fov * Math.PI / 360), L = H * 1.5, tan1 = -.05 * H / F, tan0 = (.45 * H + L - H / 2) / F, Yh = L - .55 * H, Hp = Yh + .34 * H, sunX = W * (n ? .2 : .45);
+    const fov = n ? 42 : 30, F = H / 2 / Math.tan(fov * Math.PI / 360), L = H * 1.35, tan1 = -.05 * H / F, tan0 = (.45 * H + L - H / 2) / F, Yh = L - .55 * H, Hp = Yh + .34 * H, sunX = W * (n ? .2 : .45);
     const C = n ? [0, 1.25, 9.6] : [-1, 1.1, 9.8], shift = n ? 0 : .05 * W;
     const peb = n ? [{ x: -.55, z: 6.1, r: .1 }, { x: .12, z: 6.5, r: .07 }, { kind: 'scallop', flip: 1, x: .5, z: 5.6, r: .15, rot: .5 }, { kind: 'spiral', x: -.2, z: 5.2, r: .2, rot: 1.1 }] : [{ x: -2.5, z: 4.4, r: .15 }, { x: -1.75, z: 3.3, r: .09 }, { kind: 'scallop', flip: 1, x: .3, z: 4.0, r: .2, rot: .6 }, { kind: 'spiral', x: -.9, z: 4.9, r: .26, rot: .9 }, { kind: 'scallop', x: 1.1, z: 2.6, r: .16, rot: -.4 }];
     this.g2 = { W, H, n, fov, F, L, tan0, tan1, Yh, Hp, sunX, C, shift, peb, gulls: n ? [[.15, .2], [.75, .16], [.86, .22]] : [[.9, .2], [.95, .14], [.46, .13]] };
-    const plate = this.$('[data-plate]', w2), cl = this.$('[data-a8cloud]', w2), sea = this.$('[data-a8sea]', w2);
+    const plate = this.$('[data-plate]', w2), sea = this.$('[data-a8sea]', w2);
     if (plate) Object.assign(plate.style, { width: W + 'px', height: Hp + 'px' });
-    if (cl) Object.assign(cl.style, { width: W * 1.3 + 'px', height: H * .42 + 'px', left: -.15 * W + 'px' });
     if (sea) { const sh = H * .16; Object.assign(sea.style, { width: W + 'px', height: sh + 'px' }); sea.width = Math.round(W * .6); sea.height = Math.round(sh * .6); }
-    this.q2 = { world: w2, plate, cl, sea, sx: sea && sea.getContext('2d'), gulls: this.$$('[data-gull2]', w2), alay: this.$('[data-applelayer]') };
+    // three cloud layers moving at their own parallax (f) through the tilt: far, mid and near
+    const c9 = this.$$('[data-c9]');
+    this.g2.cl9 = [
+      { w: W * 1.1, h: H * .26, k: .7, x0: -.05 * W, y0: H * .2, f: .92, list: n ? [[.15, .62, .05], [.52, .5, .036], [.86, .64, .046]] : [[.07, .64, .026], [.24, .48, .019], [.42, .66, .03], [.6, .5, .021], [.78, .64, .028], [.95, .5, .019]], col: { lit: [255, 232, 204], mid: [242, 214, 196], sh: [196, 176, 186], base: [176, 160, 178] } },
+      { w: W * 1.1, h: H * .62, k: .6, x0: -.05 * W, y0: -H * .25, f: 1, list: n ? [[.12, .3, .1], [.72, .52, .085], [.4, .82, .07]] : [[.1, .3, .058], [.37, .62, .044], [.63, .2, .052], [.87, .52, .048], [.52, .86, .034]], col: { lit: [255, 244, 228], mid: [238, 228, 222], sh: [186, 190, 210], base: [162, 170, 198] } },
+      { w: W * 1.2, h: H, k: .5, x0: -.1 * W, y0: -H, f: 1.45, list: n ? [[.06, .36, .2], [.95, .7, .18]] : [[.03, .36, .14], [.92, .64, .12], [.13, .86, .095], [1.0, .3, .11]], col: { lit: [252, 248, 240], mid: [236, 232, 228], sh: [190, 198, 216], base: [166, 178, 204], blur: 3 } },
+    ];
+    c9.forEach((cv, i) => { const L = this.g2.cl9[i]; if (L) Object.assign(cv.style, { width: L.w + 'px', height: L.h + 'px', left: L.x0 + 'px' }); });
+    this.q2 = { world: w2, plate, c9, sea, sx: sea && sea.getContext('2d'), gulls: this.$$('[data-gull2]', w2), alay: this.$('[data-applelayer]') };
     Object.assign(this.st.apple8, { cam: null, peb });
   }
   tiltAt(t) { const G = this.g2; if (!G) return null; const e = sm(.08, 1.58, t), tn = mx(G.tan0, G.tan1, e); return { e, tn, top: this.H / 2 + G.F * tn - G.Yh, topE: this.H - G.L }; }
@@ -186,15 +201,70 @@ export class HomeEngine {
     this.q7 = { world: w7, cam: this.$('[data-cam]', w7), wincam: this.$('[data-wincam]') };
   }
   layout8() {
-    const W = this.W, H = this.H, n = this.n, w8 = this.wEl[7]; if (!w8) return;
+    const W = this.W, H = this.H, n = this.n, w8 = this.wEl[7], P = window.Painter; if (!w8) return;
     const rx = n ? W * .28 : Math.min(W * .17, 260);
-    this.g8 = { cx: n ? W * .7 : W * .72, cy: n ? H * .22 : H * .42, rx, ry: rx * .82, ks: n ? Math.min(.58, H / 1300) : Math.min(1.4, H / 700), mx: n ? .78 : .82 };
-    this.ctear = this.ctear || window.Painter.ragged(0, 0, 1, 1, 29);
+    const g = this.g8 = { cx: n ? W * .7 : W * .72, cy: n ? H * .22 : H * .42, rx, ry: rx * .82, ks: n ? Math.min(.58, H / 1300) : Math.min(1.4, H / 700), mx: n ? .2 : .3 };
+    this.ctear = this.ctear && this.ctear.fib ? this.ctear : P.ragged6(29);
     const ms = n ? 96 : 150, moon = this.$('[data-moon]', w8); if (moon) Object.assign(moon.style, { width: ms + 'px', height: ms + 'px' });
-    this.moon0 = [W * this.g8.mx - ms / 2, H * (n ? .12 : .22) - ms / 2];
-    this.q8 = { world: w8, cam: this.$('[data-cam]', w8), plate: this.$('[data-nightplate]', w8), rim: this.$('[data-crim]', w8), moon, reach: this.$('[data-reach]', w8), tsh: this.$('[data-tsh]', w8), refl: this.$('[data-reflect]', w8) };
-    this.thumbEl = this.$('[data-thumb]'); const cc = this.$('[data-id="ccard"]'); this.cardW = cc ? cc.offsetWidth || 320 : 320; if (cc) cc.style.transformOrigin = n ? '50% 0' : '0 0';
+    this.moon0 = [W * g.mx - ms / 2, H * (n ? .1 : .2) - ms / 2];
+    this.q8 = { world: w8, cam: this.$('[data-cam]', w8), plate: this.$('[data-nightplate]', w8), rimcv: this.$('[data-crimcv]', w8), moon, refl: this.$('[data-reflect]', w8) };
+    const T = this.ctear, inn = T.at(g.cx, g.cy, g.rx, g.ry, 0), out = T.at(g.cx, g.cy, g.rx, g.ry, 1); this.ct8 = out; this._k8 = null;
+    // the torn paper rim is painted once at full size; opening and closing the tear only scales it
+    const rc = this.q8.rimcv; if (rc) { const d = Math.min(2, devicePixelRatio || 1); rc.width = Math.round(W * d); rc.height = Math.round(H * d); rc.style.transformOrigin = `${g.cx.toFixed(1)}px ${g.cy.toFixed(1)}px`; rc.style.visibility = 'hidden'; try { P.tearRim6(rc.getContext('2d'), inn, out, T, g.cx, g.cy, d); } catch (e) { console.warn('rim8: ' + e.message); } }
+    const cc = this.cardEl = this.$('[data-id="ccard"]'); this.cardSheen = this.$('[data-sheen]');
+    if (!this._deckle) { const r = P.rng(13), pts = [], j = () => (r() * 1.7).toFixed(2);
+      for (let i = 0; i <= 40; i++) pts.push(`${(i * 2.5).toFixed(1)}% ${j()}px`); for (let i = 1; i <= 20; i++) pts.push(`calc(100% - ${j()}px) ${(i * 5).toFixed(1)}%`);
+      for (let i = 39; i >= 0; i--) pts.push(`${(i * 2.5).toFixed(1)}% calc(100% - ${j()}px)`); for (let i = 19; i >= 1; i--) pts.push(`${j()}px ${(i * 5).toFixed(1)}%`);
+      this._deckle = `polygon(${pts.join(',')})`; }
+    if (cc) cc.querySelectorAll('[data-deckle],[data-sheen]').forEach(el => { el.style.clipPath = this._deckle; });
+    try { this.layoutArm(); } catch (e) { console.warn('arm8: ' + e.message); }
   }
+  /* the founder's arm: white glove out of a charcoal sleeve, through the lower-left edge of the tear; the letter hangs from the pinch */
+  layoutArm() {
+    const g = this.g8, W = this.W, H = this.H, n = this.n, Gl = window.Glove, out = this.ct8, cc = this.cardEl; if (!g || !Gl || !out) return;
+    const s = n ? cl(Math.min(H / 800, W / 560), .6, 1) : cl(H / 800, .62, 1.15), cs = n ? cl(Math.min(H / 820, W / 420), .78, 1) : cl(H / 820, .8, 1.05);
+    const cw = (cc && cc.offsetWidth || 236) * cs, ch = (cc && cc.offsetHeight || 124) * cs, WC = [15.3, -108.5], C0 = [-10, -9], HG = 3.5 * Math.PI / 180, sn = Math.sin(HG), co = Math.cos(HG);
+    const c = [g.cx, g.cy], ea = 150 * Math.PI / 180, E0 = [c[0] + Math.cos(ea) * g.rx * 1.02, c[1] + Math.sin(ea) * g.ry * 1.02];
+    const G = [E0[0] - Math.SQRT1_2 * 110 * s - WC[0] * s, E0[1] + Math.SQRT1_2 * 110 * s - WC[1] * s];
+    // keep the letter clear of the contact headline and buttons
+    const sec = this.$('#start'), boxes = [];
+    if (sec) { const sl = sec.offsetLeft, st = sec.offsetTop, h2 = sec.querySelector('h2'), row = h2 && h2.nextElementSibling;
+      if (h2) { let l = 1e9, r = -1e9; h2.querySelectorAll('[data-w]').forEach(w => { l = Math.min(l, w.offsetLeft); r = Math.max(r, w.offsetLeft + w.offsetWidth); }); if (r > l) boxes.push([sl + l, st + h2.offsetTop, sl + r, st + h2.offsetTop + h2.offsetHeight]); }
+      if (row) [...row.children].forEach(e => boxes.push([sl + e.offsetLeft, st + e.offsetTop, sl + e.offsetLeft + e.offsetWidth, st + e.offsetTop + e.offsetHeight])); }
+    const box = P => { const x0 = P[0] + C0[0] * s, y0 = P[1] + C0[1] * s, m = 10; return [x0 - ch * sn - m, y0 - m, x0 + cw * co + m, y0 + cw * sn + ch * co + m]; };
+    const M = 44, ov = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+    for (let it = 0; it < 4; it++) {
+      boxes.forEach(F0 => { const F = [F0[0] - M, F0[1] - M, F0[2] + M, F0[3] + M], B = box(G); if (!ov(B, F)) return; const dx = F[2] - B[0]; if (B[2] + dx <= W - 12) G[0] += dx; else G[1] -= B[3] - F[1]; });
+      const B = box(G); if (B[2] > W - 12) G[0] -= B[2] - (W - 12); if (B[3] > H - 12) G[1] -= B[3] - (H - 12); if (B[0] < 12) G[0] += 12 - B[0];
+    }
+    const Wr = [G[0] + WC[0] * s, G[1] + WC[1] * s], A = [c[0] + g.rx * .12, c[1] - g.ry * .12], fl = Math.hypot(A[0] - Wr[0], A[1] - Wr[1]) || 1, f0 = [(A[0] - Wr[0]) / fl, (A[1] - Wr[1]) / fl];
+    const inside = (p, poly) => { let r = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) r = !r; } return r; };
+    let E = A; for (let d = 0; d < fl; d += 2) { const p = [Wr[0] + f0[0] * d, Wr[1] + f0[1] * d]; if (inside(p, out)) { E = p; break; } }
+    const S0 = [Wr[0] + f0[0] * 12 * s, Wr[1] + f0[1] * 12 * s], Le = Math.hypot(c[0] - S0[0], c[1] - S0[1]) / s;
+    const cwl = cw / s, chl = ch / s, card = [C0, [C0[0] + cwl * co, C0[1] + cwl * sn], [C0[0] + cwl * co - chl * sn, C0[1] + cwl * sn + chl * co], [C0[0] - chl * sn, C0[1] + chl * co]];
+    this.arm = { G, E, f0, s, cs, D: Math.hypot(c[0] - G[0], c[1] - G[1]), C0 };
+    const back = this.$('[data-armback]'), wraps = this.$$('[data-armwrap]'), sv = k => this.$(`[data-armsvg="${k}"]`);
+    const o = { f: f0, Le, card };
+    if (sv('back')) sv('back').innerHTML = Gl.build('gk', o).back;
+    if (sv('thumb')) sv('thumb').innerHTML = Gl.build('ga', o).thumb;
+    if (sv('front')) sv('front').innerHTML = Gl.build('gb', o).front;
+    const flapG = this.$('[data-armflap]'); if (flapG) flapG.innerHTML = Gl.flap(out, E, c, 34 * s, 11);
+    this.armEls = { back, wraps, movers: this.$$('[data-armmove]'), flapG };
+    if (cc) cc.style.transformOrigin = '0px 0px';
+    this._k8 = null;
+  }
+  // The thumb and front layers are cut along the tear on the elbow's side, so the arm reads as coming out of it.
+  armClip(k) {
+    const AR = this.arm, g = this.g8, o = this.ct8; if (!AR || !g || !o) return 'none';
+    const c = [g.cx, g.cy], f = AR.f0, pp = [-f[1], f[0]], B = 4000, side = p => (p[0] - c[0]) * f[0] + (p[1] - c[1]) * f[1];
+    const pts = o.map(([x, y]) => [c[0] + (x - c[0]) * k, c[1] + (y - c[1]) * k]), res = [];
+    for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length], sa = side(a), sb = side(b);
+      if (sa <= 0) res.push(a); if ((sa <= 0) !== (sb <= 0)) { const t = sa / (sa - sb); res.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } }
+    const q = [[c[0] + pp[0] * B, c[1] + pp[1] * B], [c[0] + pp[0] * B - f[0] * B, c[1] + pp[1] * B - f[1] * B], [c[0] - pp[0] * B - f[0] * B, c[1] - pp[1] * B - f[1] * B], [c[0] - pp[0] * B, c[1] - pp[1] * B]];
+    const P = window.Painter; return `path(evenodd, "${P.toPath(q)}${res.length > 2 ? ' ' + P.toPath(res) : ''}")`;
+  }
+  // the day sky behind the night tear puts its clouds around the opening
+  tearSky() { const g = this.g8; return { cx: g.cx, cy: g.cy, rx: g.rx }; }
   mixc(a, b, t) { const P = window.Painter, A = P.hex(a), B = P.hex(b); return `rgb(${Math.round(mx(A[0], B[0], t))},${Math.round(mx(A[1], B[1], t))},${Math.round(mx(A[2], B[2], t))})`; }
 
   /* ---------- painting ---------- */
@@ -207,12 +277,12 @@ export class HomeEngine {
       [0, 'eyeshade', cv => P.eyeShade6(cv, g.fw, g.fh)], [0, 'eyeglint', cv => P.eyeGlint6(cv, g.fw, g.fh, g.ir)],
       [0, 'lid', cv => { P.lid6(cv, g.fw, g.fh); cv.style.transform = `translateY(${-g.lidUp}px)`; }], 
       [0, 'skin', cv => P.skinField6(cv, g.PW, g.PH, g.E, g.ox, g.oy)],
-      [1, 'a8sky', cv => P.apple8Sky(cv, this.g2)], [1, 'a8cloud', cv => P.apple8Clouds(cv, this.g2)],
+      [1, 'a8sky', cv => P.apple9Sky(cv, this.g2)], [1, 'c9far', cv => P.cloudLayer9(cv, this.g2, 0)], [1, 'c9mid', cv => P.cloudLayer9(cv, this.g2, 1)], [1, 'c9near', cv => P.cloudLayer9(cv, this.g2, 2)],
       [2, 'b6sky', cv => P.beach6Sky(cv, this.S6)], [2, 'b6g0', cv => P.beach6Ground(cv, this.S6, 0)], [2, 'b6gull', cv => P.gull6(cv)], [2, 'b6g1', cv => P.beach6Ground(cv, this.S6, 1)],
             [4, 'b6tall', cv => P.beach6Tall(cv, this.S6)],
       [5, 'desert', cv => P.arcade7(cv, { hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 })], [5, 'founder', cv => P.founder7(cv, +cv.dataset.v)], [5, 'head', cv => P.head7(cv, +cv.dataset.v)], [5, 'thought', cv => P.thought7(cv, cv.dataset.kind)], [5, 'resolved', cv => P.resolved(cv, +cv.dataset.v)], [5, 'planet', cv => P.planet(cv, cv.dataset.col)],
       [6, 'room', cv => P.room(cv, R)],
-      [7, 'night', cv => P.nightSea(cv, { hy: .413, mx: this.g8.mx })], [7, 'morning', cv => P.morning(cv)], [7, 'moon', cv => P.moon(cv)], [7, 'reach3', cv => P.reach3(cv)], [7, 'thumb3', cv => P.thumb3(cv)],
+      [7, 'night', cv => P.nightSea(cv, { hy: .413, mx: this.g8.mx })], [7, 'morning', cv => P.morning9(cv, this.tearSky())], [7, 'moon', cv => P.moon(cv)],
     ];
     // The heavy plates (up to several seconds of brushwork each) are painted in a worker when the browser allows it.
     // Each entry says which painter to call there and with what; non-plain inputs are rebuilt worker-side.
@@ -222,9 +292,9 @@ export class HomeEngine {
       face: () => ['face6', [g.fw, g.fh]], eyeball: () => ['eyeball6', [g.fw, g.fh]], iris: () => ['iris6', [g.ir, n ? 1600 : 3200]],
       eyeshade: () => ['eyeShade6', [g.fw, g.fh]], eyeglint: () => ['eyeGlint6', [g.fw, g.fh, g.ir]],
       lid: () => ['lid6', [g.fw, g.fh]], skin: () => ['skinField6', [g.PW, g.PH, { $eye: [g.fw, g.fh] }, g.ox, g.oy]],
-      a8sky: () => ['apple8Sky', [this.g2]], a8cloud: () => ['apple8Clouds', [this.g2]], room: () => ['room', [R]], b6sky: () => ['beach6Sky', [B]], b6g0: () => ['beach6Ground', [B, 0]], b6g1: () => ['beach6Ground', [B, 1]], b6tall: () => ['beach6Tall', [B]],
+      a8sky: () => ['apple9Sky', [this.g2]], c9far: () => ['cloudLayer9', [this.g2, 0]], c9mid: () => ['cloudLayer9', [this.g2, 1]], c9near: () => ['cloudLayer9', [this.g2, 2]], room: () => ['room', [R]], b6sky: () => ['beach6Sky', [B]], b6g0: () => ['beach6Ground', [B, 0]], b6g1: () => ['beach6Ground', [B, 1]], b6tall: () => ['beach6Tall', [B]],
       desert: () => ['arcade7', [{ hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 }]], founder: cv => ['founder7', [+cv.dataset.v]],
-      night: () => ['nightSea', [{ hy: .413, mx: this.g8.mx }]], morning: () => ['morning', []],
+      night: () => ['nightSea', [{ hy: .413, mx: this.g8.mx }]], morning: () => ['morning9', [this.tearSky()]],
     }, AFTER = { lid: cv => { cv.style.transform = `translateY(${-g.lidUp}px)`; } };
     const remote = canPaintRemotely() && !this.q('noworker');
     const at = parseFloat(this.q('at')), aw = isNaN(at) ? -1 : this.worldAt(at);
@@ -262,7 +332,8 @@ export class HomeEngine {
 
   /* ---------- frame loop ---------- */
   loop() {
-    if (!this._alive) return; const pn = performance.now(); clearTimeout(this._lt); this._lt = setTimeout(this._loopF, 120); if (this._lastF && pn - this._lastF < 8) return; this._lastF = pn;
+    if (!this._alive) return; const pn = performance.now(); clearTimeout(this._lt);
+    this._lt = setTimeout(this._loopF, document.visibilityState === 'hidden' && pn - (this._act || 0) > 10000 && this._lastR ? 1000 : 120); if (this._lastF && pn - this._lastF < 8) return; this._lastF = pn;
     requestAnimationFrame(this._loopF);
     if (!this.W) { if (innerWidth > 0) { const n = innerWidth < 820; if (n !== this.state.narrow) this.setState({ narrow: n }); else this.relayout(true); } return; }
     if (this._at == null) { const a = parseFloat(this.q('at')); this._at = isNaN(a) ? false : a; if (this._at !== false) { this.t = this._at; this._introT0 = performance.now() - 5000; } }
@@ -271,6 +342,12 @@ export class HomeEngine {
     if (this.red()) { const b = this.beat(V(sT)); if (b !== this._beat) { if (this._beat != null) this.fadeSwap(); this._beat = b; } this.t = b; this.s = VI(b); }
     else { const d = sT - this.s; this._moving = Math.abs(d) > .01; this.s = Math.abs(d) < .0008 ? sT : this.s + d * .085; this.t = this._at !== false ? this._at : V(this.s); this._beat = null; }
     this.now = performance.now() / 1000;
+    // Once the page has been still for a while, keep only a slow heartbeat; while it moves, frame times steer the 3D resolution.
+    const busy = Math.abs(sT - this.s) > .0005 || this._sY !== scrollY || pn - (this._act || 0) < 1500 || pn - (this._introT0 || 0) < 8000 || this.state.loader || this._at !== false;
+    this._sY = scrollY; if (busy) this._busyT = pn;
+    if (!busy && pn - (this._busyT || 0) > 1200 && pn - (this._lastR || 0) < 32) return;
+    if (busy && this._lastR && window.Scene3D && window.Scene3D.quality) window.Scene3D.quality.report(pn - this._lastR, this.n ? 33.4 : 16.7);
+    this._lastR = pn;
     try { this.render(this.t); } catch (e) { if (!this._errd) { this._errd = 1; console.error(e); } }
   }
   beat(x) { let b = BEATS[0]; for (const v of BEATS) if (x >= v - .3) b = v; return b; }
@@ -279,7 +356,7 @@ export class HomeEngine {
   render(t) {
     this.mv = {}; this.m3 = 'none'; this.tilt = this.tiltAt(t); this.qstate(t);
     for (let k = 0; k < 8; k++) { const el = this.wEl[k]; if (!el) continue; const on = t >= RANGE[k][0] && t < RANGE[k][1]; if (el._on !== on) { el._on = on; el.style.visibility = on ? 'visible' : 'hidden'; el.style.display = on ? '' : 'none'; } if (on) this['w' + (k + 1)](t); }
-    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
+    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.c9[2]) this.S(this.q2.c9[2], 'visibility', 'hidden'); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
     this.carry(t); this.copy(t); this.ui(t); this.mounts(t); this.drive();
   }
 
@@ -287,8 +364,8 @@ export class HomeEngine {
     const g = this.g1, q = this.q1, P = window.Painter, W = this.W, H = this.H; if (!g || !q) return;
     if (this._s1 !== 1) { this._s1 = 1; const inn = this.tear.at(g.cx, g.cy, g.rx, g.ry, 0), out = this.tear.at(g.cx, g.cy, g.rx, g.ry, 1);
       q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H + 60}H0Z ${P.toPath(out)}")`; if (this.rimCtx) P.tearRim6(this.rimCtx, inn, out, this.tear, g.cx, g.cy, this.dpr1); }
-    const T = this.tilt, off = T ? T.top - H : 0;
-    this.S(this.wEl[0], 'transform', `translateY(${off.toFixed(1)}px)`); this.S(q.face, 'transform', 'none');
+    const T = this.tilt, off = T ? Math.round(T.top) - H : 0;
+    this.S(this.wEl[0], 'transform', `translateY(${off}px)`); this.S(q.face, 'transform', 'none');
     const gz = sm(0, .2, t), f = (1 - sm(.8, .95, t)) * (1 - gz);
     this.S(q.eye, 'transform', `translate(${((this.mx || 0) * g.ex * f).toFixed(1)}px,${((this.my || 0) * g.ey * f + g.ey * 1.15 * gz).toFixed(1)}px)`);
     this._pk = mx(this._pk ?? 1, this._hov && t < .4 ? .8 : 1, .07); this.S(q.pupil, 'transform', `scale(${this._pk.toFixed(3)})`);
@@ -297,8 +374,8 @@ export class HomeEngine {
   w2(t) {
     const W = this.W, H = this.H, q = this.q2, G = this.g2, T = this.tilt; if (!q || !G || !T) return;
     const dy = T.top - T.topE;
-    this.S(q.plate, 'transform', `translateY(${T.top.toFixed(1)}px)`);
-    this.S(q.cl, 'transform', `translate(${(Math.sin(this.now * .015) * W * .06).toFixed(1)}px,${(T.topE + dy * 1.12 + G.Yh - H * .5).toFixed(1)}px)`);
+    this.S(q.plate, 'transform', `translateY(${Math.round(T.top)}px)`);
+    q.c9.forEach((cv, i) => { const L = G.cl9 && G.cl9[i]; if (!L) return; const y = L.y0 + dy * L.f, on = y < H && y + L.h > 0 && t < PB; this.S(cv, 'visibility', on ? 'visible' : 'hidden'); if (on) this.S(cv, 'transform', `translateY(${y.toFixed(1)}px)`); });
     const nr = this.q1 && this.q1.near; if (nr) { const o = (T.top - H) * 1.35, on = o > -H * 1.3; this.S(nr, 'visibility', on ? 'visible' : 'hidden'); if (on) this.S(nr, 'transform', `translate(${(Math.sin(this.now * .05) * 24).toFixed(1)}px,${o.toFixed(1)}px)`); }
     const sy = T.top + G.Yh - 2, seaOn = sy < H; this.S(q.sea, 'visibility', seaOn ? 'visible' : 'hidden');
     if (seaOn && q.sx) { this.S(q.sea, 'transform', `translateY(${sy.toFixed(1)}px)`); window.Painter.sea8(q.sx, q.sea.width, q.sea.height, G.sunX * .6, this.now, .6); }
@@ -388,17 +465,19 @@ export class HomeEngine {
     for (let i = 1; i <= 6; i++) ol.push(pt(w, -h + (2 * h - w) * i / 6));
     for (let i = 1; i < 14; i++) { const an = Math.PI * i / 14; ol.push(pt(w * Math.cos(an), h - w + w * Math.sin(an))); }
     for (let i = 0; i <= 6; i++) ol.push(pt(-w, h - w - (2 * h - w) * i / 6));
-    let hole = null, clip = 'none', hc = [W / 2, H / 2];
+    let hole = null, clip = 'none', hc = [W / 2, H / 2], sc = null;
     if (ol.every(v => v[2] > .02)) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; ol.forEach(v => { x0 = Math.min(x0, v[0]); x1 = Math.max(x1, v[0]); y0 = Math.min(y0, v[1]); y1 = Math.max(y1, v[1]); });
       if (!(x0 < 0 && y0 < 0 && x1 > W && y1 > H)) { const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; hc = [cx, cy];
-        clip = `polygon(${ol.map(v => `${(cx + (v[0] - cx) * 1.12).toFixed(1)}px ${(cy + (v[1] - cy) * 1.12).toFixed(1)}px`).join(',')})`; hole = [cx / W, 1 - cy / H, (x1 - x0) * .75 / W, (y1 - y0) * .75 / H]; } }
+        clip = `polygon(${ol.map(v => `${(cx + (v[0] - cx) * 1.12).toFixed(1)}px ${(cy + (v[1] - cy) * 1.12).toFixed(1)}px`).join(',')})`; hole = [cx / W, 1 - cy / H, (x1 - x0) * .75 / W, (y1 - y0) * .75 / H];
+        // the arch's screen rect: while the hall is only seen through it, the arcade renders just this scissor
+        sc = [Math.max(0, Math.floor(cx + (x0 - cx) * 1.12) - 2), Math.max(0, Math.floor(cy + (y0 - cy) * 1.12) - 2), Math.min(W, Math.ceil(cx + (x1 - cx) * 1.12) + 2), Math.min(H, Math.ceil(cy + (y1 - cy) * 1.12) + 2)]; } }
     /* the arcade lives behind the crown arch: queen-local space -> arcade space (rotation + uniform scale), so both renders share one camera */
     const loc = P3 => { const dx = (P3[0] - QX) / QS, dy = (P3[1] - QY) / QS, dz = (P3[2] - QZ) / QS; return [dx * cr - dz * sr, dy, dx * sr + dz * cr]; };
     const toA = P3 => { const l = loc(P3); return [-l[0] * AK, (l[1] - YC + .14) * AK, (QR(YC) - l[2]) * AK + ZE]; };
-    const lz = loc(C)[2], R0 = QR(YC), pass = lz < R0 + .012, inside = lz < R0 * .92 - .004; if (inside) clip = 'none';
+    const lz = loc(C)[2], R0 = QR(YC), pass = lz < R0 + .012, inside = lz < R0 * .92 - .004; if (inside) { clip = 'none'; sc = null; }
     const c6 = { x: S.Xb + C[0] * S.q, y: C[1] * S.q, z: S.Zb - C[2] * S.q, ph: Math.atan2(C[1] - L[1], C[2] - L[2]), f: fp, cx: W / 2, cy: cy0 };
     st.q = { cam: { C, L }, fov, oy, near: cl(Math.abs(d) * .25, .004, .1), warm: lin(.46, .7, p), open: g, openP: sm(.6, .9, p), hole: hole || [.5, .5, 9, 9], slide: p, split: true, pass };
-    this.qs = { p, c6, clip, hc, blur: 12 * sm(.12, .55, p), inside, a: { C: toA(C), L: toA(L), fov, oy } };
+    this.qs = { p, c6, clip, sc, hc, blur: 12 * sm(.12, .55, p), inside, a: { C: toA(C), L: toA(L), fov, oy } };
     this.S(ql, 'visibility', inside ? 'hidden' : 'visible');
   }
   proj6(cm) {
@@ -410,7 +489,7 @@ export class HomeEngine {
   w6(t) {
     const W = this.W, q = this.q6, n = this.n; if (!q) return;
     const hy = this.hy6, Q = this.qs, a8 = this.st.arcade8, cz = pathv(t, CPTS);
-    const cm = Q && Q.a ? Q.a : { C: [0, 1, cz], L: [0, 1, cz + 1], fov: this.fovW, oy: .06 }; a8.cam = cm; const pj = this.proj6(cm);
+    const cm = Q && Q.a ? Q.a : { C: [0, 1, cz], L: [0, 1, cz + 1], fov: this.fovW, oy: .06 }; a8.cam = cm; a8.sc = Q && Q.clip !== 'none' ? Q.sc : null; const pj = this.proj6(cm);
     this.S(q.cam, 'transform', 'none'); this.S(q.world, 'clipPath', Q ? Q.clip : 'none'); this.S(q.world, 'webkitMaskImage', 'none'); this.S(q.world, 'maskImage', 'none');
     this.S(q.plate, 'visibility', a8.ready ? 'hidden' : 'visible');
     const dt = Math.min(.1, Math.max(0, this.now - (this._n6 || this.now))); this._n6 = this.now;
@@ -459,18 +538,30 @@ export class HomeEngine {
     this.S(q.moon, 'transform', `translate(${(this.moon0[0] + (this.mx || 0) * 12).toFixed(1)}px,${(this.moon0[1] + (this.my || 0) * 8).toFixed(1)}px)`);
     const qo = sm(26.2, 26.85, t), cz = sm(27.55, 28.05, t);
     if (qo > 0 && cz < .999) {
-      const k = (.08 + .92 * qo) * (1 - cz * .94); if (k !== this._k8) { this._k8 = k; const inn = this.ctear.at(g.cx, g.cy, g.rx * k, g.ry * k, 0), out = this.ctear.at(g.cx, g.cy, g.rx * k, g.ry * k, 1);
-        q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(out)}")`; q.rim.style.clipPath = `path(evenodd, "${P.toPath(out)} ${P.toPath(inn)}")`; }
+      const k = (.08 + .92 * qo) * (1 - cz * .94);
+      if (k !== this._k8) { this._k8 = k; const o = this.ct8; if (o) q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(o.map(([x, y]) => [g.cx + (x - g.cx) * k, g.cy + (y - g.cy) * k]))}")`;
+        if (q.rimcv) { q.rimcv.style.visibility = 'visible'; q.rimcv.style.transform = `scale(${k.toFixed(4)})`; }
+        const AE = this.armEls; if (AE) { const cp = this.armClip(k); AE.wraps.slice(0, 2).forEach(e => { e.style.clipPath = cp; }); if (AE.flapG) AE.flapG.setAttribute('transform', `translate(${g.cx.toFixed(1)} ${g.cy.toFixed(1)}) scale(${k.toFixed(4)}) translate(${(-g.cx).toFixed(1)} ${(-g.cy).toFixed(1)})`); } }
       if (qo > .4 && !this._tore2) { this._tore2 = true; this.paper(); }
-    } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; q.rim.style.clipPath = 'circle(0px)'; if (qo <= 0) this._tore2 = false; }
-    const rq = sm(.6, 1, qo), ks = g.ks * mx(.7, 1, rq) * (1 - cz * .6), rx0 = g.cx - 330 * ks + cz * 80, ry0 = g.cy - 60 * ks - cz * 50, vis = qo > .6 && cz < .4;
-    if (q.tsh) { this.S(q.tsh, 'visibility', qo > .3 && cz < .9 ? 'visible' : 'hidden'); this.S(q.tsh, 'transform', `translate(${(g.cx + 20 * ks).toFixed(1)}px,${(g.cy - 40 * ks).toFixed(1)}px) scale(${(g.rx / 150 * (.08 + .92 * qo) * (1 - cz * .9)).toFixed(3)})`); }
-    this.S(q.reach, 'visibility', vis ? 'visible' : 'hidden'); this.S(q.reach, 'transform', `translate(${rx0.toFixed(1)}px,${ry0.toFixed(1)}px) scale(${ks.toFixed(3)})`);
-    const ox = W / 2 * (1 - z), oy = H / 2 * (1 - z) + ty, th = this.thumbEl;
-    if (th) { this.S(th, 'visibility', vis ? 'visible' : 'hidden'); this.S(th, 'transform', `translate(${(ox + rx0 * z).toFixed(1)}px,${(oy + ry0 * z).toFixed(1)}px) scale(${(ks * z).toFixed(4)})`); }
-    const gx = ox + (rx0 + 60 * ks) * z, gy = oy + (ry0 + 296 * ks) * z, cw = this.cardW || 320;
-    const cx = this.n ? Math.max(12, gx - cw / 2) : gx - 22, cy = gy - 12;
-    this.cardT = `translate(${cx.toFixed(1)}px,${cy.toFixed(1)}px) rotate(${this.n ? -3 : 4}deg) perspective(700px) rotateY(${this.n ? 8 : 12}deg) rotateX(5deg)`;
+    } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; if (q.rimcv) q.rimcv.style.visibility = 'hidden'; if (qo <= 0) this._tore2 = false; }
+    /* the arm: reaches out of the tear, sways while it waits; hover brings the letter toward you */
+    const now = this.now || 0, AR = this.arm, AE = this.armEls;
+    this._hv = mx(this._hv || 0, this._chov ? 1 : 0, .14); const hv = this._hv < .002 ? 0 : this._hv;
+    const ox = W / 2 * (1 - z), oy = H / 2 * (1 - z) + ty;
+    if (AR && AE) {
+      const rq = sm(.35, .75, qo), vis = qo > .35 && cz < .4, op = (sm(.35, .5, qo) * (1 - sm(.25, .4, cz))).toFixed(3), red = this.red();
+      const retr = (1 - rq) + cz * .9, sw = red ? 0 : 1.5 * Math.sin(now * Math.PI / 2), sk = AR.s * (1 + .05 * hv);
+      const tx = AR.G[0] - AR.E[0] + AR.f0[0] * retr * AR.D, tyy = AR.G[1] - AR.E[1] + AR.f0[1] * retr * AR.D;
+      const mvT = `translate(${AR.E[0].toFixed(1)}px,${AR.E[1].toFixed(1)}px) rotate(${sw.toFixed(3)}deg) translate(${tx.toFixed(1)}px,${tyy.toFixed(1)}px) scale(${sk.toFixed(4)})`;
+      const camT = `translate(${ox.toFixed(1)}px,${oy.toFixed(1)}px) scale(${z.toFixed(4)})`, vv = vis ? 'visible' : 'hidden';
+      if (AE.back) { this.S(AE.back, 'visibility', vv); this.S(AE.back, 'opacity', op); this.S(AE.back, 'transform', mvT); }
+      AE.wraps.forEach(e => { this.S(e, 'visibility', vv); this.S(e, 'opacity', op); this.S(e, 'transform', camT); });
+      AE.movers.forEach(e => this.S(e, 'transform', mvT));
+      const px = tx + AR.C0[0] * sk, py = tyy + AR.C0[1] * sk, r = sw * Math.PI / 180, qx = AR.E[0] + px * Math.cos(r) - py * Math.sin(r), qy = AR.E[1] + px * Math.sin(r) + py * Math.cos(r);
+      const hang = 3.5 + (red ? 0 : Math.sin(now * .43 + .6) * .5);
+      this.cardT = `translate(${(ox + qx * z).toFixed(1)}px,${(oy + qy * z).toFixed(1)}px) rotate(${(hang + sw).toFixed(2)}deg) perspective(800px) rotateX(3deg) rotateY(${(-5 + hv * 3).toFixed(1)}deg) scale(${(AR.cs * (1 + .05 * hv) * z).toFixed(4)})`;
+    }
+    if (this.cardSheen) this.S(this.cardSheen, 'opacity', (hv * .9).toFixed(3));
     this.mv.ccard = sm(26.55, 26.9, t) * (1 - sm(27.4, 27.58, t));
     this.S(q.refl, 'transform', `translateX(${(Math.sin(this.now * .7) * 5).toFixed(1)}px)`);
   }
@@ -523,8 +614,8 @@ export class HomeEngine {
       if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn('3d ' + k + ': ' + (e && (e.message || e.type) || e)); return null; });
       else if (!on && el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } });
   }
-  // sandboard and arcade8 share one camera, so the engine renders both in the same frame instead of each scene running its own loop.
-  drive() { for (const k of ['sandboard', 'arcade8']) { const el = this.m3d[k]; if (el && el._sc && el.__frame) try { el.__frame(); } catch (e) { if (!this._derr) { this._derr = 1; console.warn('3d frame ' + k + ': ' + (e && e.message)); } } } }
+  // The engine renders every 3D scene from its own loop (sandboard and arcade8 share one camera), so frame times cover all of them.
+  drive() { for (const k of ['apple8', 'sandboard', 'arcade8', 'roomqueen']) { const el = this.m3d[k]; if (el && el._sc && el.__frame) try { el.__frame(); } catch (e) { if (!this._derr) { this._derr = 1; console.warn('3d frame ' + k + ': ' + (e && e.message)); } } } }
   disposeAll() { this.$$('[data-3d]').forEach(el => { if (el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } }); }
 
   /* ---------- loader / blink ---------- */
@@ -551,7 +642,7 @@ export class HomeEngine {
   /* ---------- cursor ---------- */
   // A small dot that tracks the pointer exactly and becomes a magnifying lens over anything interactive; buttons pull toward it.
   initCursor() {
-    const pm = e => { const g = this.g1; if (!g) return; this.mx = cl((e.clientX - g.P0.x) / (this.W * .5), -1, 1); this.my = cl((e.clientY - g.P0.y) / (this.H * .5), -1, 1); };
+    const pm = e => { this._act = performance.now(); const g = this.g1; if (!g) return; this.mx = cl((e.clientX - g.P0.x) / (this.W * .5), -1, 1); this.my = cl((e.clientY - g.P0.y) / (this.H * .5), -1, 1); };
     addEventListener('pointermove', pm, { passive: true });
     if (!matchMedia('(pointer: fine)').matches || this._cursorCleanup) { this._cursorCleanup = () => removeEventListener('pointermove', pm); return; }
     const pos = document.createElement('div'), ring = document.createElement('div');
@@ -582,6 +673,7 @@ export class HomeEngine {
     this.fHover[i] = on; const fs = this.fst && this.fst[i]; if (!fs || !fs.panel) return;
     fs.panel.style.opacity = on ? '1' : '0'; fs.panel.style.transform = on ? 'translateX(0)' : `translateX(${i % 2 ? 20 : -20}px)`; if (on) this.paper(.35);
   }
+  cardHover(on) { this._chov = on ? 1 : 0; this._act = performance.now(); }
   forceOpen(o) {
         const m = /^f(\d)$/.exec(o || ''); if (m) setTimeout(() => this.founderHover(+m[1], true), 600);
   }
