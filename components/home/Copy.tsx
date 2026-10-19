@@ -6,11 +6,14 @@ export type Layout = Record<string, string>;
 
 type Props = {
   studioName: string;
-  narrow: boolean;
   heroRow: boolean;
   L: Layout;
+  email: string;
+  copied: boolean;
   go: (to: "home" | "companies" | "how" | "contact", e?: MouseEvent) => void;
   onFounder: (i: number, on: boolean) => void;
+  onCard: (on: boolean) => void;
+  onCopy: () => void;
 };
 
 // Each data-w child fades and lifts in sequence as its block comes into view.
@@ -39,7 +42,17 @@ function Caption({ a, b, L, children }: { a: string; b: string; L: Layout; child
   );
 }
 
-export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: Props) {
+function ArmLayer({ svg }: { svg: "thumb" | "front" }) {
+  return (
+    <div data-armwrap aria-hidden className={s.armWrap}>
+      <div data-armmove className={s.armMove}>
+        <svg data-armsvg={svg} width="1" height="1" className={s.armSvg} />
+      </div>
+    </div>
+  );
+}
+
+export default function Copy({ studioName, heroRow, L, email, copied, go, onFounder, onCard, onCopy }: Props) {
   return (
     <main data-copylayer className={s.copyLayer}>
       <section
@@ -136,13 +149,34 @@ export default function Copy({ studioName, narrow, heroRow, L, go, onFounder }: 
           <W>Bring</W> <W>the</W> <W>idea.</W> <W italic>We’ll build the company</W> <W italic>around it.</W>
         </h2>
         <div data-w className={s.ctaRow} style={{ flex: "initial" }}>
-          <a href="#start" data-magnet className={`${s.pill} ${s.pillLg}`}>Start a company</a>
+          <a href={`mailto:${email}`} data-magnet className={`${s.pill} ${s.pillLg}`}>Start a company</a>
+          <button onClick={onCopy} className={s.takeCard}>{copied ? "Copied to your clipboard" : "Or take the card"}</button>
         </div>
       </section>
-      <div data-copy="m" data-id="ccard" className={s.contactCard} style={{ width: L.cardW, transformOrigin: narrow ? "50% 0" : "0 0" }}>
-        <span data-w style={{ fontSize: 14, lineHeight: 1.45 }}>Write any time. A founder at the studio replies within a day.</span>
+      {/* the founder's hand offers a letter out of the tear: thumb behind it, fingers in front, a paper lip where the sleeve crosses the edge */}
+      <ArmLayer svg="thumb" />
+      <a
+        data-copy="m"
+        data-id="ccard"
+        href={`mailto:${email}`}
+        onMouseEnter={() => onCard(true)}
+        onMouseLeave={() => onCard(false)}
+        onFocus={() => onCard(true)}
+        onBlur={() => onCard(false)}
+        className={s.contactCard}
+      >
+        <span data-deckle aria-hidden className={s.deckleShadow} />
+        <span data-deckle aria-hidden className={s.deckle} />
+        <span data-sheen aria-hidden className={s.sheen} />
+        <span className={s.letter}>
+          <span data-w className={s.letterTo}>{email}</span>
+          <span data-w className={s.letterNote}>Write any time. A founder at the studio replies within a day.</span>
+        </span>
+      </a>
+      <ArmLayer svg="front" />
+      <div data-armwrap="flap" aria-hidden className={s.armWrap}>
+        <svg width="1" height="1" className={s.armSvg}><g data-armflap /></svg>
       </div>
-      <canvas data-paint="thumb3" data-thumb aria-hidden style={{ position: "absolute", left: 0, top: 0, width: 360, height: 340, transformOrigin: "0 0", visibility: "hidden", pointerEvents: "none" }} />
 
       <footer data-copy data-a="27.75" data-b="99" className={`${s.copy} ${s.wide} ${s.footer}`} style={{ top: L.tFoot }}>
         <div data-w className={s.footCol} style={{ gap: 10 }}>

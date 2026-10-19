@@ -9,8 +9,8 @@ import s from "./home.module.css";
 type State = { loader: boolean; sound: boolean; menu: boolean; world: number; notes: boolean };
 type Target = "home" | "companies" | "how" | "contact";
 
-const NARROW: Layout = { tA: "auto", wA: "100%", wB: "100%", heroB: "104px", t1: "auto", b1: "92px", w1: "100%", w2: "100%", capL: "20px", capR: "auto", capT: "76px", capB: "auto", mL: "20px", mR: "20px", mT: "auto", mB: "92px", tBeach: "84px", linkB: "40px", tRoom: "84px", wRoom: "100%", wC: "100%", tagT: "15px", tagW: "104px", tQuote: "96px", bContact: "92px", cardW: "220px", tFoot: "30vh", refl: "22vw" };
-const WIDE: Layout = { tA: "clamp(100px,14vh,160px)", wA: "min(36vw,560px)", wB: "min(34vw,520px)", heroB: "clamp(56px,10vh,120px)", t1: "clamp(116px,17vh,180px)", b1: "auto", w1: "min(66vw,1080px)", w2: "min(44vw,660px)", capL: "auto", capR: "96px", capT: "auto", capB: "32px", mL: "0px", mR: "auto", mT: "0px", mB: "auto", tBeach: "clamp(116px,17vh,180px)", linkB: "48px", tRoom: "clamp(116px,17vh,180px)", wRoom: "min(34vw,560px)", wC: "min(40vw,620px)", tagT: "18px", tagW: "min(160px,10.5vw)", tQuote: "clamp(120px,18vh,190px)", bContact: "clamp(56px,12vh,130px)", cardW: "320px", tFoot: "46vh", refl: "12vw" };
+const NARROW: Layout = { tA: "auto", wA: "100%", wB: "100%", heroB: "104px", t1: "auto", b1: "92px", w1: "100%", w2: "100%", capL: "20px", capR: "auto", capT: "76px", capB: "auto", mL: "20px", mR: "20px", mT: "auto", mB: "92px", tBeach: "84px", linkB: "40px", tRoom: "84px", wRoom: "100%", wC: "100%", tagT: "15px", tagW: "104px", tQuote: "96px", bContact: "92px", tFoot: "30vh", refl: "22vw" };
+const WIDE: Layout = { tA: "clamp(100px,14vh,160px)", wA: "min(36vw,560px)", wB: "min(34vw,520px)", heroB: "clamp(56px,10vh,120px)", t1: "clamp(116px,17vh,180px)", b1: "auto", w1: "min(66vw,1080px)", w2: "min(44vw,660px)", capL: "auto", capR: "96px", capT: "auto", capB: "32px", mL: "0px", mR: "auto", mT: "0px", mB: "auto", tBeach: "clamp(116px,17vh,180px)", linkB: "48px", tRoom: "clamp(116px,17vh,180px)", wRoom: "min(34vw,560px)", wC: "min(40vw,620px)", tagT: "18px", tagW: "min(160px,10.5vw)", tQuote: "clamp(120px,18vh,190px)", bContact: "clamp(56px,12vh,130px)", tFoot: "46vh", refl: "12vw" };
 
 const onResize = (cb: () => void) => {
   addEventListener("resize", cb);
@@ -66,8 +66,20 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
     engineRef.current?.narrowChanged();
   }, [narrow]);
 
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(copyTimer.current), []);
+  const email = `hello@${studioName.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`;
+  const copyEmail = () => {
+    navigator.clipboard?.writeText(email).catch(() => {});
+    setCopied(true);
+    clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopied(false), 2400);
+  };
+
   const go = (to: Target, e?: MouseEvent) => engineRef.current?.go(to, e);
   const founder = (i: number, on: boolean) => engineRef.current?.founderHover(i, on);
+  const card = (on: boolean) => engineRef.current?.cardHover(on);
   const toggleSound = () => engineRef.current?.toggleSound();
   const toggleMenu = () => host.setState({ menu: !stateRef.current.menu });
 
@@ -137,7 +149,7 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
       )}
 
       <Stage studioName={studioName} narrow={narrow} reflSize={L.refl} tagW={L.tagW} tagT={L.tagT} onFounder={founder} />
-      <Copy studioName={studioName} narrow={narrow} heroRow={vw >= 900} L={L} go={go} onFounder={founder} />
+      <Copy studioName={studioName} heroRow={vw >= 900} L={L} email={email} copied={copied} go={go} onFounder={founder} onCard={card} onCopy={copyEmail} />
 
       <div data-spacer style={{ height: `${SPACER_VH}vh` }} />
 

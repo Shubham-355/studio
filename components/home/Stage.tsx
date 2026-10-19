@@ -56,7 +56,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
   return (
     <div data-stage className={s.stage}>
       {/* 1 · sky with an eye */}
-      <div data-world="1" className={s.world} style={{ inset: "0 0 -60px 0", zIndex: 2, background: "#0E1014", visibility: "visible", overflow: "hidden", WebkitMaskImage: "linear-gradient(180deg,#000 calc(100% - 64px),transparent)", maskImage: "linear-gradient(180deg,#000 calc(100% - 64px),transparent)" }}>
+      <div data-world="1" className={s.world} style={{ inset: "0 0 -60px 0", zIndex: 2, background: "#0E1014", visibility: "visible", overflow: "hidden", WebkitMaskImage: "linear-gradient(180deg,#000 calc(100% - 52px),transparent)", maskImage: "linear-gradient(180deg,#000 calc(100% - 52px),transparent)" }}>
         <div data-face className={s.abs} style={{ willChange: "transform" }}>
           <div data-eyeball className={s.abs}>
             <canvas data-paint="eyeball" aria-hidden className={s.abs} />
@@ -82,9 +82,11 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       </div>
 
       {/* 2 · apple on the board, by the sea at sunset */}
-      <div data-world="2" className={s.world} style={{ zIndex: 1 }}>
+      <div data-world="2" className={s.world} style={{ zIndex: 1, background: "#3E78C4" }}>
         <canvas data-paint="a8sky" data-plate aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
-        <canvas data-paint="a8cloud" data-a8cloud aria-hidden className={s.abs} />
+        {/* far and mid cloud layers; the near one sits above the apple */}
+        <canvas data-paint="c9far" data-c9="0" aria-hidden className={s.abs} style={{ visibility: "hidden" }} />
+        <canvas data-paint="c9mid" data-c9="1" aria-hidden className={s.abs} style={{ visibility: "hidden" }} />
         <canvas data-a8sea aria-hidden className={s.abs} />
         {[0, 1, 2].map((g) => (
           <canvas key={g} data-paint="b6gull" data-gull2 aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px" }} />
@@ -123,6 +125,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
         <div data-3d="apple8" className={s.fill} />
       </div>
       <canvas data-paint="near1" data-near aria-hidden style={plate({ left: "-10%", top: "-10%", width: "120%", height: "120%", zIndex: 5, pointerEvents: "none" })} />
+      <canvas data-paint="c9near" data-c9="2" aria-hidden className={s.abs} style={{ zIndex: 5, pointerEvents: "none", visibility: "hidden" }} />
 
       {/* 6 · the desert arcade */}
       <div data-world="6" className={s.world} style={{ zIndex: 6, background: "#E8A866" }}>
@@ -250,11 +253,14 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       <div data-world="8" className={s.world} style={{ zIndex: 8, background: "#141B33" }}>
         <div data-cam className={s.cam}>
           <canvas data-paint="morning" aria-hidden className={s.full} />
+          {/* the sleeve sits behind the night plate, so the arm reaches out of the tear */}
+          <div data-armback aria-hidden style={{ position: "absolute", left: 0, top: 0, width: 0, height: 0, visibility: "hidden", willChange: "transform", transformOrigin: "0 0", pointerEvents: "none" }}>
+            <svg data-armsvg="back" width="1" height="1" style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }} />
+          </div>
           <canvas data-paint="night" data-nightplate aria-hidden className={s.abs} style={{ width: "100%", height: "150%" }} />
           <div data-crim className={s.fill} style={{ background: "linear-gradient(140deg,#FDFBF6,#E3D8C4)", clipPath: "circle(0px)" }} />
           <canvas data-paint="moon" data-moon aria-hidden className={s.abs} />
-          <div data-tsh style={{ position: "absolute", left: 0, top: 0, width: 300, height: 300, margin: "-150px 0 0 -150px", borderRadius: "50%", background: "radial-gradient(closest-side,rgba(14,10,12,.9),rgba(14,10,12,.55) 45%,rgba(14,10,12,0))", visibility: "hidden", pointerEvents: "none" }} />
-          <canvas data-paint="reach3" data-reach aria-hidden className={s.abs} style={{ width: 360, height: 340, transformOrigin: "0 0", visibility: "hidden" }} />
+          <canvas data-crimcv aria-hidden className={s.full} style={{ visibility: "hidden", pointerEvents: "none", filter: "drop-shadow(0 5px 8px rgba(6,10,24,.55)) drop-shadow(0 14px 26px rgba(6,10,24,.3))" }} />
           <div data-reflect aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", top: "124%", textAlign: "center", fontFamily: "var(--serif)", fontStyle: "italic", fontWeight: 500, fontSize: reflSize, lineHeight: 0.8, letterSpacing: "-.03em", whiteSpace: "nowrap", color: "rgba(241,230,200,.5)", filter: "url(#ripple)", willChange: "transform" }}>
             {studioName}
           </div>
