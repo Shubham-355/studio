@@ -207,11 +207,39 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
               </div>
             );
           })}
-          <div data-door className={s.abs} style={{ width: 220, height: 400, transformOrigin: "0 0" }}>
-            <div style={{ position: "absolute", left: 110, top: 386, width: 640, height: 34, background: "linear-gradient(90deg,rgba(75,58,82,.6),rgba(75,58,82,0))", clipPath: "polygon(0 0,100% 40%,100% 100%,0 100%)" }} />
-            <div style={{ position: "absolute", right: "100%", top: 0, width: 150, height: 400, background: "linear-gradient(90deg,#4E3222,#7A5236)", boxShadow: "inset 0 0 0 8px #6E4B34", transformOrigin: "right center", transform: "perspective(700px) rotateY(58deg)" }} />
-            <div className={s.fill} style={{ border: "16px solid #7A5236", borderBottom: 0, boxShadow: "inset 0 0 0 2px rgba(0,0,0,.25),0 12px 22px rgba(75,58,82,.35)" }} />
-          </div>
+          {/* the door at the end of the hall, projected from 3D each frame: a lit gap, the leaf swinging inward, frame, keystone and step */}
+          <svg data-door aria-hidden width="100%" height="100%" style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none", visibility: "hidden" }}>
+            <defs>
+              <linearGradient id="dSpillG" data-dk="spillG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#FFF0D2" stopOpacity=".75" />
+                <stop offset=".55" stopColor="#FBD9A4" stopOpacity=".28" />
+                <stop offset="1" stopColor="#F4C68C" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="dWoodG" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#2E1C13" />
+                <stop offset=".5" stopColor="#3D2618" />
+                <stop offset="1" stopColor="#2A1910" />
+              </linearGradient>
+              <clipPath id="dGapC"><polygon data-dk="gapc" points="0,0" /></clipPath>
+              <filter id="dBloomF" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur data-dk="blur" stdDeviation="3" /></filter>
+            </defs>
+            <polygon data-dk="light" fill="#FFF4DE" points="0,0" />
+            <g clipPath="url(#dGapC)">
+              <polygon data-dk="leaf" fill="url(#dWoodG)" points="0,0" />
+              {[0, 1, 2, 3].map((k) => <polygon key={k} data-dk={`p${k}`} fill="#24150D" stroke="#4E3322" strokeWidth="1" points="0,0" />)}
+              <polygon data-dk="knobP" fill="#8C6A2E" points="0,0" />
+              <polygon data-dk="knob" fill="#D8B45A" points="0,0" />
+            </g>
+            <polygon data-dk="stepT" fill="#B56C52" points="0,0" />
+            <polygon data-dk="stepF" fill="#874434" points="0,0" />
+            <polygon data-dk="spill" fill="url(#dSpillG)" points="0,0" />
+            <polygon data-dk="revL" fill="#C47C5A" points="0,0" />
+            <polygon data-dk="revR" fill="#7A3D30" points="0,0" />
+            <polygon data-dk="revT" fill="#6A352A" points="0,0" />
+            <polygon data-dk="frame" fill="#A3583F" fillRule="evenodd" points="0,0" />
+            <polygon data-dk="key" fill="#B3654A" points="0,0" />
+            <polygon data-dk="bloom" fill="none" stroke="#FFE6B4" strokeWidth="4" filter="url(#dBloomF)" points="0,0" />
+          </svg>
         </div>
       </div>
 
