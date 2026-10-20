@@ -73,7 +73,9 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
             <canvas data-paint="lid" data-lid aria-hidden className={s.abs} />
           </div>
         </div>
-        <div data-skywrap className={s.fill} style={{ filter: "drop-shadow(0 4px 6px rgba(38,20,12,.5)) drop-shadow(0 12px 22px rgba(38,20,12,.26))" }}>
+        {/* the torn sky's shadow on the face, painted once instead of a live drop-shadow */}
+        <canvas data-tearsh aria-hidden className={s.full} style={{ pointerEvents: "none" }} />
+        <div data-skywrap className={s.fill}>
           <canvas data-paint="sky1" data-skyplate aria-hidden className={s.full} />
           <div data-rim className={s.fill} style={{ background: "linear-gradient(140deg,#FDFBF6 0%,#EFE7D8 60%,#E3D8C4 100%)", clipPath: "circle(0px)" }} />
           <canvas data-rimcv aria-hidden className={s.abs} style={{ width: "100%", height: "calc(100% - 60px)" }} />
@@ -81,12 +83,16 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
         <div data-navscrim aria-hidden style={{ position: "absolute", left: 0, right: 0, top: 0, height: 170, pointerEvents: "none", background: "linear-gradient(180deg,rgba(20,38,76,.5) 0%,rgba(20,38,76,.3) 45%,rgba(20,38,76,0) 100%)" }} />
       </div>
 
+      {/* one cloud deck over the whole tilt, from the torn sky down to the horizon (horizon and mid layers; the near one sits above the apple) */}
+      <div data-skycl aria-hidden className={s.full} style={{ zIndex: 2, pointerEvents: "none", willChange: "transform" }}>
+        {[0, 1].map((l) => (
+          <canvas key={l} data-paint="sk1" data-l={l} data-skyl aria-hidden className={s.abs} style={{ willChange: "transform" }} />
+        ))}
+      </div>
+
       {/* 2 · apple on the board, by the sea at sunset */}
       <div data-world="2" className={s.world} style={{ zIndex: 1, background: "#3E78C4" }}>
         <canvas data-paint="a8sky" data-plate aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
-        {/* far and mid cloud layers; the near one sits above the apple */}
-        <canvas data-paint="c9far" data-c9="0" aria-hidden className={s.abs} style={{ visibility: "hidden" }} />
-        <canvas data-paint="c9mid" data-c9="1" aria-hidden className={s.abs} style={{ visibility: "hidden" }} />
         <canvas data-a8sea aria-hidden className={s.abs} />
         {[0, 1, 2].map((g) => (
           <canvas key={g} data-paint="b6gull" data-gull2 aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px" }} />
@@ -97,6 +103,9 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       <div data-world="3" className={s.world} style={{ zIndex: 3, background: "#DAE8EC", overflow: "hidden", filter: WARM }}>
         <div data-cam className={s.cam}>
           <canvas data-paint="b6sky" data-sky6 aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
+          {[0, 2].map((l) => (
+            <canvas key={l} data-paint="b3c" data-l={l} data-b3c aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
+          ))}
           <canvas data-paint="b6g0" data-g0 aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
           <canvas data-paint="b6g1" data-g1 aria-hidden className={s.abs} style={{ transformOrigin: "0 0", opacity: 0 }} />
           <canvas data-surf3 aria-hidden className={s.full} />
@@ -124,8 +133,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       <div data-applelayer className={s.fill} style={{ zIndex: 5, pointerEvents: "none", visibility: "hidden" }}>
         <div data-3d="apple8" className={s.fill} />
       </div>
-      <canvas data-paint="near1" data-near aria-hidden style={plate({ left: "-10%", top: "-10%", width: "120%", height: "120%", zIndex: 5, pointerEvents: "none" })} />
-      <canvas data-paint="c9near" data-c9="2" aria-hidden className={s.abs} style={{ zIndex: 5, pointerEvents: "none", visibility: "hidden" }} />
+      <canvas data-paint="near1" data-near aria-hidden className={s.abs} style={{ zIndex: 5, pointerEvents: "none", willChange: "transform" }} />
 
       {/* 6 · the desert arcade */}
       <div data-world="6" className={s.world} style={{ zIndex: 6, background: "#E8A866" }}>
@@ -286,6 +294,12 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
             <svg data-armsvg="back" width="1" height="1" style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }} />
           </div>
           <canvas data-paint="night" data-nightplate aria-hidden className={s.abs} style={{ width: "100%", height: "150%" }} />
+          {/* moonlit cloud cards, cut by the same tear as the night plate */}
+          <div data-ncl className={s.abs} style={{ width: "100%", height: "150%", overflow: "hidden", pointerEvents: "none" }}>
+            {[0, 1, 2].map((l) => (
+              <canvas key={l} data-paint="n8c" data-l={l} data-n8c aria-hidden className={s.abs} />
+            ))}
+          </div>
           <div data-crim className={s.fill} style={{ background: "linear-gradient(140deg,#FDFBF6,#E3D8C4)", clipPath: "circle(0px)" }} />
           <canvas data-paint="moon" data-moon aria-hidden className={s.abs} />
           <canvas data-crimcv aria-hidden className={s.full} style={{ visibility: "hidden", pointerEvents: "none", filter: "drop-shadow(0 5px 8px rgba(6,10,24,.55)) drop-shadow(0 14px 26px rgba(6,10,24,.3))" }} />

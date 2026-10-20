@@ -45,6 +45,7 @@ export class HomeEngine {
     this.st = { apple8: { ext: true }, sandboard: { ext: true }, roomqueen: { ext: true }, arcade8: { ext: true } };
     this.fHover = [];
     this.companies = COMPANIES;
+    this.decks = {}; // cloud card layouts per scene (sk: tilt sky, b3: beach, n8: night sea)
   }
   get state() { return this.host.getState(); }
   get props() { return this.host.props; }
@@ -74,7 +75,22 @@ export class HomeEngine {
     document.removeEventListener('visibilitychange', this._onVis); ACT.forEach(e => removeEventListener(e, this._onAct));
     this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lt); clearInterval(this._fx); this._ac && this._ac.close();
   }
-  async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
+  async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Painter.cloud10 && window.Painter.eye12 && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
+  pal() { return window.Painter.cloudPal10 || { day: {}, warm: {}, night: {} }; }
+  /* cloud depth: self-drift (a few px/s per layer) and parallax factor; both off with reduced motion */
+  drift(i) { return this._rm ? 0 : 36 * Math.sin((this.now || 0) * [2, 3.5, 5][i] / 36 + i * 1.7); }
+  pf(f) { return this._rm ? 1 : f; }
+  // The torn sky's shadow on the face, painted once: a warm vignette inside the hole, a soft cast shadow and the paper's cut edge.
+  tearShadow(inn, out) {
+    const cv = this.q1 && this.q1.tsh, P = window.Painter; if (!cv) return; const W = this.W, H = this.H, d = Math.min(1.5, devicePixelRatio || 1), n = this.n;
+    cv.width = Math.round(W * d); cv.height = Math.round((H + 60) * d); const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, W, H + 60);
+    const outside = (dx, dy) => [inn, out].forEach(pts => c.fill(new Path2D(`M${-300 + dx} ${-300 + dy}H${W + 300 + dx}V${H + 360 + dy}H${-300 + dx}Z ` + P.toPath(pts.map(([x, y]) => [x + dx, y + dy]))), 'evenodd'));
+    const G1 = this.g1; if (G1) { c.save(); c.translate(G1.cx, G1.cy); c.scale(G1.rx * 1.12, G1.ry * 1.12); const vg = c.createRadialGradient(0, .08, 0, 0, .08, 1); vg.addColorStop(0, 'rgba(40,18,10,0)'); vg.addColorStop(.55, 'rgba(40,18,10,.04)'); vg.addColorStop(.85, 'rgba(40,18,10,.2)'); vg.addColorStop(1, 'rgba(40,18,10,.36)'); c.fillStyle = vg; c.fillRect(-2, -2, 4, 4); c.restore();
+      const bg = c.createLinearGradient(0, G1.cy - G1.ry * 1.15, 0, G1.cy - G1.ry * .35); bg.addColorStop(0, 'rgba(46,22,12,.3)'); bg.addColorStop(1, 'rgba(46,22,12,0)'); c.fillStyle = bg; c.fillRect(0, G1.cy - G1.ry * 1.25, W, G1.ry * .9); }
+    const B = 20000; c.fillStyle = '#000';
+    [[1.5, 5, .62], [5, 12, .4], [10, 22, .2]].forEach(([oy, b, a]) => { c.save(); c.shadowColor = `rgba(38,20,12,${a})`; c.shadowBlur = b * d; c.shadowOffsetX = B * d; c.shadowOffsetY = oy * d; outside(-B, 0); c.restore(); });
+    const th = n ? 2 : 3; c.fillStyle = 'rgba(92,70,48,.4)'; outside(0, th + 1); c.fillStyle = '#CDBFA5'; outside(0, th);
+  }
 
   boot() {
     if (!window.Painter || !window.Painter.desert) return;
@@ -130,7 +146,7 @@ export class HomeEngine {
     this.$('[data-lidwin]').style.clipPath = this.$('[data-shadewin]').style.clipPath = `path("${E.path}")`;
     const cap = this.$('[data-herocap]');
     if (cap) cap.style.display = (!n && cx + rx + 44 + 230 > W - 16) ? 'none' : ''; if (cap) Object.assign(cap.style, n ? { left: (cx - rx) + 'px', top: Math.max(76, cy - ry - 64) + 'px', maxWidth: rx * 2 + 'px' } : { left: (cx + rx + 44) + 'px', top: (cy - ry * .3) + 'px', maxWidth: '220px' });
-    this.q1 = { face, eye: this.$('[data-eyeball]'), wrap: this.$('[data-skywrap]'), plate: this.$('[data-skyplate]'), rim: this.$('[data-rim]'), near: this.$('[data-near]'), lid: this.$('[data-lid]'), pupil: this.$('[data-pupil]'), glint: this.$('[data-glint]'), scrim: this.$('[data-navscrim]') };
+    this.q1 = { face, eye: this.$('[data-eyeball]'), wrap: this.$('[data-skywrap]'), plate: this.$('[data-skyplate]'), rim: this.$('[data-rim]'), near: this.$('[data-near]'), lid: this.$('[data-lid]'), pupil: this.$('[data-pupil]'), glint: this.$('[data-glint]'), scrim: this.$('[data-navscrim]'), cl: this.$('[data-skycl]'), tsh: this.$('[data-tearsh]') };
   }
   layout2() {
     const W = this.W, H = this.H, n = this.n, w2 = this.wEl[1]; if (!w2) return;
@@ -141,15 +157,22 @@ export class HomeEngine {
     const plate = this.$('[data-plate]', w2), sea = this.$('[data-a8sea]', w2);
     if (plate) Object.assign(plate.style, { width: W + 'px', height: Hp + 'px' });
     if (sea) { const sh = H * .16; Object.assign(sea.style, { width: W + 'px', height: sh + 'px' }); sea.width = Math.round(W * .6); sea.height = Math.round(sh * .6); }
-    // three cloud layers moving at their own parallax (f) through the tilt: far, mid and near
-    const c9 = this.$$('[data-c9]');
-    this.g2.cl9 = [
-      { w: W * 1.1, h: H * .26, k: .7, x0: -.05 * W, y0: H * .2, f: .92, list: n ? [[.15, .62, .05], [.52, .5, .036], [.86, .64, .046]] : [[.07, .64, .026], [.24, .48, .019], [.42, .66, .03], [.6, .5, .021], [.78, .64, .028], [.95, .5, .019]], col: { lit: [255, 232, 204], mid: [242, 214, 196], sh: [196, 176, 186], base: [176, 160, 178] } },
-      { w: W * 1.1, h: H * .62, k: .6, x0: -.05 * W, y0: -H * .25, f: 1, list: n ? [[.12, .3, .1], [.72, .52, .085], [.4, .82, .07]] : [[.1, .3, .058], [.37, .62, .044], [.63, .2, .052], [.87, .52, .048], [.52, .86, .034]], col: { lit: [255, 244, 228], mid: [238, 228, 222], sh: [186, 190, 210], base: [162, 170, 198] } },
-      { w: W * 1.2, h: H, k: .5, x0: -.1 * W, y0: -H, f: 1.45, list: n ? [[.06, .36, .2], [.95, .7, .18]] : [[.03, .36, .14], [.92, .64, .12], [.13, .86, .095], [1.0, .3, .11]], col: { lit: [252, 248, 240], mid: [236, 232, 228], sh: [190, 198, 216], base: [166, 178, 204], blur: 3 } },
-    ];
-    c9.forEach((cv, i) => { const L = this.g2.cl9[i]; if (L) Object.assign(cv.style, { width: L.w + 'px', height: L.h + 'px', left: L.x0 + 'px' }); });
-    this.q2 = { world: w2, plate, c9, sea, sx: sea && sea.getContext('2d'), gulls: this.$$('[data-gull2]', w2), alay: this.$('[data-applelayer]') };
+    // One cloud deck spans the whole tilt, from around the torn sky down to the horizon: a warm horizon band (f .4),
+    // the main layer (f 1) and a near layer above the apple (f 1.4). Positions are CSS px; sizes scale with the viewport.
+    {
+      const g1 = this.g1 || { cx: W / 2, cy: H * .45, rx: W * .2, ry: W * .13 }, U = Math.max(.45, Math.min(W, 1.6 * H) / 1440), PAL = this.pal(), { cx, cy, rx, ry } = g1;
+      const lay = (y0, f, k, seed, col, h, items) => ({ w: W * 1.2, h, k, x0: -.1 * W, y0, f, seed, col, list: items.map(([X, Y, S, kd, tl, fl]) => [X + .1 * W, Y - y0, S * U, kd, tl || 0, fl || 1]) });
+      this.decks.sk = [
+        lay(0, .4, .55, 7, PAL.warm, H * 1.1, [[W * .03, H * .87, 30, 'flat'], [W * .15, H * .955, 50, 'flat', -.02], [W * .215, H * .9, 20, 'wisp'], [W * .5, H * .96, 60, 'flat', .02, -1], [W * .575, H * .91, 22, 'heap'], [W * .81, H * .945, 40, 'flat', .01], [W * .965, H * .885, 28, 'wisp', 0, -1]]),
+        lay(-.1 * H, 1, .5, 19, PAL.day, H * 1.9, [[cx + rx * .8, cy + ry * .62, 175, 'mass', -.03], [cx - rx * 1.3, cy - ry * .4, 150, 'mass', .04, -1], [W * .86, H * .27, 26, 'wisp', .02], [W * .61, H * .14, 15, 'heap', 0, -1], [W * .08, H * .66, 20, 'flat', -.04], [W * .95, H * .6, 34, 'tall', 0, -1],
+          [W * .18, H * 1.12, 120, 'tall', .03], [W * .3, H * 1.2, 48, 'heap', -.05, -1], [W * .06, H * 1.26, 24, 'wisp'], [W * .77, H * 1.02, 80, 'heap', .02, -1], [W * .9, H * 1.1, 36, 'flat', -.03], [W * .52, H * 1.36, 18, 'wisp', 0, -1],
+          [W * .1, H * 1.56, 44, 'flat', .02], [W * .37, H * 1.66, 26, 'flat', -.02, -1], [W * .63, H * 1.52, 58, 'flat', .01], [W * .71, H * 1.6, 16, 'wisp'], [W * .93, H * 1.68, 22, 'flat', -.03, -1]]),
+        lay(0, 1.4, .4, 29, Object.assign({ blur: 3 }, PAL.day), H * 1.9, [[-W * .03, H * 1.0, 80, 'heap'], [W * 1.02, H * 1.04, 70, 'tall', 0, -1], [W * .12, H * 1.42, 110, 'heap', .03], [W * .9, H * 1.66, 120, 'mass', -.02, -1]]),
+      ];
+      this.$$('[data-skyl]').forEach((cv, i) => { const L = this.decks.sk[i]; if (L) Object.assign(cv.style, { left: L.x0 + 'px', top: L.y0 + 'px', width: L.w + 'px', height: L.h + 'px' }); });
+      const nr = this.$('[data-near]'), Ln = this.decks.sk[2]; if (nr) Object.assign(nr.style, { left: Ln.x0 + 'px', top: '0px', width: Ln.w + 'px', height: Ln.h + 'px' });
+    }
+    this.q2 = { world: w2, plate, sea, sx: sea && sea.getContext('2d'), gulls: this.$$('[data-gull2]', w2), alay: this.$('[data-applelayer]'), skycl: this.$('[data-skycl]'), skl: this.$$('[data-skyl]') };
     Object.assign(this.st.apple8, { cam: null, peb });
   }
   tiltAt(t) { const G = this.g2; if (!G) return null; const e = sm(.08, 1.58, t), tn = mx(G.tan0, G.tan1, e); return { e, tn, top: this.H / 2 + G.F * tn - G.Yh, topE: this.H - G.L }; }
@@ -162,7 +185,14 @@ export class HomeEngine {
     const pr = P.cam6.proj, pts = S.board.map(([X, Z]) => pr(S.camO, X, 0, Z)).map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
     this.w5mask = 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '"><filter id="f"><feGaussianBlur stdDeviation="2.5"/></filter><polygon points="' + pts + '" fill="#fff" filter="url(#f)"/></svg>') + '")';
     this.w5c = pr(S.camO, S.Xb, 0, S.Zb); this.ballTex = this.ballTex || P.ballTex();
-    this.q3 = { world: w3, cam: this.$('[data-cam]', w3), sky, g0, g1, surf, sx: surf && surf.getContext('2d'), chair: this.$('[data-chair]', w3), umb: this.$('[data-umb]', w3), gulls: this.$$('[data-gull]', w3), ball: bc, bx: bc && bc.getContext('2d') };
+    // beach clouds: a warm band on the horizon and a near layer, carried with the beach sky (layer 1 is not used here)
+    const PAL = this.pal(), hz = S.hy + .04 * H;
+    this.decks.b3 = [
+      { w: W * 1.08, h: H * .16, k: .6, x0: 0, y0: hz - H * .16, f: .4, seed: 31, col: PAL.warm, list: n ? [[.12, .7, .02], [.5, .6, .016], [.86, .72, .02]] : [[.06, .72, .011], [.22, .6, .008], [.4, .74, .012], [.6, .62, .009], [.78, .74, .011], [.94, .6, .008]] }, null,
+      { w: W * 1.08, h: H * .5, k: .45, x0: 0, y0: -H * .04, f: 1.4, seed: 37, col: Object.assign({ blur: 3 }, PAL.day), list: n ? [[.04, .32, .1], [.97, .26, .085]] : [[.02, .34, .06], [.98, .24, .05]] },
+    ];
+    this.$$('[data-b3c]', w3).forEach(cv => { const L = this.decks.b3[+cv.dataset.l]; if (L) px(cv, L.w, L.h); });
+    this.q3 = { world: w3, cam: this.$('[data-cam]', w3), sky, g0, g1, surf, sx: surf && surf.getContext('2d'), chair: this.$('[data-chair]', w3), umb: this.$('[data-umb]', w3), gulls: this.$$('[data-gull]', w3), ball: bc, bx: bc && bc.getContext('2d'), b3c: this.$$('[data-b3c]', w3) };
   }
   cam3(t) {
     const st = this.st.apple8; if (t >= PB || !st || !st.Ds) return { cx: 0, cy: 0, cs: 1 };
@@ -208,7 +238,15 @@ export class HomeEngine {
     this.ctear = this.ctear && this.ctear.fib ? this.ctear : P.ragged6(29);
     const ms = n ? 96 : 150, moon = this.$('[data-moon]', w8); if (moon) Object.assign(moon.style, { width: ms + 'px', height: ms + 'px' });
     this.moon0 = [W * g.mx - ms / 2, H * (n ? .1 : .2) - ms / 2];
-    this.q8 = { world: w8, cam: this.$('[data-cam]', w8), plate: this.$('[data-nightplate]', w8), rimcv: this.$('[data-crimcv]', w8), moon, refl: this.$('[data-reflect]', w8) };
+    // moonlit cloud cards over the night sea: a band on the horizon, a mid layer and a near one
+    const NC = this.pal().night, hz8 = H * .62;
+    this.decks.n8 = [
+      { w: W * 1.1, h: H * .14, k: .6, x0: -.05 * W, y0: hz8 - H * .14, f: .4, seed: 41, col: NC, list: n ? [[.12, .66, .02], [.48, .56, .016], [.85, .7, .02]] : [[.05, .7, .011], [.2, .56, .008], [.38, .72, .012], [.56, .6, .009], [.74, .72, .011], [.92, .58, .008]] },
+      { w: W * 1.1, h: H * .4, k: .55, x0: -.05 * W, y0: H * .1, f: 1, seed: 43, col: NC, list: n ? [[.1, .55, .06], [.86, .75, .05]] : [[.06, .5, .035], [.5, .72, .03], [.94, .4, .04], [.62, .92, .026]] },
+      { w: W * 1.2, h: H * .5, k: .45, x0: -.1 * W, y0: -H * .06, f: 1.4, seed: 47, col: Object.assign({ blur: 3 }, NC), list: n ? [[.04, .3, .1]] : [[.02, .36, .06], [.99, .22, .05]] },
+    ];
+    this.$$('[data-n8c]', w8).forEach(cv => { const L = this.decks.n8[+cv.dataset.l]; if (L) Object.assign(cv.style, { left: L.x0 + 'px', top: L.y0 + 'px', width: L.w + 'px', height: L.h + 'px' }); });
+    this.q8 = { world: w8, ncl: this.$('[data-ncl]', w8), n8c: this.$$('[data-n8c]', w8), cam: this.$('[data-cam]', w8), plate: this.$('[data-nightplate]', w8), rimcv: this.$('[data-crimcv]', w8), moon, refl: this.$('[data-reflect]', w8) };
     const T = this.ctear, inn = T.at(g.cx, g.cy, g.rx, g.ry, 0), out = T.at(g.cx, g.cy, g.rx, g.ry, 1); this.ct8 = out; this._k8 = null;
     // the torn paper rim is painted once at full size; opening and closing the tear only scales it
     const rc = this.q8.rimcv; if (rc) { const d = Math.min(2, devicePixelRatio || 1); rc.width = Math.round(W * d); rc.height = Math.round(H * d); rc.style.transformOrigin = `${g.cx.toFixed(1)}px ${g.cy.toFixed(1)}px`; rc.style.visibility = 'hidden'; try { P.tearRim6(rc.getContext('2d'), inn, out, T, g.cx, g.cy, d); } catch (e) { console.warn('rim8: ' + e.message); } }
@@ -272,13 +310,14 @@ export class HomeEngine {
   queuePaint() {
     const P = new Proxy({}, { get: (_, k) => window.Painter[k] }), g = this.g1, n = this.n, R = this.room;
     const J = [
-      [0, 'sky1', cv => P.sky(cv, { seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: n ? 6 : 11, cy0: .17, cy1: .7, cs0: .05, cs1: .11 })],
-      [0, 'near1', cv => P.cloudLayer(cv, { seed: 5, spots: n ? [[.06, .92, .12], [.95, .95, .1]] : [[.03, .9, .08], [.97, .88, .07], [.99, .5, .05]] })],
+      [0, 'sky1', cv => P.sky(cv, { seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: 0 })],
+      [0, 'near1', cv => P.deck11(cv, this.decks.sk[2])], [0, 'sk1', cv => P.deck11(cv, this.decks.sk[+cv.dataset.l])],
       [0, 'face', cv => P.face6(cv, g.fw, g.fh)], [0, 'eyeball', cv => P.eyeball6(cv, g.fw, g.fh)], [0, 'iris', cv => P.iris6(cv, g.ir, n ? 1600 : 3200)],
       [0, 'eyeshade', cv => P.eyeShade6(cv, g.fw, g.fh)], [0, 'eyeglint', cv => P.eyeGlint6(cv, g.fw, g.fh, g.ir)],
       [0, 'lid', cv => { P.lid6(cv, g.fw, g.fh); cv.style.transform = `translateY(${-g.lidUp}px)`; }], 
       [0, 'skin', cv => P.skinField6(cv, g.PW, g.PH, g.E, g.ox, g.oy)],
-      [1, 'a8sky', cv => P.apple9Sky(cv, this.g2)], [1, 'c9far', cv => P.cloudLayer9(cv, this.g2, 0)], [1, 'c9mid', cv => P.cloudLayer9(cv, this.g2, 1)], [1, 'c9near', cv => P.cloudLayer9(cv, this.g2, 2)],
+      [1, 'a8sky', cv => P.apple9Sky(cv, this.g2)],
+      [2, 'b3c', cv => P.deck10(cv, this.decks.b3[+cv.dataset.l])], [7, 'n8c', cv => P.deck10(cv, this.decks.n8[+cv.dataset.l])],
       [2, 'b6sky', cv => P.beach6Sky(cv, this.S6)], [2, 'b6g0', cv => P.beach6Ground(cv, this.S6, 0)], [2, 'b6gull', cv => P.gull6(cv)], [2, 'b6g1', cv => P.beach6Ground(cv, this.S6, 1)],
             [4, 'b6tall', cv => P.beach6Tall(cv, this.S6)],
       [5, 'desert', cv => P.arcade7(cv, { hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 })], [5, 'founder', cv => P.founder7(cv, +cv.dataset.v)], [5, 'head', cv => P.head7(cv, +cv.dataset.v)], [5, 'thought', cv => P.thought7(cv, cv.dataset.kind)], [5, 'resolved', cv => P.resolved(cv, +cv.dataset.v)], [5, 'planet', cv => P.planet(cv, cv.dataset.col)],
@@ -288,12 +327,13 @@ export class HomeEngine {
     // The heavy plates (up to several seconds of brushwork each) are painted in a worker when the browser allows it.
     // Each entry says which painter to call there and with what; non-plain inputs are rebuilt worker-side.
     const B = { $beach: [this.W, this.H, n] }, RM = {
-      near1: () => ['cloudLayer', [{ seed: 5, spots: n ? [[.06, .92, .12], [.95, .95, .1]] : [[.03, .9, .08], [.97, .88, .07], [.99, .5, .05]] }]],
-      sky1: cv => ['sky', [{ seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: n ? 6 : 11, cy0: .17, cy1: .7, cs0: .05, cs1: .11 }]],
+      near1: () => ['deck11', [this.decks.sk[2]]], sk1: cv => ['deck11', [this.decks.sk[+cv.dataset.l]]],
+      b3c: cv => ['deck10', [this.decks.b3[+cv.dataset.l]]], n8c: cv => ['deck10', [this.decks.n8[+cv.dataset.l]]],
+      sky1: cv => ['sky', [{ seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: 0 }]],
       face: () => ['face6', [g.fw, g.fh]], eyeball: () => ['eyeball6', [g.fw, g.fh]], iris: () => ['iris6', [g.ir, n ? 1600 : 3200]],
       eyeshade: () => ['eyeShade6', [g.fw, g.fh]], eyeglint: () => ['eyeGlint6', [g.fw, g.fh, g.ir]],
       lid: () => ['lid6', [g.fw, g.fh]], skin: () => ['skinField6', [g.PW, g.PH, { $eye: [g.fw, g.fh] }, g.ox, g.oy]],
-      a8sky: () => ['apple9Sky', [this.g2]], c9far: () => ['cloudLayer9', [this.g2, 0]], c9mid: () => ['cloudLayer9', [this.g2, 1]], c9near: () => ['cloudLayer9', [this.g2, 2]], room: () => ['room', [R]], b6sky: () => ['beach6Sky', [B]], b6g0: () => ['beach6Ground', [B, 0]], b6g1: () => ['beach6Ground', [B, 1]], b6tall: () => ['beach6Tall', [B]],
+      a8sky: () => ['apple9Sky', [this.g2]], room: () => ['room', [R]], b6sky: () => ['beach6Sky', [B]], b6g0: () => ['beach6Ground', [B, 0]], b6g1: () => ['beach6Ground', [B, 1]], b6tall: () => ['beach6Tall', [B]],
       desert: () => ['arcade7', [{ hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 }]], founder: cv => ['founder7', [+cv.dataset.v]],
       night: () => ['nightSea', [{ hy: .413, mx: this.g8.mx }]], morning: () => ['morning9', [this.tearSky()]],
     }, AFTER = { lid: cv => { cv.style.transform = `translateY(${-g.lidUp}px)`; } };
@@ -355,20 +395,28 @@ export class HomeEngine {
   fadeSwap() { ['[data-stage]', '[data-copylayer]'].forEach(s => { const el = this.$(s); el && el.animate([{ opacity: .15 }, { opacity: 1 }], { duration: 600, easing: 'ease-out' }); }); }
   worldAt(t) { let k = 0; for (let i = 0; i < 8; i++) if (t >= NAVT[i]) k = i; return k; }
   render(t) {
+    this._mq = this._mq || matchMedia('(prefers-reduced-motion: reduce)'); this._rm = this.props.motion === false || this._mq.matches;
     this.mv = {}; this.m3 = 'none'; this.tilt = this.tiltAt(t); this.qstate(t);
     for (let k = 0; k < 8; k++) { const el = this.wEl[k]; if (!el) continue; const on = t >= RANGE[k][0] && t < RANGE[k][1]; if (el._on !== on) { el._on = on; el.style.visibility = on ? 'visible' : 'hidden'; el.style.display = on ? '' : 'none'; } if (on) this['w' + (k + 1)](t); }
-    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.c9[2]) this.S(this.q2.c9[2], 'visibility', 'hidden'); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
+    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
     this.carry(t); this.copy(t); this.ui(t); this.mounts(t); this.drive();
   }
 
   w1(t) {
     const g = this.g1, q = this.q1, P = window.Painter, W = this.W, H = this.H; if (!g || !q) return;
     if (this._s1 !== 1) { this._s1 = 1; const inn = this.tear.at(g.cx, g.cy, g.rx, g.ry, 0), out = this.tear.at(g.cx, g.cy, g.rx, g.ry, 1);
-      q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H + 60}H0Z ${P.toPath(out)}")`; if (this.rimCtx) P.tearRim6(this.rimCtx, inn, out, this.tear, g.cx, g.cy, this.dpr1); }
-    const T = this.tilt, off = T ? Math.round(T.top) - H : 0;
-    this.S(this.wEl[0], 'transform', `translateY(${off}px)`); this.S(q.face, 'transform', 'none');
+      q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H + 60}H0Z ${P.toPath(out)}")`; if (q.cl) q.cl.style.clipPath = `path(evenodd, "M-600 -600H${W + 600}V${H * 3.5}H-600Z ${P.toPath(out)}")`;
+      if (this.rimCtx) P.tearRim6(this.rimCtx, inn, out, this.tear, g.cx, g.cy, this.dpr1); this.tearShadow(inn, out); }
+    const T = this.tilt, off = T ? Math.round(T.top) - H : 0, rm = this._rm;
+    this.S(this.wEl[0], 'transform', `translateY(${off}px)`);
+    /* the face sits behind the hole: it travels a little less than the torn sky */
+    const sh = rm ? 0 : Math.min(g.ry * .3, Math.max(0, -off * .1)); this.S(q.face, 'transform', sh > .05 ? `translateY(${sh.toFixed(1)}px)` : 'none');
     const gz = sm(0, .2, t), f = (1 - sm(.8, .95, t)) * (1 - gz);
-    this.S(q.eye, 'transform', `translate(${((this.mx || 0) * g.ex * f).toFixed(1)}px,${((this.my || 0) * g.ey * f + g.ey * 1.15 * gz).toFixed(1)}px)`);
+    // the eye follows a fine pointer, eased and held within 6px
+    const fine = this._fine ?? (this._fine = matchMedia('(pointer: fine)').matches), fol = fine && !rm;
+    this._ex = mx(this._ex || 0, fol ? (this.mx || 0) * 6 : 0, .05); this._ey = mx(this._ey || 0, fol ? (this.my || 0) * 6 : 0, .05);
+    const em = Math.hypot(this._ex, this._ey), ek = em > 6 ? 6 / em : 1;
+    this.S(q.eye, 'transform', `translate(${(this._ex * ek * f).toFixed(1)}px,${(this._ey * ek * f + g.ey * 1.15 * gz).toFixed(1)}px)`);
     this._pk = mx(this._pk ?? 1, this._hov && t < .4 ? .8 : 1, .07); this.S(q.pupil, 'transform', `scale(${this._pk.toFixed(3)})`);
   }
   /* one camera: pitch from the sky down to the horizon, then a push along the ray into the bite */
@@ -376,8 +424,8 @@ export class HomeEngine {
     const W = this.W, H = this.H, q = this.q2, G = this.g2, T = this.tilt; if (!q || !G || !T) return;
     const dy = T.top - T.topE;
     this.S(q.plate, 'transform', `translateY(${Math.round(T.top)}px)`);
-    q.c9.forEach((cv, i) => { const L = G.cl9 && G.cl9[i]; if (!L) return; const y = L.y0 + dy * L.f, on = y < H && y + L.h > 0 && t < PB; this.S(cv, 'visibility', on ? 'visible' : 'hidden'); if (on) this.S(cv, 'transform', `translateY(${y.toFixed(1)}px)`); });
-    const nr = this.q1 && this.q1.near; if (nr) { const o = (T.top - H) * 1.35, on = o > -H * 1.3; this.S(nr, 'visibility', on ? 'visible' : 'hidden'); if (on) this.S(nr, 'transform', `translate(${(Math.sin(this.now * .05) * 24).toFixed(1)}px,${o.toFixed(1)}px)`); }
+    { const sc = q.skycl, off = Math.round(T.top) - H, on = t < PB; if (sc) { this.S(sc, 'visibility', on ? 'visible' : 'hidden'); if (on) { this.S(sc, 'transform', `translateY(${off}px)`); q.skl.forEach((cv, i) => { const L = this.decks.sk && this.decks.sk[i]; if (L) this.S(cv, 'transform', `translate(${this.drift(i).toFixed(1)}px,${((this.pf(L.f) - 1) * off).toFixed(1)}px)`); }); } } }
+    const nr = this.q1 && this.q1.near; if (nr) { const o = (T.top - H) * this.pf(1.4), on = o > -H * 1.95; this.S(nr, 'visibility', on ? 'visible' : 'hidden'); if (on) this.S(nr, 'transform', `translate(${this.drift(2).toFixed(1)}px,${o.toFixed(1)}px)`); }
     const sy = T.top + G.Yh - 2, seaOn = sy < H; this.S(q.sea, 'visibility', seaOn ? 'visible' : 'hidden');
     if (seaOn && q.sx) { this.S(q.sea, 'transform', `translateY(${sy.toFixed(1)}px)`); window.Painter.sea8(q.sx, q.sea.width, q.sea.height, G.sunX * .6, this.now, .6); }
     q.gulls.forEach((el, i) => { const gp = G.gulls[i]; if (!gp) return; const a = this.now * (.04 + i * .011) + i * 2.1, x = W * gp[0] + Math.sin(a) * W * .03, y = dy + H * gp[1] + Math.sin(a * 1.7) * 6, s2 = (this.n ? .3 : .34) + i * .05, fl = .7 + Math.sin(this.now * 3 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
@@ -398,7 +446,11 @@ export class HomeEngine {
     this.S(q.world, 'clipPath', 'none'); this.S(q.world, 'maskImage', m3); this.S(q.world, 'webkitMaskImage', m3);
     this.S(q.cam, 'transform', `translate(${C.cx.toFixed(1)}px,${C.cy.toFixed(1)}px) scale(${C.cs.toFixed(4)})`);
     const c = this.cam6(t), s = c.f / S.F, vh = c.cy - c.f * Math.tan(c.ph);
-    this.S(q.sky, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${(W / 2 - s * W / 2 - s * .04 * W).toFixed(2)},${(vh - s * S.hy - s * .04 * H).toFixed(2)})`);
+    const sx0 = W / 2 - s * W / 2 - s * .04 * W, sy0 = vh - s * S.hy - s * .04 * H;
+    this.S(q.sky, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${sx0.toFixed(2)},${sy0.toFixed(2)})`);
+    // the beach clouds ride with the sky and drift a little apart in depth while the beach holds
+    const v3 = this._rm ? 0 : cl(-(t - 8.4) * H * .03, -H * .08, H * .08);
+    q.b3c.forEach(cv => { const i = +cv.dataset.l, L = this.decks.b3 && this.decks.b3[i]; if (L) this.S(cv, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${(sx0 + s * L.x0 + this.drift(i)).toFixed(2)},${(sy0 + s * L.y0 + v3 * this.pf(L.f)).toFixed(2)})`); });
     const hm = (el, pose) => { if (!el) return; const z1 = Math.max(c.z, pose.z) + 1.6, pts = [[c.x - 1.5, z1], [c.x + 1.5, z1], [c.x + 1.5, z1 + 6], [c.x - 1.5, z1 + 6]];
       this.S(el, 'transform', P.homog(pts.map(([X, Z]) => { const p = pr(pose, X, 0, Z); return [p[0] + .1 * W, p[1]]; }), pts.map(([X, Z]) => pr(c, X, 0, Z)))); };
     hm(q.g0, S.pose0); hm(q.g1, S.poseE); this.S(q.g1, 'opacity', '1');
@@ -581,15 +633,17 @@ export class HomeEngine {
     const w = this.win; q.world.style.clipPath = t < 25.1 && w ? `polygon(${w[0].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[3].toFixed(1)}px,${w[0].toFixed(1)}px ${w[3].toFixed(1)}px)` : 'none';
     const e7 = sm(24.1, 25.1, t), z = mx(1.22, 1, e7), foot = sm(27.7, 28.5, t), ty = -H * .36 * foot - H * .06 * (1 - e7);
     this.S(q.cam, 'transform', `translate(${(W / 2 * (1 - z)).toFixed(1)}px,${(H / 2 * (1 - z) + ty).toFixed(1)}px) scale(${z.toFixed(4)})`);
-    this.S(q.moon, 'transform', `translate(${(this.moon0[0] + (this.mx || 0) * 12).toFixed(1)}px,${(this.moon0[1] + (this.my || 0) * 8).toFixed(1)}px)`);
+    const fm = this._rm ? 0 : 1; this.S(q.moon, 'transform', `translate(${(this.moon0[0] + (this.mx || 0) * 12 * fm).toFixed(1)}px,${(this.moon0[1] + (this.my || 0) * 8 * fm).toFixed(1)}px)`);
+    const v8 = this._rm ? 0 : cl(-(t - 26.6) * H * .03, -H * .08, H * .08);
+    q.n8c.forEach((cv, i) => { const L = this.decks.n8 && this.decks.n8[i]; if (L) this.S(cv, 'transform', `translate(${this.drift(i).toFixed(1)}px,${(v8 * this.pf(L.f)).toFixed(1)}px)`); });
     const qo = sm(26.2, 26.85, t), cz = sm(27.55, 28.05, t);
     if (qo > 0 && cz < .999) {
       const k = (.08 + .92 * qo) * (1 - cz * .94);
-      if (k !== this._k8) { this._k8 = k; const o = this.ct8; if (o) q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(o.map(([x, y]) => [g.cx + (x - g.cx) * k, g.cy + (y - g.cy) * k]))}")`;
+      if (k !== this._k8) { this._k8 = k; const o = this.ct8; if (o) { q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(o.map(([x, y]) => [g.cx + (x - g.cx) * k, g.cy + (y - g.cy) * k]))}")`; if (q.ncl) q.ncl.style.clipPath = q.plate.style.clipPath; }
         if (q.rimcv) { q.rimcv.style.visibility = 'visible'; q.rimcv.style.transform = `scale(${k.toFixed(4)})`; }
         const AE = this.armEls; if (AE) { const cp = this.armClip(k); AE.wraps.slice(0, 2).forEach(e => { e.style.clipPath = cp; }); if (AE.flapG) AE.flapG.setAttribute('transform', `translate(${g.cx.toFixed(1)} ${g.cy.toFixed(1)}) scale(${k.toFixed(4)}) translate(${(-g.cx).toFixed(1)} ${(-g.cy).toFixed(1)})`); } }
       if (qo > .4 && !this._tore2) { this._tore2 = true; this.paper(); }
-    } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; if (q.rimcv) q.rimcv.style.visibility = 'hidden'; if (qo <= 0) this._tore2 = false; }
+    } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; if (q.ncl) q.ncl.style.clipPath = 'none'; if (q.rimcv) q.rimcv.style.visibility = 'hidden'; if (qo <= 0) this._tore2 = false; }
     /* the arm: reaches out of the tear, sways while it waits; hover brings the letter toward you */
     const now = this.now || 0, AR = this.arm, AE = this.armEls;
     this._hv = mx(this._hv || 0, this._chov ? 1 : 0, .14); const hv = this._hv < .002 ? 0 : this._hv;
