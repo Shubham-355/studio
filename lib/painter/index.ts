@@ -19,6 +19,7 @@ export function loadPainter(): Promise<void> {
       await import("./worlds6.js");
       await import("./eye6.js");
       await import("./eye12.js");
+      await import("./blink14.js"); // main thread only: the lid is drawn live
       await import("./worlds7.js");
       await import("./worlds8.js");
       await import("./worlds9.js");
