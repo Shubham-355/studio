@@ -34,14 +34,6 @@ function Words({ text }: { text: string }) {
   return <>{out}</>;
 }
 
-function Caption({ a, b, L, children }: { a: string; b: string; L: Layout; children: ReactNode }) {
-  return (
-    <div data-copy data-a={a} data-b={b} className={s.copy} style={{ left: L.capL, right: L.capR, top: L.capT, bottom: L.capB }}>
-      <span data-w className={s.caption}>{children}</span>
-    </div>
-  );
-}
-
 function ArmLayer({ svg }: { svg: "thumb" | "front" }) {
   return (
     <div data-armwrap aria-hidden className={s.armWrap}>
@@ -101,7 +93,6 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
           <span data-w className={s.stageText}>{g.d}</span>
         </div>
       ))}
-      <Caption a="13.85" b="16.76" L={L}>Oil on sand, 2026. Five moves to the last rank.</Caption>
 
       <section id="companies" data-copy data-a="18.3" data-b="19.1" className={`${s.copy} ${s.wide}`} style={{ top: L.t1, bottom: L.b1, color: "var(--ink)" }}>
         <h2 className={s.display} style={{ maxWidth: L.w1, fontSize: "clamp(44px,5.6vw,92px)", textShadow: "0 0 30px rgba(237,187,128,.8)" }}>

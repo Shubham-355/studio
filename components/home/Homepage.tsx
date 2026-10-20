@@ -9,8 +9,8 @@ import s from "./home.module.css";
 type State = { loader: boolean; sound: boolean; menu: boolean; world: number; notes: boolean };
 type Target = "home" | "companies" | "how" | "contact";
 
-const NARROW: Layout = { tA: "auto", wA: "100%", wB: "100%", heroB: "104px", t1: "auto", b1: "92px", w1: "100%", w2: "100%", capL: "20px", capR: "auto", capT: "76px", capB: "auto", mL: "20px", mR: "20px", mT: "auto", mB: "92px", tBeach: "84px", linkB: "40px", tRoom: "84px", wRoom: "100%", wC: "100%", tagT: "15px", tagW: "104px", tQuote: "96px", bContact: "92px", tFoot: "30vh", refl: "22vw" };
-const WIDE: Layout = { tA: "clamp(100px,14vh,160px)", wA: "min(36vw,560px)", wB: "min(34vw,520px)", heroB: "clamp(56px,10vh,120px)", t1: "clamp(116px,17vh,180px)", b1: "auto", w1: "min(66vw,1080px)", w2: "min(44vw,660px)", capL: "auto", capR: "96px", capT: "auto", capB: "32px", mL: "0px", mR: "auto", mT: "0px", mB: "auto", tBeach: "clamp(116px,17vh,180px)", linkB: "48px", tRoom: "clamp(116px,17vh,180px)", wRoom: "min(34vw,560px)", wC: "min(40vw,620px)", tagT: "18px", tagW: "min(160px,10.5vw)", tQuote: "clamp(120px,18vh,190px)", bContact: "clamp(56px,12vh,130px)", tFoot: "46vh", refl: "12vw" };
+const NARROW: Layout = { tA: "auto", wA: "100%", wB: "100%", heroB: "104px", t1: "auto", b1: "92px", w1: "100%", w2: "100%", mL: "20px", mR: "20px", mT: "auto", mB: "92px", tBeach: "84px", linkB: "40px", tRoom: "84px", wRoom: "100%", wC: "100%", tagT: "15px", tagW: "104px", tQuote: "96px", bContact: "92px", tFoot: "30vh", refl: "22vw" };
+const WIDE: Layout = { tA: "clamp(100px,14vh,160px)", wA: "min(36vw,560px)", wB: "min(34vw,520px)", heroB: "clamp(56px,10vh,120px)", t1: "clamp(116px,17vh,180px)", b1: "auto", w1: "min(66vw,1080px)", w2: "min(44vw,660px)", mL: "0px", mR: "auto", mT: "0px", mB: "auto", tBeach: "clamp(116px,17vh,180px)", linkB: "48px", tRoom: "clamp(116px,17vh,180px)", wRoom: "min(34vw,560px)", wC: "min(40vw,620px)", tagT: "18px", tagW: "min(160px,10.5vw)", tQuote: "clamp(120px,18vh,190px)", bContact: "clamp(56px,12vh,130px)", tFoot: "46vh", refl: "12vw" };
 
 const onResize = (cb: () => void) => {
   addEventListener("resize", cb);
@@ -116,17 +116,22 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
         ) : (
           <div className={s.navBar}>
             <a href="#top" onClick={(e) => go("home", e)} className={`${s.brand} ${s.focusRing}`}>{studioName}</a>
-            <div className={s.navLinks}>
-              <a href="#companies" onClick={(e) => go("companies", e)} className={`${s.navLink} ${s.focusRing}`}>Companies</a>
-              <a href="#how-we-build" onClick={(e) => go("how", e)} className={`${s.navLink} ${s.focusRing}`}>How we build</a>
-              <a href="#studio" className={`${s.navLink} ${s.focusRing}`}>Studio</a>
-            </div>
-            <div className={s.navEnd}>
-              <button onClick={toggleSound} aria-label="Ambient sound" aria-pressed={sound} className={`${s.soundBtn} ${s.focusRing}`}>
-                <Bars />
-                {vw >= 1120 && <span>{sound ? "Sound on" : "Sound off"}</span>}
-              </button>
-              <a href="#start" onClick={(e) => go("contact", e)} data-magnet data-navcta className={`${s.pill} ${s.pillSm} ${s.navCta}`}>Start a company</a>
+            <div className={s.navRight}>
+              {/* the links and sound button step aside when the call to action slides in */}
+              <div data-navlinks className={s.navSlide}>
+                <div className={s.navLinks}>
+                  <a href="#companies" onClick={(e) => go("companies", e)} className={`${s.navLink} ${s.focusRing}`}>Companies</a>
+                  <a href="#how-we-build" onClick={(e) => go("how", e)} className={`${s.navLink} ${s.focusRing}`}>How we build</a>
+                  <a href="#studio" className={`${s.navLink} ${s.focusRing}`}>Studio</a>
+                </div>
+                <div className={s.navEnd}>
+                  <button onClick={toggleSound} aria-label="Ambient sound" aria-pressed={sound} className={`${s.soundBtn} ${s.focusRing}`}>
+                    <Bars />
+                    {vw >= 1120 && <span>{sound ? "Sound on" : "Sound off"}</span>}
+                  </button>
+                </div>
+              </div>
+              <a href="#start" onClick={(e) => go("contact", e)} data-magnet data-navcta tabIndex={-1} aria-hidden="true" className={`${s.pill} ${s.pillSm} ${s.navCta}`}>Start a company</a>
             </div>
           </div>
         )}
