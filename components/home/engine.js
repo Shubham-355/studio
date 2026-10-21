@@ -24,7 +24,7 @@ const INK = [0, 1, 1, 0, 1, 1, 1, 0], SOFT = [0, 0, 1, 0, 1, 0, 1, 0];
 const CZ = [6, 11, 16, 21], DOORZ = 27;
 const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
 const AK = 1 / .14, ZE = -2 - 1 / QS;
-const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [21.95, 21.2], [22.9, 26.62]];
+const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [22.9, 26.8]];
 const BEATS = [.05, 2.0, 2.95, 12.45].concat([14.3, 14.74, 15.24, 15.73, 16.23, 16.6, 17.65, 18.6, 19.35, 20.05, 20.75, 21.45, 22.1, 23.6, 25.7, 27.1, 28.4]);
 const BEDS = [{ f: 420, g: .5, s: .05 }, { f: 800, g: .26, s: .2 }, { f: 1100, g: .3, s: .65 }, { f: 170, g: .8, s: .04 }, { f: 1000, g: .28, s: .55 }, { f: 300, g: .45, s: 0 }, { f: 260, g: .04, s: 0 }, { f: 520, g: .32, s: .45 }];
 export const NOTES = [
@@ -34,7 +34,7 @@ export const NOTES = [
   '',
   'Board reached from the beach rise (ends 14.05, pawn emerges 13.1–13.9); pawn crosses 14.25–16.55, wave makes the queen. Into the queen 16.6–18.2 (1.2 screens of scroll): settle over the crown, push into the front arch (board blurs by depth), sunset light stains the porcelain stroke by stroke, the arch widens into the arcade and the board squares become its floor.',
   'One camera: the arcade is a 3D hall rendered from the queen camera mapped through the crown arch (no copy), so the camera walks on into it from 18.2. Founders at z 6/11/16/21: thoughts resolve as the camera nears (dz 4.9→3.2) and scatter again on the way back. Hover: object turns, panel slides out.',
-  'Walk through the door 21.9–22.9. Dolly 22.9–24.1. Window 24.1–25.1: camera turns into the lower-left pane, world 8 visible through the glass throughout.',
+  'Door in the back wall from the first frame; it swings inward with scroll 21.5–22.85 while the camera walks straight through it (21.45–22.9). Dolly 22.9–24.1. Window 24.1–25.1: camera turns into the lower-left pane, world 8 visible through the glass throughout.',
   'Quote 25.25–26.25. Tear opens 26.2–26.85; arm emerges from shadow inside it and holds the card (thumb in front, fingers behind). Card leaves 27.4; tear closes 27.55–28.05 as the camera lowers to the water; footer from 27.75.',
 ];
 
@@ -73,9 +73,9 @@ export class HomeEngine {
   destroy() {
     this._alive = false; removeEventListener('resize', this._onResize);
     document.removeEventListener('visibilitychange', this._onVis); ACT.forEach(e => removeEventListener(e, this._onAct));
-    this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lt); clearInterval(this._fx); this._ac && this._ac.close();
+    this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lidT); clearTimeout(this._lt); clearInterval(this._fx); this._ac && this._ac.close();
   }
-  async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Painter.cloud10 && window.Painter.eye12 && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
+  async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Painter.cloud10 && window.Painter.eye12 && window.Painter.blink14 && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
   pal() { return window.Painter.cloudPal10 || { day: {}, warm: {}, night: {} }; }
   /* cloud depth: self-drift (a few px/s per layer) and parallax factor; both off with reduced motion */
   drift(i) { return this._rm ? 0 : 36 * Math.sin((this.now || 0) * [2, 3.5, 5][i] / 36 + i * 1.7); }
@@ -143,7 +143,10 @@ export class HomeEngine {
     const rc = this.$('[data-rimcv]'); if (rc) { const d = Math.min(2, devicePixelRatio || 1); rc.width = Math.round(W * d); rc.height = Math.round(H * d); this.rimCtx = rc.getContext('2d'); this.dpr1 = d; }
     Object.assign(this.$('[data-pupil]').style, { left: (E.cx - pr) + 'px', top: (E.cy - pr) + 'px', width: pr * 2 + 'px', height: pr * 2 + 'px' });
     const m = `radial-gradient(ellipse 50% 50% at 50% 50%, #000 80%, transparent 98%)`; const fc = this.$('[data-facecv]'); fc.style.webkitMaskImage = fc.style.maskImage = m;
-    this.$('[data-lidwin]').style.clipPath = this.$('[data-shadewin]').style.clipPath = `path("${E.path}")`;
+    this.$('[data-shadewin]').style.clipPath = `path("${E.path}")`; this.$('[data-lidwin]').style.clipPath = 'none';
+    // the upper lid is drawn live: its skin texture is painted once, a moment after layout, so it never delays the first frame
+    { const lc = this.$('[data-lid]'), d = Math.min(2, devicePixelRatio || 1); lc.width = Math.round(fw * d); lc.height = Math.round(fh * d); Object.assign(lc.style, { width: fw + 'px', height: fh + 'px', transform: 'none' }); this.lidCtx = lc.getContext('2d'); this.lidCtx.setTransform(d, 0, 0, d, 0, 0);
+      this.lid14 = { tex: null, lashes: [], w: fw, h: fh }; this._lc = -1; clearTimeout(this._lidT); this._lidT = setTimeout(() => { const L = this.lid14; if (L && P.lidTex14) { L.tex = P.lidTex14(fw, fh); this._lc = -1; } }, 700); }
     const cap = this.$('[data-herocap]');
     if (cap) cap.style.display = (!n && cx + rx + 44 + 230 > W - 16) ? 'none' : ''; if (cap) Object.assign(cap.style, n ? { left: (cx - rx) + 'px', top: Math.max(76, cy - ry - 64) + 'px', maxWidth: rx * 2 + 'px' } : { left: (cx + rx + 44) + 'px', top: (cy - ry * .3) + 'px', maxWidth: '220px' });
     this.q1 = { face, eye: this.$('[data-eyeball]'), wrap: this.$('[data-skywrap]'), plate: this.$('[data-skyplate]'), rim: this.$('[data-rim]'), near: this.$('[data-near]'), lid: this.$('[data-lid]'), pupil: this.$('[data-pupil]'), glint: this.$('[data-glint]'), scrim: this.$('[data-navscrim]'), cl: this.$('[data-skycl]'), tsh: this.$('[data-tearsh]') };
@@ -218,7 +221,7 @@ export class HomeEngine {
     const H = this.H, n = this.n, w6 = this.wEl[5]; if (!w6) return;
     this.F6 = n ? H * .52 : H * .9; this.hy6 = H * .56; this.fovW = 2 * Math.atan(H / 2 / this.F6) * 180 / Math.PI; this.px6 = n ? [-.4, .4, -.4, .4] : [-1.35, 1.35, -1.35, 1.35]; this.pw6 = n ? 1.05 : 1;
     Object.assign(this.st.arcade8, { xw: n ? 1.3 : 2.6, ze: ZE, dz: DOORZ, fs: this.px6.map((x, i) => [-x, CZ[i], 2.4]) });
-    this.dk = null;
+    this.dk6 = null;
     this.q6 = { world: w6, cam: this.$('[data-cam]', w6), plate: this.$('[data-plate]', w6), door: this.$('[data-door]', w6), train: this.$('[data-train]', w6) };
   }
   layout7() {
@@ -312,9 +315,8 @@ export class HomeEngine {
     const J = [
       [0, 'sky1', cv => P.sky(cv, { seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: 0 })],
       [0, 'near1', cv => P.deck11(cv, this.decks.sk[2])], [0, 'sk1', cv => P.deck11(cv, this.decks.sk[+cv.dataset.l])],
-      [0, 'face', cv => P.face6(cv, g.fw, g.fh)], [0, 'eyeball', cv => P.eyeball6(cv, g.fw, g.fh)], [0, 'iris', cv => P.iris6(cv, g.ir, n ? 1600 : 3200)],
+      [0, 'face', cv => P.face6(cv, g.fw, g.fh, { noUp: true })], [0, 'eyeball', cv => P.eyeball6(cv, g.fw, g.fh)], [0, 'iris', cv => P.iris6(cv, g.ir, n ? 1600 : 3200)],
       [0, 'eyeshade', cv => P.eyeShade6(cv, g.fw, g.fh)], [0, 'eyeglint', cv => P.eyeGlint6(cv, g.fw, g.fh, g.ir)],
-      [0, 'lid', cv => { P.lid6(cv, g.fw, g.fh); cv.style.transform = `translateY(${-g.lidUp}px)`; }], 
       [0, 'skin', cv => P.skinField6(cv, g.PW, g.PH, g.E, g.ox, g.oy)],
       [1, 'a8sky', cv => P.apple9Sky(cv, this.g2)],
       [2, 'b3c', cv => P.deck10(cv, this.decks.b3[+cv.dataset.l])], [7, 'n8c', cv => P.deck10(cv, this.decks.n8[+cv.dataset.l])],
@@ -330,16 +332,16 @@ export class HomeEngine {
       near1: () => ['deck11', [this.decks.sk[2]]], sk1: cv => ['deck11', [this.decks.sk[+cv.dataset.l]]],
       b3c: cv => ['deck10', [this.decks.b3[+cv.dataset.l]]], n8c: cv => ['deck10', [this.decks.n8[+cv.dataset.l]]],
       sky1: cv => ['sky', [{ seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: 0 }]],
-      face: () => ['face6', [g.fw, g.fh]], eyeball: () => ['eyeball6', [g.fw, g.fh]], iris: () => ['iris6', [g.ir, n ? 1600 : 3200]],
+      face: () => ['face6', [g.fw, g.fh, { noUp: true }]], eyeball: () => ['eyeball6', [g.fw, g.fh]], iris: () => ['iris6', [g.ir, n ? 1600 : 3200]],
       eyeshade: () => ['eyeShade6', [g.fw, g.fh]], eyeglint: () => ['eyeGlint6', [g.fw, g.fh, g.ir]],
-      lid: () => ['lid6', [g.fw, g.fh]], skin: () => ['skinField6', [g.PW, g.PH, { $eye: [g.fw, g.fh] }, g.ox, g.oy]],
+      skin: () => ['skinField6', [g.PW, g.PH, { $eye: [g.fw, g.fh] }, g.ox, g.oy]],
       a8sky: () => ['apple9Sky', [this.g2]], room: () => ['room', [R]], b6sky: () => ['beach6Sky', [B]], b6g0: () => ['beach6Ground', [B, 0]], b6g1: () => ['beach6Ground', [B, 1]], b6tall: () => ['beach6Tall', [B]],
       desert: () => ['arcade7', [{ hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 }]], founder: cv => ['founder7', [+cv.dataset.v]],
       night: () => ['nightSea', [{ hy: .413, mx: this.g8.mx }]], morning: () => ['morning9', [this.tearSky()]],
-    }, AFTER = { lid: cv => { cv.style.transform = `translateY(${-g.lidUp}px)`; } };
+    };
     const remote = canPaintRemotely() && !this.q('noworker');
     const at = parseFloat(this.q('at')), aw = isNaN(at) ? -1 : this.worldAt(at);
-    this.pq = []; J.forEach(([w, k, fn]) => { if (aw >= 0 && Math.abs(w - aw) > 1 && !(aw === 1 && w === 2)) return; this.$$(`[data-paint="${k}"]`).forEach(cv => this.pq.push({ w, cv, fn, rm: remote && RM[k], after: AFTER[k] })); });
+    this.pq = []; J.forEach(([w, k, fn]) => { if (aw >= 0 && Math.abs(w - aw) > 1 && !(aw === 1 && w === 2)) return; this.$$(`[data-paint="${k}"]`).forEach(cv => this.pq.push({ w, cv, fn, rm: remote && RM[k] })); });
     const token = (this._pt = (this._pt || 0) + 1);
     // Plates near the visible world get a deadline; far ones wait for genuinely idle time so they never stall a scroll.
     const idle = (f, urgent) => window.requestIdleCallback ? requestIdleCallback(f, urgent ? { timeout: 100 } : undefined) : setTimeout(f, urgent ? 16 : 120);
@@ -353,7 +355,7 @@ export class HomeEngine {
       const j = this.pq.splice(bi, 1)[0], cv = j.cv, back = show(cv), cw = cv.offsetWidth, ch = cv.offsetHeight, [fn, args] = j.rm(cv); back();
       paintRemote(cv, fn, args, cw, ch).then(ok => {
         if (token !== this._pt) return;
-        if (ok) j.after && j.after(cv); else { j.rm = null; this.pq.push(j); idle(step, true); }
+        if (!ok) { j.rm = null; this.pq.push(j); idle(step, true); }
         remoteStep();
       });
     };
@@ -412,11 +414,14 @@ export class HomeEngine {
     /* the face sits behind the hole: it travels a little less than the torn sky */
     const sh = rm ? 0 : Math.min(g.ry * .3, Math.max(0, -off * .1)); this.S(q.face, 'transform', sh > .05 ? `translateY(${sh.toFixed(1)}px)` : 'none');
     const gz = sm(0, .2, t), f = (1 - sm(.8, .95, t)) * (1 - gz);
-    // the eye follows a fine pointer, eased and held within 6px
+    // the eye follows a fine pointer, eased and held within 6px; it holds still and dips slightly while the lid is down
     const fine = this._fine ?? (this._fine = matchMedia('(pointer: fine)').matches), fol = fine && !rm;
-    this._ex = mx(this._ex || 0, fol ? (this.mx || 0) * 6 : 0, .05); this._ey = mx(this._ey || 0, fol ? (this.my || 0) * 6 : 0, .05);
+    if (this._sb == null) this._sb = t > .012; if (!this._sb && t > .012) { this._sb = true; if (t < .4 && !rm) this.startBlink(false); }
+    const bc = this.blinkC(performance.now());
+    if (bc <= 0) { this._ex = mx(this._ex || 0, fol ? (this.mx || 0) * 6 : 0, .05); this._ey = mx(this._ey || 0, fol ? (this.my || 0) * 6 : 0, .05); }
     const em = Math.hypot(this._ex, this._ey), ek = em > 6 ? 6 / em : 1;
-    this.S(q.eye, 'transform', `translate(${(this._ex * ek * f).toFixed(1)}px,${(this._ey * ek * f + g.ey * 1.15 * gz).toFixed(1)}px)`);
+    this.S(q.eye, 'transform', `translate(${(this._ex * ek * f - g.E.ew * .012 * bc).toFixed(2)}px,${(this._ey * ek * f + g.ey * 1.15 * gz + g.E.eh * .04 * bc).toFixed(2)}px)`);
+    this.drawLid(bc);
     this._pk = mx(this._pk ?? 1, this._hov && t < .4 ? .8 : 1, .07); this.S(q.pupil, 'transform', `scale(${this._pk.toFixed(3)})`);
   }
   /* one camera: pitch from the sky down to the horizon, then a push along the ray into the bite */
@@ -546,10 +551,12 @@ export class HomeEngine {
     this.S(q.cam, 'transform', 'none'); this.S(q.world, 'clipPath', Q ? Q.clip : 'none'); this.S(q.world, 'webkitMaskImage', 'none'); this.S(q.world, 'maskImage', 'none');
     this.S(q.plate, 'visibility', a8.ready ? 'hidden' : 'visible');
     const dt = Math.min(.1, Math.max(0, this.now - (this._n6 || this.now))); this._n6 = this.now;
-    const pd = pj(0, 0, DOORZ), dzD = pd[2], dP = dzD > .05 ? [pd[0], pd[1] - .96 * pd[3], pd[3]] : null; let gsum = 0;
+    const pd = pj(0, 0, DOORZ), dzD = pd[2]; let gsum = 0;
     this.fEls.forEach((el, i) => {
       const co = this.companies[i], fs = this.fst[i]; if (!fs) return;
       const pr = pj(-this.px6[i], 0, CZ[i]), dz = pr[2];
+      // the hover panel only slides out while its founder is at a readable distance
+      if (fs.panel) { const okP = dz > 1.7 && dz < 7, want = !!this.fHover[i] && okP; if (fs.tr0 == null) fs.tr0 = fs.panel.style.transition; if (fs.pv !== want) { fs.pv = want; fs.panel.style.transition = okP ? fs.tr0 : 'none'; fs.panel.style.opacity = want ? '1' : '0'; fs.panel.style.transform = want ? 'translateX(0)' : `translateX(${i % 2 ? 20 : -20}px)`; } }
       if (dz < .3) { gsum += 1; this.S(el, 'visibility', 'hidden'); this.mv['card' + i] = 0; return; }
       const s = pr[3], k = s * this.pw6 / 300, X = pr[0], Yb = pr[1];
       this.S(el, 'visibility', 'visible');
@@ -558,9 +565,6 @@ export class HomeEngine {
       fs.ph += dt * ((1 - R) * 1.1 + .04);
       fs.th.forEach((te, j) => { const a = j / N * Math.PI * 2 + fs.ph * (.7 + (j % 3) * .25) * (j % 2 ? 1 : -1), rad = 80 + Math.sin(fs.ph * 1.7 + j * 1.3) * 34, ej = sm(j * .025, .5 + j * .035, R);
         const ox = 150 + Math.cos(a) * rad * 1.5 - 46, oy = hcY - 12 + Math.sin(a) * rad * .95 - 46;
-        if (j % 4 === 1 && dP) { /* a few thoughts drift down the hall and settle at the door */
-          const u = sm(.1 + (j % 3) * .07, .92, R), e = u * u * (3 - 2 * u), tx = (dP[0] - (X - 150 * k)) / k - 46, ty = (dP[1] - (Yb - 600 * k)) / k - 46, se = Math.max(.08, .22 * dP[2] / k / 92);
-          this.S(te, 'transform', `translate(${mx(ox, tx, e).toFixed(1)}px,${(mx(oy, ty, e) - Math.sin(Math.PI * u) * 60).toFixed(1)}px) rotate(${(fs.ph * 1.5 + j).toFixed(2)}rad) scale(${mx(1, se, e).toFixed(3)})`); this.S(te, 'opacity', (.9 * (1 - sm(.62, .96, u)) + .1 * (1 - sm(0, .3, u))).toFixed(3)); return; }
         const px = mx(ox + 46, 150, ej) - 46, py = mx(oy + 46, tY, ej) - 46;
         this.S(te, 'transform', `translate(${px.toFixed(1)}px,${py.toFixed(1)}px) rotate(${((fs.ph * 1.5 + j) * (1 - ej)).toFixed(2)}rad) scale(${mx(1, .15, ej).toFixed(3)})`); this.S(te, 'opacity', (1 - sm(.75, 1, ej)).toFixed(3)); });
       const rs = sm(.55, 1, R); fs.hv = mx(fs.hv, this.fHover[i] ? 1 : 0, .06);
@@ -572,54 +576,55 @@ export class HomeEngine {
       this.mv['card' + i] = sm(3.9, 3.1, dz) * sm(1.0, 1.6, dz);
       if (!n) this.pos['card' + i] = this.px6[i] < 0 ? [X + 150 * k + 24, Yb - 400 * k] : [X - 150 * k - 344, Yb - 400 * k];
     });
-    /* the door ends the hall: closed, edge-lit (brighter per founder passed), swings inward after the last one */
-    const D = this.dk || (this.dk = Object.fromEntries([...q.door.querySelectorAll('[data-dk]')].map(e => [e.dataset.dk, e])));
-    const g = Math.min(1, gsum / 4), op = sm(21.45, 21.9, t), th = op * 100 * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th);
-    if (dzD > .05) {
-      const s = pd[3], kd = s / 200, X = pd[0], Yb = pd[1], HW = .47, HH = 1.92, FD = .2, FW = .22, FT = .3, Z = DOORZ, camZ = cm.C[2];
-      this.gap = [X - 94 * kd, Yb - 384 * kd, X + 94 * kd, Yb]; const G = this.gap;
+    /* the door ends the hall from the first frame: closed, edge-lit (brighter per founder passed); after the last founder it swings inward with scroll.
+       Stone frame, jambs and step are 3D (scene3d14); the leaf, light and spill are drawn here, inside the far edge of the doorway. */
+    const D = this.dk6 || (this.dk6 = Object.fromEntries([...q.door.querySelectorAll('[data-dk]')].map(e => [e.dataset.dk, e])));
+    const g = Math.min(1, gsum / 4), op = sm(21.5, 22.3, t), sw = sm(21.5, 22.85, t), th = sw * 165 * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th);
+    this.d6 = { cz: cm.C[2] }; this.gap = null; this.gapPoly = null;
+    const HW = .47, HH = 1.92, TS = .07, FD = .15, ZF = DOORZ + .25, F = DOORZ - FD, camZ = cm.C[2];
+    const P = (x, y, z) => { const p = pj(x, y, z); return p[2] > .02 ? p : null; };
+    const fo = [P(-HW, HH, ZF), P(HW, HH, ZF), P(HW, TS, ZF), P(-HW, TS, ZF)];
+    if (dzD > .05 && fo.every(Boolean)) {
+      const s = pd[3]; const fx = fo.map(p => p[0]), fy = fo.map(p => p[1]); this.gap = [Math.min(...fx), Math.min(...fy), Math.max(...fx), Math.max(...fy)];
       this.S(q.door, 'visibility', 'visible'); this.S(q.door, 'zIndex', String(Math.max(1, Math.round(1000 - dzD * 10))));
-      const P = (x, y, z) => { const p = pj(x, y, z); return p[2] > .02 ? p : null; };
-      const set = (k, a) => { const e = D[k]; if (!e) return; const ok = a && a.every(Boolean); e.setAttribute('points', ok ? a.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') : '0,0'); };
-      const rect = [[G[0], G[1]], [G[2], G[1]], [G[2], G[3]], [G[0], G[3]]];
-      set('gapc', rect); set('light', rect); set('bloom', rect);
-      const lp = (u, v) => { const ue = .012 + u * .976, ve = v * (HH - .012), x = -HW + ue * 2 * HW * ct; return P(x, ve, Z + ue * 2 * HW * st); };
+      const set = (k, pts) => { const e = D[k]; if (!e) return; const ok = pts && pts.every(Boolean); e.setAttribute('points', ok ? pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') : '0,0'); };
+      set('gapc', fo); set('light', fo); set('bloom', fo);
+      const lp = (u, v, ins = 1) => { const ue = ins ? .02 + u * .96 : u, ve = ins ? .012 + v * .976 : v, x = -HW + ue * 2 * HW * ct; return P(x, TS + ve * (HH - TS), ZF + ue * 2 * HW * st); };
       const quad = (u0, u1, v0, v1) => [lp(u0, v0), lp(u1, v0), lp(u1, v1), lp(u0, v1)];
       set('leaf', quad(0, 1, 0, 1)); set('p0', quad(.12, .46, .44, .92)); set('p1', quad(.54, .88, .44, .92)); set('p2', quad(.12, .46, .08, .36)); set('p3', quad(.54, .88, .08, .36));
       set('knobP', quad(.86, .91, .46, .56)); set('knob', Array.from({ length: 8 }, (_, i) => lp(.885 + Math.cos(i * Math.PI / 4) * .021, .51 + Math.sin(i * Math.PI / 4) * .022)));
-      const F = Z - FD;
-      set('revL', [P(-HW, 0, F), P(-HW, HH, F), P(-HW, HH, Z), P(-HW, 0, Z)]); set('revR', [P(HW, 0, F), P(HW, HH, F), P(HW, HH, Z), P(HW, 0, Z)]); set('revT', [P(-HW, HH, F), P(HW, HH, F), P(HW, HH, Z), P(-HW, HH, Z)]);
-      set('frame', [P(-HW - FW, 0, F), P(-HW - FW, HH + FT, F), P(HW + FW, HH + FT, F), P(HW + FW, 0, F), P(HW, 0, F), P(HW, HH, F), P(-HW, HH, F), P(-HW, 0, F)]);
-      set('key', [P(-.1, HH + FT + .05, F - .02), P(.1, HH + FT + .05, F - .02), P(.065, HH - .02, F - .02), P(-.065, HH - .02, F - .02)]);
-      const SW = HW + FW + .06, S0 = F - .32;
-      set('stepT', [P(-SW, .07, S0), P(SW, .07, S0), P(SW, .07, F), P(-SW, .07, F)]); set('stepF', [P(-SW, 0, S0), P(SW, 0, S0), P(SW, .07, S0), P(-SW, .07, S0)]);
-      const zf = Math.max(Z - 3.4, camZ + .25), n0 = P(0, .075, F), n1 = P(0, 0, zf);
-      set('spill', zf < F - .05 ? [P(-HW, .075, F), P(HW, .075, F), P(HW + 1.0, .002, zf), P(-HW - .55, .002, zf)] : null);
+      const zf = Math.max(F - 3.4, camZ + .25), n0 = P(0, .072, F), n1 = P(0, 0, zf);
+      set('spill', zf < F - .05 ? [P(-HW, .072, F), P(HW, .072, F), P(HW + 1.0, .002, zf), P(-HW - .55, .002, zf)] : null);
       if (D.spillG && n0 && n1) { D.spillG.setAttribute('x1', n0[0].toFixed(1)); D.spillG.setAttribute('y1', n0[1].toFixed(1)); D.spillG.setAttribute('x2', n1[0].toFixed(1)); D.spillG.setAttribute('y2', (n1[1] + .001).toFixed(1)); }
       if (D.spill) D.spill.setAttribute('opacity', (.1 * g + .9 * op).toFixed(3));
       if (D.light) D.light.setAttribute('opacity', (.55 + .45 * g).toFixed(3));
       if (D.bloom) { D.bloom.setAttribute('opacity', Math.min(1, .3 + .55 * g + .3 * op).toFixed(3)); D.bloom.setAttribute('stroke-width', Math.max(1.2, .035 * s).toFixed(2)); }
       if (D.blur) D.blur.setAttribute('stdDeviation', Math.max(1, .03 * s).toFixed(2));
-      /* the room shows through whatever the leaf has uncovered */
-      const fT = P(-HW + 2 * HW * ct, HH, Z + 2 * HW * st), fB = P(-HW + 2 * HW * ct, 0, Z + 2 * HW * st);
-      if (fT && fB) { const cx = v => Math.max(G[0], Math.min(G[2], v)); const hT = P(-HW, HH, Z), hR = hT && hT[0] > (G[0] + G[2]) / 2, hx = hR ? G[2] : G[0], ox = hR ? G[0] : G[2];
-        const pp = [[hx, G[1]], [ox, G[1]], [ox, G[3]], [hx, G[3]], [cx(fB[0]), Math.min(G[3], fB[1])], [cx(fT[0]), Math.max(G[1], fT[1])]];
-        this.gapPoly = `polygon(${pp.map(p => p[0].toFixed(1) + 'px ' + p[1].toFixed(1) + 'px').join(',')})`; } else this.gapPoly = null;
+      /* the room (world 7) shows through the doorway minus whatever the leaf still covers */
+      if (sw > 0) {
+        const G = this.gap, lq = [lp(0, 0, 0), lp(0, 1, 0), lp(1, 1, 0), lp(1, 0, 0)], pth = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z';
+        let leaf = lq.every(Boolean) ? lq.map(p => [p[0], p[1]]) : null;
+        if (leaf) [[0, G[0], 1], [0, G[2], -1], [1, G[1], 1], [1, G[3], -1]].forEach(([k, v, sg]) => { if (!leaf || !leaf.length) return; const o = []; for (let i = 0; i < leaf.length; i++) { const A = leaf[i], B = leaf[(i + 1) % leaf.length], ia = (A[k] - v) * sg >= 0, ib = (B[k] - v) * sg >= 0; if (ia) o.push(A); if (ia !== ib) { const u = (v - A[k]) / (B[k] - A[k]); o.push([A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u]); } } leaf = o; });
+        this.gapPoly = `path(evenodd, "${pth(fo)}${leaf && leaf.length > 2 ? ' ' + pth(leaf) : ''}")`;
+      }
     }
-    else { this.S(q.door, 'visibility', 'hidden'); this.gapPoly = null; }
+    else this.S(q.door, 'visibility', 'hidden');
     this.S(q.train, 'transform', `translate(${(((this.now * 22) % (W * 1.5)) - W * .25).toFixed(1)}px,${(hy - 10).toFixed(1)}px)`);
   }
   w7(t) {
     const W = this.W, H = this.H, q = this.q7; if (!q) return;
-    const g = this.gap; q.world.style.clipPath = t < 21.9 && g ? (this.gapPoly || 'polygon(0 0,0 0,0 0)') : t < 22.9 && g ? `polygon(${g[0].toFixed(1)}px ${g[1].toFixed(1)}px,${g[2].toFixed(1)}px ${g[1].toFixed(1)}px,${g[2].toFixed(1)}px ${g[3].toFixed(1)}px,${g[0].toFixed(1)}px ${g[3].toFixed(1)}px)` : 'none';
-    // while the door swings, the room is framed in the doorway and grows toward the walk-through
-    if (t < 21.9 && g) {
-      const u = sm(21.45, 21.9, t), b = this.room.b, Sf = 1.25 * (g[2] - g[0]) / ((b[2] - b[0]) * W), S1 = 1.3, Sc = Math.exp(mx(Math.log(Sf), Math.log(S1), u));
-      const Pm = [mx((b[0] + b[2]) / 2 * W, W / 2, u), mx((b[1] + b[3]) / 2 * H, H / 2, u)], Gm = [mx((g[0] + g[2]) / 2, W / 2, u), mx((g[1] + g[3]) / 2, H / 2, u)];
-      const A = [Gm[0] - Pm[0] * Sc, Gm[1] - Pm[1] * Sc];
+    const g = this.gap, d6 = this.d6;
+    // until the walk-through ends the room is seen through the doorway, scaled so the opening stays filled
+    if (t < 22.9) {
+      q.world.style.clipPath = g && this.gapPoly ? this.gapPoly : 'polygon(0 0,0 0,0 0)'; if (!g || !d6) return;
+      const Hc = H * .56, x0 = cl(g[0], 0, W), x1 = cl(g[2], 0, W), y0 = cl(g[1], 0, H), y1 = cl(g[3], 0, H);
+      const need = Math.max(Math.abs(x0 - W / 2), Math.abs(x1 - W / 2)) / (W / 2), nT = (Hc - y0) / Hc, nB = (y1 - Hc) / (H - Hc);
+      const Dr = 5, Sc = Math.min(1, Math.max(Dr / (Dr + Math.max(0, 26.8 - d6.cz)), Math.max(need, nT, nB) * 1.02));
+      const A = [W / 2 * (1 - Sc), Hc * (1 - Sc)];
       this.cam7 = `translate(${A[0].toFixed(1)}px,${A[1].toFixed(1)}px) scale(${Sc.toFixed(4)})`; this.S(q.cam, 'transform', this.cam7);
       const w = this.win0; this.win = [A[0] + w[0] * Sc, A[1] + w[1] * Sc, A[0] + w[2] * Sc, A[1] + w[3] * Sc]; return;
     }
+    q.world.style.clipPath = 'none';
     const e6 = sm(21.9, 22.9, t), dol = lin(22.9, 24.1, t), e7 = sm(24.1, 25.1, t), C = [W / 2, H / 2];
     const z0 = mx(1.3, 1, e6) * (1 + dol * .05), pane = this.pane;
     const w0 = [C[0] + (pane.x - C[0]) * z0, C[1] + (pane.y - C[1]) * z0], Sm = Math.pow(pane.z / 1.05, e7);
@@ -746,10 +751,24 @@ export class HomeEngine {
     R.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(62%) rotate(3deg)', opacity: .2 }], o);
     this._introT0 = performance.now() + 1150; setTimeout(() => this.setState({ loader: false }), 1780);
   }
+  // every 3 to 8 seconds while the eye is on screen, one in five a double blink
   blink() {
-    const lid = this.q1 && this.q1.lid, g = this.g1;
-    if (lid && g && !this.red() && (this.t || 0) < .8) lid.animate([{ transform: `translateY(${-g.lidUp}px)`, easing: 'cubic-bezier(.55,0,.85,.45)' }, { transform: 'translateY(0px)', offset: .26 }, { transform: 'translateY(0px)', offset: .34, easing: 'cubic-bezier(.25,.55,.35,1)' }, { transform: `translateY(${-g.lidUp}px)` }], { duration: 430 });
-    this._blinkT = setTimeout(() => this.blink(), 4000 + Math.random() * 3000);
+    clearTimeout(this._blinkT);
+    this._blinkT = setTimeout(() => { if (!this.red() && (this.t || 0) < .8 && !document.hidden) this.startBlink(Math.random() < .2); this.blink(); }, 3000 + Math.random() * 5000);
+  }
+  startBlink(dbl) { if (!this._bk) this._bk = { t0: performance.now(), dbl }; this._act = performance.now(); }
+  /* lid closure 0..1: close 110ms ease-in, hold 50ms, open 190ms ease-out; a double blink repeats after 70ms */
+  blinkC(now) {
+    const b = this._bk; if (!b) return 0; const C = 110, Hd = 50, O = 190, T1 = C + Hd + O, GAP = 70, e = now - b.t0;
+    if (e >= (b.dbl ? 2 * T1 + GAP : T1)) { this._bk = null; return 0; }
+    const one = x => x < 0 ? 0 : x < C ? (x / C) ** 2 : x < C + Hd ? 1 : x < T1 ? (1 - (x - C - Hd) / O) ** 2 : 0;
+    return b.dbl && e >= T1 ? one(e - T1 - GAP) : one(e);
+  }
+  drawLid(c) {
+    const L = this.lid14, x = this.lidCtx, g = this.g1, P = window.Painter; if (!L || !x || !g || !P.lidDraw14) return;
+    if (!L.lashes.length) L.lashes = P.lashes14(g.E);
+    if (Math.abs(c - this._lc) < 1e-4) return; this._lc = c;
+    P.lidDraw14(x, L.w, L.h, g.E, c, L.tex, L.lashes, 2 * c);
   }
 
   /* ---------- cursor ---------- */
@@ -783,8 +802,8 @@ export class HomeEngine {
 
   /* ---------- founders ---------- */
   founderHover(i, on) {
-    this.fHover[i] = on; const fs = this.fst && this.fst[i]; if (!fs || !fs.panel) return;
-    fs.panel.style.opacity = on ? '1' : '0'; fs.panel.style.transform = on ? 'translateX(0)' : `translateX(${i % 2 ? 20 : -20}px)`; if (on) this.paper(.35);
+    // the panel itself follows in w6, and only slides out while the founder is at a readable distance
+    this.fHover[i] = on; if (on) this.paper(.35);
   }
   cardHover(on) { this._chov = on ? 1 : 0; this._act = performance.now(); }
   forceOpen(o) {

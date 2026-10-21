@@ -70,7 +70,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
           <canvas data-paint="skin" aria-hidden className={s.abs} style={{ width: "100%", height: "100%" }} />
           <canvas data-paint="face" data-facecv aria-hidden className={s.abs} />
           <div data-lidwin className={s.abs}>
-            <canvas data-paint="lid" data-lid aria-hidden className={s.abs} />
+            <canvas data-lid aria-hidden className={s.abs} />
           </div>
         </div>
         {/* the torn sky's shadow on the face, painted once instead of a live drop-shadow */}
@@ -215,7 +215,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
               </div>
             );
           })}
-          {/* the door at the end of the hall, projected from 3D each frame: a lit gap, the leaf swinging inward, frame, keystone and step */}
+          {/* the door at the end of the hall, projected from 3D each frame: the lit doorway, the leaf swinging inward and the light spilling out (frame and step are 3D) */}
           <svg data-door aria-hidden width="100%" height="100%" style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none", visibility: "hidden" }}>
             <defs>
               <linearGradient id="dSpillG" data-dk="spillG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1">
@@ -238,14 +238,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
               <polygon data-dk="knobP" fill="#8C6A2E" points="0,0" />
               <polygon data-dk="knob" fill="#D8B45A" points="0,0" />
             </g>
-            <polygon data-dk="stepT" fill="#B56C52" points="0,0" />
-            <polygon data-dk="stepF" fill="#874434" points="0,0" />
             <polygon data-dk="spill" fill="url(#dSpillG)" points="0,0" />
-            <polygon data-dk="revL" fill="#C47C5A" points="0,0" />
-            <polygon data-dk="revR" fill="#7A3D30" points="0,0" />
-            <polygon data-dk="revT" fill="#6A352A" points="0,0" />
-            <polygon data-dk="frame" fill="#A3583F" fillRule="evenodd" points="0,0" />
-            <polygon data-dk="key" fill="#B3654A" points="0,0" />
             <polygon data-dk="bloom" fill="none" stroke="#FFE6B4" strokeWidth="4" filter="url(#dBloomF)" points="0,0" />
           </svg>
         </div>
