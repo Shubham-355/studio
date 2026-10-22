@@ -21,7 +21,8 @@ const V = s => { const u = V1(V0(s)); return u <= QA ? u : u <= QA + QL ? QA + (
 const QS = .95, QY = .04, QZ = -3.5, QX = .5, YC = 1.335, QR = y => y <= 1.24 ? .22 : y >= 1.52 ? .34 : y < 1.36 ? mx(.22, .28, (y - 1.24) / .12) : mx(.28, .34, (y - 1.36) / .16);
 export const NAMES = ['The sky with an eye', 'The apple on the board', 'The beach', 'The underwater hall', 'The board in the sand', 'The desert arcade', 'The quiet room', 'The night sea'];
 const INK = [0, 1, 1, 0, 1, 1, 1, 0], SOFT = [0, 0, 1, 0, 1, 0, 1, 0];
-const CZ = [6, 11, 16, 21], DOORZ = 27;
+// door in the back wall: half width, height and threshold top; the leaf hinges at DZL, the doorway's far face is DZF; it swings to DSW
+const CZ = [6, 11, 16, 21], DOORZ = 27, DHW = .47, DHH = 1.92, DTS = .07, DZL = DOORZ + .1, DZF = DOORZ + .25, DSW = 96 * Math.PI / 180;
 const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
 const AK = 1 / .14, ZE = -2 - 1 / QS;
 const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [22.9, 26.8]];
@@ -34,7 +35,7 @@ export const NOTES = [
   '',
   'Board reached from the beach rise (ends 14.05, pawn emerges 13.1–13.9); pawn crosses 14.25–16.55, wave makes the queen. Into the queen 16.6–18.2 (1.2 screens of scroll): settle over the crown, push into the front arch (board blurs by depth), sunset light stains the porcelain stroke by stroke, the arch widens into the arcade and the board squares become its floor.',
   'One camera: the arcade is a 3D hall rendered from the queen camera mapped through the crown arch (no copy), so the camera walks on into it from 18.2. Founders at z 6/11/16/21: thoughts resolve as the camera nears (dz 4.9→3.2) and scatter again on the way back. Hover: object turns, panel slides out.',
-  'Door in the back wall from the first frame; it swings inward with scroll 21.5–22.85 while the camera walks straight through it (21.45–22.9). Dolly 22.9–24.1. Window 24.1–25.1: camera turns into the lower-left pane, world 8 visible through the glass throughout.',
+  'Door in the back wall from the first frame (perspective-mapped wood leaf, hinge screen-left); it swings inward to 96° with scroll 21.5–22.85 while the camera walks straight through it (21.45–22.9). Dolly 22.9–24.1. Window 24.1–25.1: camera turns into the lower-left pane, world 8 visible through the glass throughout.',
   'Quote 25.25–26.25. Tear opens 26.2–26.85; arm emerges from shadow inside it and holds the card (thumb in front, fingers behind). Card leaves 27.4; tear closes 27.55–28.05 as the camera lowers to the water; footer from 27.75.',
 ];
 
@@ -222,7 +223,7 @@ export class HomeEngine {
     this.F6 = n ? H * .52 : H * .9; this.hy6 = H * .56; this.fovW = 2 * Math.atan(H / 2 / this.F6) * 180 / Math.PI; this.px6 = n ? [-.4, .4, -.4, .4] : [-1.35, 1.35, -1.35, 1.35]; this.pw6 = n ? 1.05 : 1;
     Object.assign(this.st.arcade8, { xw: n ? 1.3 : 2.6, ze: ZE, dz: DOORZ, fs: this.px6.map((x, i) => [-x, CZ[i], 2.4]) });
     this.dk6 = null;
-    this.q6 = { world: w6, cam: this.$('[data-cam]', w6), plate: this.$('[data-plate]', w6), door: this.$('[data-door]', w6), train: this.$('[data-train]', w6) };
+    this.q6 = { world: w6, cam: this.$('[data-cam]', w6), plate: this.$('[data-plate]', w6), door: this.$('[data-door]', w6), leafw: this.$('[data-leafw]', w6), leaf: this.$('[data-leaf]', w6), train: this.$('[data-train]', w6) };
   }
   layout7() {
     const W = this.W, H = this.H, n = this.n, w7 = this.wEl[6]; if (!w7) return;
@@ -232,7 +233,7 @@ export class HomeEngine {
     const qb = this.$('[data-3d="roomqueen"]'); if (qb) Object.assign(qb.style, n ? { left: '-4%', top: '18%', width: '64%', height: '66%' } : { left: '32%', top: '4%', width: '30%', height: '92%' });
     const tb = this.$('[data-table]'); if (tb) Object.assign(tb.style, n ? { left: '80%', top: '64%', display: '' } : { display: 'none' });
     const pw = (x1 - x0) * .5, ph = (y1 - y0) * .56; this.pane = { x: x0 + (x1 - x0) * .25, y: y0 + (y1 - y0) * .72, z: 1.2 * Math.max(W / pw, H / ph) };
-    this.q7 = { world: w7, cam: this.$('[data-cam]', w7), wincam: this.$('[data-wincam]') };
+    this._lqB = null; this.q7 = { leafBw: this.$('[data-leafbw]', w7), leafB: this.$('[data-leafb]', w7), world: w7, cam: this.$('[data-cam]', w7), wincam: this.$('[data-wincam]') };
   }
   layout8() {
     const W = this.W, H = this.H, n = this.n, w8 = this.wEl[7], P = window.Painter; if (!w8) return;
@@ -551,17 +552,15 @@ export class HomeEngine {
     this.S(q.cam, 'transform', 'none'); this.S(q.world, 'clipPath', Q ? Q.clip : 'none'); this.S(q.world, 'webkitMaskImage', 'none'); this.S(q.world, 'maskImage', 'none');
     this.S(q.plate, 'visibility', a8.ready ? 'hidden' : 'visible');
     const dt = Math.min(.1, Math.max(0, this.now - (this._n6 || this.now))); this._n6 = this.now;
-    const pd = pj(0, 0, DOORZ), dzD = pd[2]; let gsum = 0;
+    const pd = pj(0, 0, DOORZ), dzD = pd[2];
     this.fEls.forEach((el, i) => {
       const co = this.companies[i], fs = this.fst[i]; if (!fs) return;
       const pr = pj(-this.px6[i], 0, CZ[i]), dz = pr[2];
-      // the hover panel only slides out while its founder is at a readable distance
-      if (fs.panel) { const okP = dz > 1.7 && dz < 7, want = !!this.fHover[i] && okP; if (fs.tr0 == null) fs.tr0 = fs.panel.style.transition; if (fs.pv !== want) { fs.pv = want; fs.panel.style.transition = okP ? fs.tr0 : 'none'; fs.panel.style.opacity = want ? '1' : '0'; fs.panel.style.transform = want ? 'translateX(0)' : `translateX(${i % 2 ? 20 : -20}px)`; } }
-      if (dz < .3) { gsum += 1; this.S(el, 'visibility', 'hidden'); this.mv['card' + i] = 0; return; }
+      if (dz < .3) { this.S(el, 'visibility', 'hidden'); this.mv['card' + i] = 0; return; }
       const s = pr[3], k = s * this.pw6 / 300, X = pr[0], Yb = pr[1];
       this.S(el, 'visibility', 'visible');
       this.S(el, 'transform', `translate(${(X - 150 * k).toFixed(1)}px,${(Yb - 600 * k).toFixed(1)}px) scale(${k.toFixed(4)})`); this.S(el, 'zIndex', String(Math.max(1, Math.round(1000 - dz * 10))));
-      const R = sm(4.9, 3.2, dz); gsum += R; const hcY = co.stand ? 99 : 227, tY = co.stand ? -26 : 102, N = fs.th.length;
+      const R = sm(4.9, 3.2, dz), hcY = co.stand ? 99 : 227, tY = co.stand ? -26 : 102, N = fs.th.length;
       fs.ph += dt * ((1 - R) * 1.1 + .04);
       fs.th.forEach((te, j) => { const a = j / N * Math.PI * 2 + fs.ph * (.7 + (j % 3) * .25) * (j % 2 ? 1 : -1), rad = 80 + Math.sin(fs.ph * 1.7 + j * 1.3) * 34, ej = sm(j * .025, .5 + j * .035, R);
         const ox = 150 + Math.cos(a) * rad * 1.5 - 46, oy = hcY - 12 + Math.sin(a) * rad * .95 - 46;
@@ -577,45 +576,74 @@ export class HomeEngine {
       if (!n) this.pos['card' + i] = this.px6[i] < 0 ? [X + 150 * k + 24, Yb - 400 * k] : [X - 150 * k - 344, Yb - 400 * k];
     });
     /* the door ends the hall from the first frame: closed, edge-lit (brighter per founder passed); after the last founder it swings inward with scroll.
-       Stone frame, jambs and step are 3D (scene3d14); the leaf, light and spill are drawn here, inside the far edge of the doorway. */
+       Frame, jambs, step and the door's light are 3D (scene3d); the painted wood leaf is perspective-mapped onto its hinge here. */
     const D = this.dk6 || (this.dk6 = Object.fromEntries([...q.door.querySelectorAll('[data-dk]')].map(e => [e.dataset.dk, e])));
-    const g = Math.min(1, gsum / 4), op = sm(21.5, 22.3, t), sw = sm(21.5, 22.85, t), th = sw * 165 * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th);
+    const op = sm(21.5, 22.3, t), sw = sm(21.5, 22.85, t), th = sw * DSW; a8.door = [th, op, sw];
     this.d6 = { cz: cm.C[2] }; this.gap = null; this.gapPoly = null;
-    const HW = .47, HH = 1.92, TS = .07, FD = .15, ZF = DOORZ + .25, F = DOORZ - FD, camZ = cm.C[2];
     const P = (x, y, z) => { const p = pj(x, y, z); return p[2] > .02 ? p : null; };
-    const fo = [P(-HW, HH, ZF), P(HW, HH, ZF), P(HW, TS, ZF), P(-HW, TS, ZF)];
+    const fo = [P(-DHW, DHH, DZF), P(DHW, DHH, DZF), P(DHW, DTS, DZF), P(-DHW, DTS, DZF)], lq = this.leafQuad(P, th);
     if (dzD > .05 && fo.every(Boolean)) {
-      const s = pd[3]; const fx = fo.map(p => p[0]), fy = fo.map(p => p[1]); this.gap = [Math.min(...fx), Math.min(...fy), Math.max(...fx), Math.max(...fy)];
-      this.S(q.door, 'visibility', 'visible'); this.S(q.door, 'zIndex', String(Math.max(1, Math.round(1000 - dzD * 10))));
-      const set = (k, pts) => { const e = D[k]; if (!e) return; const ok = pts && pts.every(Boolean); e.setAttribute('points', ok ? pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') : '0,0'); };
-      set('gapc', fo); set('light', fo); set('bloom', fo);
-      const lp = (u, v, ins = 1) => { const ue = ins ? .02 + u * .96 : u, ve = ins ? .012 + v * .976 : v, x = -HW + ue * 2 * HW * ct; return P(x, TS + ve * (HH - TS), ZF + ue * 2 * HW * st); };
-      const quad = (u0, u1, v0, v1) => [lp(u0, v0), lp(u1, v0), lp(u1, v1), lp(u0, v1)];
-      set('leaf', quad(0, 1, 0, 1)); set('p0', quad(.12, .46, .44, .92)); set('p1', quad(.54, .88, .44, .92)); set('p2', quad(.12, .46, .08, .36)); set('p3', quad(.54, .88, .08, .36));
-      set('knobP', quad(.86, .91, .46, .56)); set('knob', Array.from({ length: 8 }, (_, i) => lp(.885 + Math.cos(i * Math.PI / 4) * .021, .51 + Math.sin(i * Math.PI / 4) * .022)));
-      const zf = Math.max(F - 3.4, camZ + .25), n0 = P(0, .072, F), n1 = P(0, 0, zf);
-      set('spill', zf < F - .05 ? [P(-HW, .072, F), P(HW, .072, F), P(HW + 1.0, .002, zf), P(-HW - .55, .002, zf)] : null);
-      if (D.spillG && n0 && n1) { D.spillG.setAttribute('x1', n0[0].toFixed(1)); D.spillG.setAttribute('y1', n0[1].toFixed(1)); D.spillG.setAttribute('x2', n1[0].toFixed(1)); D.spillG.setAttribute('y2', (n1[1] + .001).toFixed(1)); }
-      if (D.spill) D.spill.setAttribute('opacity', (.1 * g + .9 * op).toFixed(3));
-      if (D.light) D.light.setAttribute('opacity', (.55 + .45 * g).toFixed(3));
-      if (D.bloom) { D.bloom.setAttribute('opacity', Math.min(1, .3 + .55 * g + .3 * op).toFixed(3)); D.bloom.setAttribute('stroke-width', Math.max(1.2, .035 * s).toFixed(2)); }
-      if (D.blur) D.blur.setAttribute('stdDeviation', Math.max(1, .03 * s).toFixed(2));
-      /* the room (world 7) shows through the doorway minus whatever the leaf still covers */
+      const fx = fo.map(p => p[0]), fy = fo.map(p => p[1]); this.gap = [Math.min(...fx), Math.min(...fy), Math.max(...fx), Math.max(...fy)];
+      const zi = String(Math.max(1, Math.round(1000 - dzD * 10)));
+      this.S(q.door, 'visibility', 'visible'); this.S(q.door, 'zIndex', zi); this.S(q.leafw, 'visibility', 'visible'); this.S(q.leafw, 'zIndex', zi);
+      if (D.room) D.room.setAttribute('points', fo.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '));
+      this.leafPose(q.leaf, lq, sw);
+      /* the room (world 7) shows through the back of the doorway minus whatever the leaf still covers */
       if (sw > 0) {
-        const G = this.gap, lq = [lp(0, 0, 0), lp(0, 1, 0), lp(1, 1, 0), lp(1, 0, 0)], pth = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z';
+        const G = this.gap, pth = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z';
         let leaf = lq.every(Boolean) ? lq.map(p => [p[0], p[1]]) : null;
         if (leaf) [[0, G[0], 1], [0, G[2], -1], [1, G[1], 1], [1, G[3], -1]].forEach(([k, v, sg]) => { if (!leaf || !leaf.length) return; const o = []; for (let i = 0; i < leaf.length; i++) { const A = leaf[i], B = leaf[(i + 1) % leaf.length], ia = (A[k] - v) * sg >= 0, ib = (B[k] - v) * sg >= 0; if (ia) o.push(A); if (ia !== ib) { const u = (v - A[k]) / (B[k] - A[k]); o.push([A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u]); } } leaf = o; });
         this.gapPoly = `path(evenodd, "${pth(fo)}${leaf && leaf.length > 2 ? ' ' + pth(leaf) : ''}")`;
       }
     }
-    else this.S(q.door, 'visibility', 'hidden');
+    else { this.S(q.door, 'visibility', 'hidden'); this.S(q.leafw, 'visibility', 'hidden'); }
     this.S(q.train, 'transform', `translate(${(((this.now * 22) % (W * 1.5)) - W * .25).toFixed(1)}px,${(hy - 10).toFixed(1)}px)`);
   }
+  /* door leaf: hinge on the screen-left jamb (world +x), swings inward; 4 projected corners: hinge-top, free-top, free-bottom, hinge-bottom */
+  leafQuad(P, th) { const c = Math.cos(th), s = Math.sin(th), L = 2 * DHW, lp = (u, v) => P(DHW - u * L * c, DHH - v * (DHH - DTS), DZL + u * L * s); return [lp(0, 0), lp(1, 0), lp(1, 1), lp(0, 1)]; }
+  h3d(w, h, p) { const [x0, y0] = p[0], [x1, y1] = p[1], [x2, y2] = p[2], [x3, y3] = p[3];
+    const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3, den = dx1 * dy2 - dx2 * dy1 || 1e-9;
+    const g = (sx * dy2 - dx2 * sy) / den, k = (dx1 * sy - sx * dy1) / den, a = (x1 - x0 + g * x1) / w, b = (x3 - x0 + k * x3) / h, d = (y1 - y0 + g * y1) / w, e = (y3 - y0 + k * y3) / h;
+    return 'matrix3d(' + [a, d, 0, g / w, b, e, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1].map(v => +v.toPrecision(9)).join(',') + ')'; }
+  leafPose(el, lq, sw) { if (!el) return; if (!lq || !lq.every(Boolean)) { this.S(el, 'visibility', 'hidden'); return; }
+    if (!el._k) { el._k = { lsh: el.querySelector('[data-lsh]'), lsh2: el.querySelector('[data-lsh2]'), ldk: el.querySelector('[data-ldk]') }; this.paintDoor(el.querySelector('[data-leafcv]')); }
+    this.S(el, 'visibility', 'visible'); this.S(el, 'transform', this.h3d(480, 944, lq));
+    const K = el._k, sh = (1 - sm(0, .35, sw)).toFixed(3); this.S(K.lsh, 'opacity', sh); this.S(K.lsh2, 'opacity', sh); this.S(K.ldk, 'opacity', (.06 + .3 * sm(0, .6, sw)).toFixed(3)); }
+  leafB(t) { const q = this.q7; if (!q || !q.leafB) return; const on = t >= 22.9; this.S(q.leafBw, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
+    if (!this._lqB) { const z = pathv(99, CPTS), pj = this.proj6({ C: [0, 1, z], L: [0, 1, z + 1], fov: this.fovW, oy: .06 }); this._lqB = this.leafQuad((x, y, zz) => { const p = pj(x, y, zz); return p[2] > .02 ? p : null; }, DSW); }
+    this.S(q.leafBw, 'transform', this.cam7 || 'none'); this.leafPose(q.leafB, this._lqB, 1); }
+  paintDoor(cv) { if (!cv) return; const W = 480, H = 944, x = cv.getContext('2d'); let sd = 7; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+    const grain = (x0, y0, w, h, vert, n) => { x.save(); x.beginPath(); x.rect(x0, y0, w, h); x.clip();
+      for (let i = 0; i < n; i++) { const o = r() * (vert ? w : h), a = 1 + r() * 4, f = .004 + r() * .01, ph = r() * 6.28, dk = r() < .62, L = vert ? h : w;
+        x.strokeStyle = dk ? `rgba(22,12,7,${(.12 + r() * .3).toFixed(3)})` : `rgba(112,74,46,${(.08 + r() * .18).toFixed(3)})`; x.lineWidth = .5 + r() * 2.2; x.beginPath();
+        for (let q = 0; q <= L + 6; q += 6) { const dd = o + Math.sin(q * f + ph) * a + Math.sin(q * f * 3.7 + ph * 2) * a * .3; vert ? x.lineTo(x0 + dd, y0 + q) : x.lineTo(x0 + q, y0 + dd); } x.stroke(); }
+      x.restore(); };
+    const poly = (pts, col) => { x.fillStyle = col; x.beginPath(); pts.forEach(([px, py], i) => i ? x.lineTo(px, py) : x.moveTo(px, py)); x.closePath(); x.fill(); };
+    const rr = (X, Y, w, h, rad) => { x.beginPath(); if (x.roundRect) x.roundRect(X, Y, w, h, rad); else x.rect(X, Y, w, h); x.fill(); };
+    x.fillStyle = '#3B2518'; x.fillRect(0, 0, W, H); grain(0, 0, W, H, true, 340);
+    const sx = W * .15, mc = [W * .475, W * .525], rt = H * .09, rm = [H * .47, H * .53], rb = H * .86;
+    [[sx, 0, W - 2 * sx, rt], [sx, rm[0], W - 2 * sx, rm[1] - rm[0]], [sx, rb, W - 2 * sx, H - rb]].forEach(([a, b, c, d]) => { x.fillStyle = '#3A2417'; x.fillRect(a, b, c, d); grain(a, b, c, d, false, 46); x.fillStyle = 'rgba(15,8,4,.55)'; x.fillRect(a, b, 1.5, d); x.fillRect(a + c - 1.5, b, 1.5, d); });
+    [[sx, rt, mc[0], rm[0]], [mc[1], rt, W - sx, rm[0]], [sx, rm[1], mc[0], rb], [mc[1], rm[1], W - sx, rb]].forEach(([a, b, c, d]) => { const bv = 20, ia = a + 3, ib = b + 3, ic = c - 3, id = d - 3;
+      x.fillStyle = 'rgba(12,6,3,.8)'; x.fillRect(a, b, c - a, d - b); x.fillStyle = '#3F281A'; x.fillRect(ia, ib, ic - ia, id - ib); grain(ia, ib, ic - ia, id - ib, true, 40);
+      poly([[ia, ib], [ic, ib], [ic - bv, ib + bv], [ia + bv, ib + bv]], 'rgba(255,214,160,.30)'); poly([[ia, id], [ic, id], [ic - bv, id - bv], [ia + bv, id - bv]], 'rgba(8,4,2,.42)');
+      poly([[ia, ib], [ia + bv, ib + bv], [ia + bv, id - bv], [ia, id]], 'rgba(255,214,160,.10)'); poly([[ic, ib], [ic - bv, ib + bv], [ic - bv, id - bv], [ic, id]], 'rgba(8,4,2,.25)');
+      x.fillStyle = 'rgba(255,228,184,.6)'; x.fillRect(ia + bv, ib + bv - 1, ic - ia - 2 * bv, 1.6); x.fillStyle = 'rgba(255,220,170,.38)'; x.fillRect(ia, ib, ic - ia, 1.4);
+      x.fillStyle = 'rgba(8,4,2,.35)'; x.fillRect(ia + bv, id - bv, ic - ia - 2 * bv, 1.4); });
+    let g2 = x.createLinearGradient(0, 0, W, 0); g2.addColorStop(0, 'rgba(10,5,2,.35)'); g2.addColorStop(.06, 'rgba(10,5,2,0)'); g2.addColorStop(.94, 'rgba(10,5,2,0)'); g2.addColorStop(1, 'rgba(10,5,2,.35)'); x.fillStyle = g2; x.fillRect(0, 0, W, H);
+    g2 = x.createLinearGradient(0, H * .82, 0, H); g2.addColorStop(0, 'rgba(10,5,2,0)'); g2.addColorStop(1, 'rgba(10,5,2,.42)'); x.fillStyle = g2; x.fillRect(0, H * .82, W, H * .18);
+    [H * .13, H * .5, H * .85].forEach(y => { x.fillStyle = '#17110D'; x.fillRect(0, y - 26, 15, 52); x.fillStyle = 'rgba(170,150,120,.35)'; x.fillRect(0, y - 26, 15, 1.5); });
+    const hx = W * .925, hy = H * .5; x.fillStyle = 'rgba(8,4,2,.45)'; rr(hx - 13, hy - 46, 30, 104, 10);
+    let g = x.createLinearGradient(hx - 12, 0, hx + 12, 0); g.addColorStop(0, '#7A5A24'); g.addColorStop(.4, '#D9B860'); g.addColorStop(1, '#6E4F1E'); x.fillStyle = g; rr(hx - 12, hy - 50, 24, 100, 9);
+    x.fillStyle = 'rgba(8,4,2,.4)'; x.beginPath(); x.arc(hx + 2, hy + 4, 17, 0, 7); x.fill();
+    g = x.createRadialGradient(hx - 5, hy - 6, 1, hx, hy, 17); g.addColorStop(0, '#FFF3C8'); g.addColorStop(.25, '#E6C66C'); g.addColorStop(.7, '#9A7430'); g.addColorStop(1, '#4E3814'); x.fillStyle = g; x.beginPath(); x.arc(hx, hy, 16, 0, 7); x.fill();
+    x.fillStyle = 'rgba(255,250,232,.95)'; x.beginPath(); x.arc(hx - 6, hy - 7, 2.6, 0, 7); x.fill();
+    x.fillStyle = '#1A1006'; x.beginPath(); x.arc(hx, hy + 30, 3.4, 0, 7); x.fill(); x.fillRect(hx - 1.5, hy + 30, 3, 10); }
   w7(t) {
     const W = this.W, H = this.H, q = this.q7; if (!q) return;
     const g = this.gap, d6 = this.d6;
     // until the walk-through ends the room is seen through the doorway, scaled so the opening stays filled
     if (t < 22.9) {
+      this.leafB(t);
       q.world.style.clipPath = g && this.gapPoly ? this.gapPoly : 'polygon(0 0,0 0,0 0)'; if (!g || !d6) return;
       const Hc = H * .56, x0 = cl(g[0], 0, W), x1 = cl(g[2], 0, W), y0 = cl(g[1], 0, H), y1 = cl(g[3], 0, H);
       const need = Math.max(Math.abs(x0 - W / 2), Math.abs(x1 - W / 2)) / (W / 2), nT = (Hc - y0) / Hc, nB = (y1 - Hc) / (H - Hc);
@@ -630,7 +658,7 @@ export class HomeEngine {
     const w0 = [C[0] + (pane.x - C[0]) * z0, C[1] + (pane.y - C[1]) * z0], Sm = Math.pow(pane.z / 1.05, e7);
     const z = z0 * Sm, A = [0, 1].map(k => w0[k] + (C[k] * (1 - z0) - w0[k]) * Sm + (C[k] - w0[k]) * e7);
     this.cam7 = `translate(${A[0].toFixed(1)}px,${A[1].toFixed(1)}px) scale(${z.toFixed(4)})`;
-    this.S(q.cam, 'transform', this.cam7);
+    this.S(q.cam, 'transform', this.cam7); this.leafB(t);
     const w = this.win0; this.win = [A[0] + w[0] * z, A[1] + w[1] * z, A[0] + w[2] * z, A[1] + w[3] * z];
   }
   w8(t) {

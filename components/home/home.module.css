@@ -542,9 +542,11 @@
 .allLink {
   font-size: 16px;
   font-weight: 500;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ink);
+  padding: 7px 16px 6px;
+  border-bottom: 1.5px solid var(--ink);
   color: var(--ink);
+  background: rgba(246, 240, 228, 0.86);
+  box-shadow: 0 6px 22px 6px rgba(246, 240, 228, 0.45);
 }
 
 .allLink:focus-visible {

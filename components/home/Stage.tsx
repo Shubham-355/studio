@@ -165,82 +165,22 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
                         ))}
                     </div>
                   </div>
-                  <div
-                    data-panel
-                    style={{
-                      position: "absolute",
-                      top: c.stand ? -150 : -40,
-                      left: i % 2 ? "auto" : "calc(100% + 18px)",
-                      right: i % 2 ? "calc(100% + 18px)" : "auto",
-                      width: 300,
-                      padding: 14,
-                      background: "#F3EEE4",
-                      boxShadow: "0 18px 34px rgba(75,58,82,.3)",
-                      display: "grid",
-                      gridTemplateColumns: "92px minmax(0,1fr)",
-                      gap: 10,
-                      opacity: 0,
-                      transform: `translateX(${i % 2 ? 20 : -20}px)`,
-                      transition: "opacity 700ms ease,transform 900ms cubic-bezier(.2,.7,.2,1)",
-                      pointerEvents: "none",
-                      color: "#1B1D24",
-                    }}
-                  >
-                    <div style={{ gridRow: "1 / 3", height: 172, borderRadius: 14, background: "#1B1D24", padding: 7 }}>
-                      <div style={{ height: "100%", borderRadius: 8, background: "#FBF8F1", display: "flex", flexDirection: "column", gap: 6, padding: 9 }}>
-                        <div style={{ height: 6, width: "46%", background: "#A8242A" }} />
-                        <div style={{ height: 40, background: "#E6DCCB" }} />
-                        <div style={{ height: 4, background: "#C9BCA8" }} />
-                        <div style={{ height: 4, width: "70%", background: "#C9BCA8" }} />
-                        <div style={{ marginTop: "auto", height: 18, borderRadius: 9, background: "#1B1D24" }} />
-                      </div>
-                    </div>
-                    <div style={{ height: 81, background: "#1B1D24", color: "#F3EEE4", display: "flex", alignItems: "flex-end", padding: 9, fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 22, lineHeight: 1 }}>{c.name}</div>
-                    <div style={{ height: 81, border: "1px solid #1B1D24", display: "flex", flexDirection: "column" }}>
-                      <div style={{ height: 12, borderBottom: "1px solid #1B1D24", display: "flex", gap: 3, alignItems: "center", padding: "0 5px" }}>
-                        <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#1B1D24" }} />
-                        <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#1B1D24" }} />
-                      </div>
-                      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, padding: 6 }}>
-                        <div style={{ background: "#E6DCCB" }} />
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <div style={{ height: 4, background: "#C9BCA8" }} />
-                          <div style={{ height: 4, width: "60%", background: "#C9BCA8" }} />
-                        </div>
-                      </div>
-                    </div>
-                    <span style={{ gridColumn: "1 / 3", fontFamily: "var(--mono)", fontSize: 10, letterSpacing: ".06em" }}>PRODUCT SCREENS · BRAND WORK</span>
-                  </div>
                 </div>
               </div>
             );
           })}
-          {/* the door at the end of the hall, projected from 3D each frame: the lit doorway, the leaf swinging inward and the light spilling out (frame and step are 3D) */}
+          {/* the door at the end of the hall: the doorway shows the room's colour, and a painted wood leaf is perspective-mapped onto the 3D hinge (frame, step and light are 3D) */}
           <svg data-door aria-hidden width="100%" height="100%" style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none", visibility: "hidden" }}>
-            <defs>
-              <linearGradient id="dSpillG" data-dk="spillG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#FFF0D2" stopOpacity=".75" />
-                <stop offset=".55" stopColor="#FBD9A4" stopOpacity=".28" />
-                <stop offset="1" stopColor="#F4C68C" stopOpacity="0" />
-              </linearGradient>
-              <linearGradient id="dWoodG" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stopColor="#2E1C13" />
-                <stop offset=".5" stopColor="#3D2618" />
-                <stop offset="1" stopColor="#2A1910" />
-              </linearGradient>
-              <clipPath id="dGapC"><polygon data-dk="gapc" points="0,0" /></clipPath>
-              <filter id="dBloomF" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur data-dk="blur" stdDeviation="3" /></filter>
-            </defs>
-            <polygon data-dk="light" fill="#FFF4DE" points="0,0" />
-            <g clipPath="url(#dGapC)">
-              <polygon data-dk="leaf" fill="url(#dWoodG)" points="0,0" />
-              {[0, 1, 2, 3].map((k) => <polygon key={k} data-dk={`p${k}`} fill="#24150D" stroke="#4E3322" strokeWidth="1" points="0,0" />)}
-              <polygon data-dk="knobP" fill="#8C6A2E" points="0,0" />
-              <polygon data-dk="knob" fill="#D8B45A" points="0,0" />
-            </g>
-            <polygon data-dk="spill" fill="url(#dSpillG)" points="0,0" />
-            <polygon data-dk="bloom" fill="none" stroke="#FFE6B4" strokeWidth="4" filter="url(#dBloomF)" points="0,0" />
+            <polygon data-dk="room" fill="#EFE6D6" points="0,0" />
           </svg>
+          <div data-leafw aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden", transformOrigin: "0 0" }}>
+            <div data-leaf style={{ position: "absolute", left: 0, top: 0, width: 480, height: 944, transformOrigin: "0 0", backfaceVisibility: "hidden" }}>
+              <canvas data-leafcv width={480} height={944} className={s.abs} style={{ width: 480, height: 944 }} />
+              <div data-lsh className={s.fill} style={{ background: "linear-gradient(90deg,rgba(26,16,24,.5) 0,rgba(26,16,24,.5) 76%,rgba(26,16,24,0) 81%)" }} />
+              <div data-lsh2 style={{ position: "absolute", left: "76%", right: 0, top: 0, height: "27%", background: "linear-gradient(180deg,rgba(26,16,24,.5) 0,rgba(26,16,24,.5) 80%,rgba(26,16,24,0) 100%)" }} />
+              <div data-ldk className={s.fill} style={{ background: "#140B07", opacity: 0 }} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -248,6 +188,15 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
 
       {/* 7 · the quiet room */}
       <div data-world="7" className={s.world} style={{ zIndex: 7, background: "#E6DCCB" }}>
+        {/* the open leaf seen from inside the room once the camera has walked through */}
+        <div data-leafbw aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden", zIndex: 2, transformOrigin: "0 0" }}>
+          <div data-leafb style={{ position: "absolute", left: 0, top: 0, width: 480, height: 944, transformOrigin: "0 0", backfaceVisibility: "hidden" }}>
+            <canvas data-leafcv width={480} height={944} className={s.abs} style={{ width: 480, height: 944 }} />
+            <div data-lsh className={s.fill} style={{ background: "linear-gradient(90deg,rgba(26,16,24,.5) 0,rgba(26,16,24,.5) 76%,rgba(26,16,24,0) 81%)" }} />
+            <div data-lsh2 style={{ position: "absolute", left: "76%", right: 0, top: 0, height: "27%", background: "linear-gradient(180deg,rgba(26,16,24,.5) 0,rgba(26,16,24,.5) 80%,rgba(26,16,24,0) 100%)" }} />
+            <div data-ldk className={s.fill} style={{ background: "#140B07", opacity: 0 }} />
+          </div>
+        </div>
         <div data-cam className={s.cam}>
           <canvas data-paint="room" data-plate aria-hidden className={s.full} />
           <div data-table style={{ position: "absolute", width: 150, height: 70, transform: "translate(-50%,0)" }}>
