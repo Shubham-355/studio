@@ -61,7 +61,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
           <div data-eyeball className={s.abs}>
             <canvas data-paint="eyeball" aria-hidden className={s.abs} />
             <canvas data-paint="iris" data-iris aria-hidden className={s.abs} />
-            <div data-pupil style={{ position: "absolute", borderRadius: "50%", background: "radial-gradient(circle,#0B0D10 0%,#0C0E11 70%,rgba(10,12,14,.92) 84%,rgba(12,14,16,.5) 93%,rgba(12,14,16,0) 100%)" }} />
+            <div data-pupil style={{ position: "absolute", borderRadius: "50%", background: "radial-gradient(circle,#000 0%,#000 84%,rgba(0,0,0,.82) 91%,rgba(0,0,0,.3) 96%,rgba(0,0,0,0) 100%)" }} />
           </div>
           <div data-shadewin className={s.abs}>
             <canvas data-paint="eyeshade" aria-hidden className={s.abs} />
@@ -127,6 +127,11 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
               </div>
             </div>
           </div>
+          {/* gulls seen from above over the board, with soft shadows on the sand */}
+          <div data-bgl aria-hidden className={s.fill} style={{ pointerEvents: "none", overflow: "hidden", visibility: "hidden" }}>
+            {[0, 1, 2].map((g) => <canvas key={`s${g}`} data-bgs width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", filter: "blur(2.5px)", mixBlendMode: "multiply", opacity: 0 }} />)}
+            {[0, 1, 2].map((g) => <canvas key={`g${g}`} data-bgg width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
+          </div>
         </div>
       </div>
       <canvas data-ball6 aria-hidden className={s.full} style={{ zIndex: 5, pointerEvents: "none", visibility: "hidden" }} />
@@ -174,6 +179,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
             <polygon data-dk="room" fill="#EFE6D6" points="0,0" />
           </svg>
           <div data-leafw aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden", transformOrigin: "0 0" }}>
+            <div data-dstop style={{ position: "absolute", left: 0, top: 0, width: 20, height: 12, borderRadius: "50% 50% 3px 3px / 80% 80% 3px 3px", background: "radial-gradient(circle at 34% 30%,#F6DE9A 0,#C9973A 45%,#7A5418 100%)", boxShadow: "0 1px 0 rgba(255,236,190,.35) inset,0 2px 3px rgba(20,10,4,.55)", transformOrigin: "50% 100%", visibility: "hidden" }} />
             <div data-leaf style={{ position: "absolute", left: 0, top: 0, width: 480, height: 944, transformOrigin: "0 0", backfaceVisibility: "hidden" }}>
               <canvas data-leafcv width={480} height={944} className={s.abs} style={{ width: 480, height: 944 }} />
               <div data-lsh className={s.fill} style={{ background: "linear-gradient(90deg,rgba(26,16,24,.5) 0,rgba(26,16,24,.5) 76%,rgba(26,16,24,0) 81%)" }} />
@@ -190,6 +196,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       <div data-world="7" className={s.world} style={{ zIndex: 7, background: "#E6DCCB" }}>
         {/* the open leaf seen from inside the room once the camera has walked through */}
         <div data-leafbw aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden", zIndex: 2, transformOrigin: "0 0" }}>
+          <div data-dstop style={{ position: "absolute", left: 0, top: 0, width: 20, height: 12, borderRadius: "50% 50% 3px 3px / 80% 80% 3px 3px", background: "radial-gradient(circle at 34% 30%,#F6DE9A 0,#C9973A 45%,#7A5418 100%)", boxShadow: "0 1px 0 rgba(255,236,190,.35) inset,0 2px 3px rgba(20,10,4,.55)", transformOrigin: "50% 100%", visibility: "hidden" }} />
           <div data-leafb style={{ position: "absolute", left: 0, top: 0, width: 480, height: 944, transformOrigin: "0 0", backfaceVisibility: "hidden" }}>
             <canvas data-leafcv width={480} height={944} className={s.abs} style={{ width: 480, height: 944 }} />
             <div data-lsh className={s.fill} style={{ background: "linear-gradient(90deg,rgba(26,16,24,.5) 0,rgba(26,16,24,.5) 76%,rgba(26,16,24,0) 81%)" }} />

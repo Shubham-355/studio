@@ -22,7 +22,7 @@ const QS = .95, QY = .04, QZ = -3.5, QX = .5, YC = 1.335, QR = y => y <= 1.24 ? 
 export const NAMES = ['The sky with an eye', 'The apple on the board', 'The beach', 'The underwater hall', 'The board in the sand', 'The desert arcade', 'The quiet room', 'The night sea'];
 const INK = [0, 1, 1, 0, 1, 1, 1, 0], SOFT = [0, 0, 1, 0, 1, 0, 1, 0];
 // door in the back wall: half width, height and threshold top; the leaf hinges at DZL, the doorway's far face is DZF; it swings to DSW
-const CZ = [6, 11, 16, 21], DOORZ = 27, DHW = .47, DHH = 1.92, DTS = .07, DZL = DOORZ + .1, DZF = DOORZ + .25, DSW = 96 * Math.PI / 180;
+const CZ = [6, 11, 16, 21], DOORZ = 27, DHW = .47, DHH = 1.92, DTS = .07, DZL = DOORZ + .1, DZF = DOORZ + .25, DSW = 170 * Math.PI / 180, DSTOP = [DHW + 2 * DHW * Math.cos(10 * Math.PI / 180) + .05, 0, DZF + .03];
 const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
 const AK = 1 / .14, ZE = -2 - 1 / QS;
 const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [22.9, 26.8]];
@@ -35,7 +35,7 @@ export const NOTES = [
   '',
   'Board reached from the beach rise (ends 14.05, pawn emerges 13.1–13.9); pawn crosses 14.25–16.55, wave makes the queen. Into the queen 16.6–18.2 (1.2 screens of scroll): settle over the crown, push into the front arch (board blurs by depth), sunset light stains the porcelain stroke by stroke, the arch widens into the arcade and the board squares become its floor.',
   'One camera: the arcade is a 3D hall rendered from the queen camera mapped through the crown arch (no copy), so the camera walks on into it from 18.2. Founders at z 6/11/16/21: thoughts resolve as the camera nears (dz 4.9→3.2) and scatter again on the way back. Hover: object turns, panel slides out.',
-  'Door in the back wall from the first frame (perspective-mapped wood leaf, hinge screen-left); it swings inward to 96° with scroll 21.5–22.85 while the camera walks straight through it (21.45–22.9). Dolly 22.9–24.1. Window 24.1–25.1: camera turns into the lower-left pane, world 8 visible through the glass throughout.',
+  'Door in the back wall from the first frame (perspective-mapped wood leaf, hinge screen-left); it swings inward to 170° with scroll 21.5–22.3, flat against the inside wall on a brass stop before the camera reaches the doorway while the camera walks straight through it (21.45–22.9). Dolly 22.9–24.1. Window 24.1–25.1: camera turns into the lower-left pane, world 8 visible through the glass throughout.',
   'Quote 25.25–26.25. Tear opens 26.2–26.85; arm emerges from shadow inside it and holds the card (thumb in front, fingers behind). Card leaves 27.4; tear closes 27.55–28.05 as the camera lowers to the water; footer from 27.75.',
 ];
 
@@ -76,7 +76,7 @@ export class HomeEngine {
     document.removeEventListener('visibilitychange', this._onVis); ACT.forEach(e => removeEventListener(e, this._onAct));
     this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lidT); clearTimeout(this._lt); clearInterval(this._fx); this._ac && this._ac.close();
   }
-  async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Painter.cloud10 && window.Painter.eye12 && window.Painter.blink14 && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
+  async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Painter.cloud10 && window.Painter.eye12 && window.Painter.blink14 && window.Painter.paint16 && window.Painter.room17 && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
   pal() { return window.Painter.cloudPal10 || { day: {}, warm: {}, night: {} }; }
   /* cloud depth: self-drift (a few px/s per layer) and parallax factor; both off with reduced motion */
   drift(i) { return this._rm ? 0 : 36 * Math.sin((this.now || 0) * [2, 3.5, 5][i] / 36 + i * 1.7); }
@@ -89,7 +89,7 @@ export class HomeEngine {
     const G1 = this.g1; if (G1) { c.save(); c.translate(G1.cx, G1.cy); c.scale(G1.rx * 1.12, G1.ry * 1.12); const vg = c.createRadialGradient(0, .08, 0, 0, .08, 1); vg.addColorStop(0, 'rgba(40,18,10,0)'); vg.addColorStop(.55, 'rgba(40,18,10,.04)'); vg.addColorStop(.85, 'rgba(40,18,10,.2)'); vg.addColorStop(1, 'rgba(40,18,10,.36)'); c.fillStyle = vg; c.fillRect(-2, -2, 4, 4); c.restore();
       const bg = c.createLinearGradient(0, G1.cy - G1.ry * 1.15, 0, G1.cy - G1.ry * .35); bg.addColorStop(0, 'rgba(46,22,12,.3)'); bg.addColorStop(1, 'rgba(46,22,12,0)'); c.fillStyle = bg; c.fillRect(0, G1.cy - G1.ry * 1.25, W, G1.ry * .9); }
     const B = 20000; c.fillStyle = '#000';
-    [[1.5, 5, .62], [5, 12, .4], [10, 22, .2]].forEach(([oy, b, a]) => { c.save(); c.shadowColor = `rgba(38,20,12,${a})`; c.shadowBlur = b * d; c.shadowOffsetX = B * d; c.shadowOffsetY = oy * d; outside(-B, 0); c.restore(); });
+    [[0, 3, .55], [0, 9, .42], [1.5, 12, .3], [6, 22, .14]].forEach(([oy, b, a]) => { c.save(); c.shadowColor = `rgba(38,20,12,${a})`; c.shadowBlur = b * d; c.shadowOffsetX = B * d; c.shadowOffsetY = oy * d; outside(-B, 0); c.restore(); });
     const th = n ? 2 : 3; c.fillStyle = 'rgba(92,70,48,.4)'; outside(0, th + 1); c.fillStyle = '#CDBFA5'; outside(0, th);
   }
 
@@ -154,13 +154,15 @@ export class HomeEngine {
   }
   layout2() {
     const W = this.W, H = this.H, n = this.n, w2 = this.wEl[1]; if (!w2) return;
-    const fov = n ? 42 : 30, F = H / 2 / Math.tan(fov * Math.PI / 360), L = H * 1.35, tan1 = -.05 * H / F, tan0 = (.45 * H + L - H / 2) / F, Yh = L - .55 * H, Hp = Yh + .34 * H, sunX = W * (n ? .2 : .45);
-    const C = n ? [0, 1.25, 9.6] : [-1, 1.1, 9.8], shift = n ? 0 : .05 * W;
-    const peb = n ? [{ x: -.55, z: 6.1, r: .1 }, { x: .12, z: 6.5, r: .07 }, { kind: 'scallop', flip: 1, x: .5, z: 5.6, r: .15, rot: .5 }, { kind: 'spiral', x: -.2, z: 5.2, r: .2, rot: 1.1 }] : [{ x: -2.5, z: 4.4, r: .15 }, { x: -1.75, z: 3.3, r: .09 }, { kind: 'scallop', flip: 1, x: .3, z: 4.0, r: .2, rot: .6 }, { kind: 'spiral', x: -.9, z: 4.9, r: .26, rot: .9 }, { kind: 'scallop', x: 1.1, z: 2.6, r: .16, rot: -.4 }];
-    this.g2 = { W, H, n, fov, F, L, tan0, tan1, Yh, Hp, sunX, C, shift, peb, gulls: n ? [[.15, .2], [.75, .16], [.86, .22]] : [[.9, .2], [.95, .14], [.46, .13]] };
+    const fov = n ? 42 : 30, F = H / 2 / Math.tan(fov * Math.PI / 360), L = H * 1.35, tan1 = -.1 * H / F, tan0 = (.45 * H + L - H / 2) / F, Yh = L - .55 * H, Hp = Yh + .34 * H;
+    /* standing eye height, a touch down and across the floor; apple on the right third, sun low on the horizon between the headline and the apple */
+    const C = n ? [0, 1.6, 9.6] : [-.78, 1.92, 11.15], shift = 0, yaw = n ? 0 : .12, aX = W / 2 + F * Math.tan(Math.atan2(-C[0], C[2]) + yaw), aHalf = F * 1.45 / Math.hypot(C[0], C[2]), hlR = Math.min(64, W * .0444) + Math.min(W * .36, 560);
+    const sunX = n ? W * .28 : Math.max(hlR + 24, (hlR + aX - aHalf) / 2), sa = Math.atan((sunX - W / 2) / F) - yaw, sel = .175, ld = [Math.sin(sa) * Math.cos(sel), Math.sin(sel), -Math.cos(sa) * Math.cos(sel)];
+    const peb = n ? [{ x: -.55, z: 6.1, r: .1 }, { x: .12, z: 6.5, r: .07 }, { kind: 'scallop', flip: 1, x: .5, z: 5.6, r: .19, rot: .5 }, { kind: 'spiral', x: -.2, z: 5.2, r: .2, rot: 1.1 }] : [{ x: -2.5, z: 4.4, r: .15 }, { x: -1.75, z: 3.3, r: .09 }, { kind: 'spiral', x: -.9, z: 4.9, r: .26, rot: .9 }, { kind: 'scallop', flip: 1, x: .55, z: 4.6, r: .24, rot: .5 }];
+    this.g2 = { W, H, n, fov, F, L, tan0, tan1, Yh, Hp, sunX, C, shift, yaw, ld, peb, gulls: n ? [[.15, .2], [.75, .16], [.86, .22]] : [[.9, .2], [.95, .14], [.46, .13]] };
     const plate = this.$('[data-plate]', w2), sea = this.$('[data-a8sea]', w2);
     if (plate) Object.assign(plate.style, { width: W + 'px', height: Hp + 'px' });
-    if (sea) { const sh = H * .16; Object.assign(sea.style, { width: W + 'px', height: sh + 'px' }); sea.width = Math.round(W * .6); sea.height = Math.round(sh * .6); }
+    if (sea) { const sh = H * .2; Object.assign(sea.style, { width: W + 'px', height: sh + 'px' }); sea.width = Math.round(W * .6); sea.height = Math.round(sh * .6); }
     // One cloud deck spans the whole tilt, from around the torn sky down to the horizon: a warm horizon band (f .4),
     // the main layer (f 1) and a near layer above the apple (f 1.4). Positions are CSS px; sizes scale with the viewport.
     {
@@ -214,7 +216,7 @@ export class HomeEngine {
   ball6At(t) { const S = this.S6, b = S.rest, a = { X: b.X + .6, Z: b.Z - .05 }, u = sm(PA + .45 * (PB - PA), PB, t), L = Math.hypot(b.X - a.X, b.Z - a.Z) + .1; return { X: mx(a.X, b.X, u), Z: mx(a.Z, b.Z, u), rho: u * L / S.br }; }
   layout4() {
     const w5 = this.wEl[4]; if (!w5) return; const s5 = this.$('[data-surf5]', w5);
-    this.q5 = { world: w5, clip: this.$('[data-w5clip]'), wcam: this.$('[data-w5cam]'), tall: this.$('[data-tall]', w5), s5, sx5: s5 && s5.getContext('2d'), b6: this.$('[data-paint="b6tall"]', w5), ql: this.$('[data-qlayer]') };
+    this.q5 = { bgl: this.$('[data-bgl]'), world: w5, clip: this.$('[data-w5clip]'), wcam: this.$('[data-w5cam]'), tall: this.$('[data-tall]', w5), s5, sx5: s5 && s5.getContext('2d'), b6: this.$('[data-paint="b6tall"]', w5), ql: this.$('[data-qlayer]') };
     if (this.q5.b6) this.q5.b6.style.transformOrigin = '0 0'; this.st.sandboard.qel = this.q5.ql;
     w5.style.maskSize = w5.style.webkitMaskSize = '100% 100%, 100% 100%'; w5.style.maskRepeat = w5.style.webkitMaskRepeat = 'no-repeat';
   }
@@ -233,7 +235,7 @@ export class HomeEngine {
     const qb = this.$('[data-3d="roomqueen"]'); if (qb) Object.assign(qb.style, n ? { left: '-4%', top: '18%', width: '64%', height: '66%' } : { left: '32%', top: '4%', width: '30%', height: '92%' });
     const tb = this.$('[data-table]'); if (tb) Object.assign(tb.style, n ? { left: '80%', top: '64%', display: '' } : { display: 'none' });
     const pw = (x1 - x0) * .5, ph = (y1 - y0) * .56; this.pane = { x: x0 + (x1 - x0) * .25, y: y0 + (y1 - y0) * .72, z: 1.2 * Math.max(W / pw, H / ph) };
-    this._lqB = null; this.q7 = { leafBw: this.$('[data-leafbw]', w7), leafB: this.$('[data-leafb]', w7), world: w7, cam: this.$('[data-cam]', w7), wincam: this.$('[data-wincam]') };
+    this._lqB = null; this._spB = null; this.q7 = { leafBw: this.$('[data-leafbw]', w7), leafB: this.$('[data-leafb]', w7), world: w7, cam: this.$('[data-cam]', w7), wincam: this.$('[data-wincam]') };
   }
   layout8() {
     const W = this.W, H = this.H, n = this.n, w8 = this.wEl[7], P = window.Painter; if (!w8) return;
@@ -401,7 +403,7 @@ export class HomeEngine {
     this._mq = this._mq || matchMedia('(prefers-reduced-motion: reduce)'); this._rm = this.props.motion === false || this._mq.matches;
     this.mv = {}; this.m3 = 'none'; this.tilt = this.tiltAt(t); this.qstate(t);
     for (let k = 0; k < 8; k++) { const el = this.wEl[k]; if (!el) continue; const on = t >= RANGE[k][0] && t < RANGE[k][1]; if (el._on !== on) { el._on = on; el.style.visibility = on ? 'visible' : 'hidden'; el.style.display = on ? '' : 'none'; } if (on) this['w' + (k + 1)](t); }
-    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
+    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); if (this.q5 && this.q5.bgl && !(this.wEl[4] && this.wEl[4]._on)) this.S(this.q5.bgl, 'visibility', 'hidden'); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
     this.carry(t); this.copy(t); this.ui(t); this.mounts(t); this.drive();
   }
 
@@ -437,8 +439,8 @@ export class HomeEngine {
     q.gulls.forEach((el, i) => { const gp = G.gulls[i]; if (!gp) return; const a = this.now * (.04 + i * .011) + i * 2.1, x = W * gp[0] + Math.sin(a) * W * .03, y = dy + H * gp[1] + Math.sin(a * 1.7) * 6, s2 = (this.n ? .3 : .34) + i * .05, fl = .7 + Math.sin(this.now * 3 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
       this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
     const st = this.st.apple8, pe = sm(PA, PB, t);
-    st.cam = { C: G.C, pitch: Math.atan(T.tn), fov: G.fov, shift: G.shift }; st.peb = G.peb;
-    st.dolly = pe; st.bk = [sm(2.62, 2.69, t), sm(2.71, 2.79, t)]; st.bite = Math.max(st.bk[0], st.bk[1]); st.port = pe < .72 ? mx(.1, .15, sm(.3, .72, pe)) : mx(.15, 1.3, sm(.72, .97, pe)); st.sand = sm(.5, .85, pe);
+    st.cam = { C: G.C, pitch: Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: G.yaw, ld: G.ld }; st.peb = G.peb;
+    st.dolly = pe; st.bk = [sm(2.62, 2.69, t), sm(2.71, 2.79, t)]; st.bite = Math.max(st.bk[0], st.bk[1]); st.port = pe < .72 ? mx(.1, .14, sm(.3, .72, pe)) : mx(.14, 1.3, sm(.72, .97, pe)); st.sand = sm(.5, .85, pe);
     if (st.bk[0] > .3 && !this._bit1) { this._bit1 = 1; this.crunch(); } if (st.bk[0] < .1) this._bit1 = 0; if (st.bk[1] > .3 && !this._bit2) { this._bit2 = 1; this.crunch(); } if (st.bk[1] < .1) this._bit2 = 0;
     this.S(q.alay, 'visibility', t < PB - .0005 ? 'visible' : 'hidden');
     let m3 = 'linear-gradient(transparent,transparent)';
@@ -501,6 +503,31 @@ export class HomeEngine {
     const f = Math.min(1, p / .86) * 5;
     for (let k = 0; k < 5; k++) { let v = 1 - sm(.42, .56, Math.abs(f - k - .5)); if (k === 0 && f < .5) v = t < 14.25 ? sm(13.9, 14.1, t) : 1; if (k === 4 && f >= 4.5) v = 1; if (t < 13.9) v = 0; if (t > QA) v = k === 4 ? 1 - sm(QA, QA + .16, t) : 0; this.mv['stg' + k] = v; }
     if (!this.n && sb.sx != null) { const P0 = t > QA && this._stgP ? this._stgP : (this._stgP = [sb.sx * W + 110, Math.min(ty + 1.2 * H + sb.sy * H - 150, H - 250)]); for (let k = 0; k < 5; k++) this.pos['stg' + k] = P0; }
+    this.bgulls(t);
+  }
+  /* overhead board: the beach gulls seen from above, gliding low over the sand with soft shadows offset away from the sun; they keep clear of the pawn, queen and copy */
+  gullTop(cv, sh) { const P = window.Painter, x = cv.getContext('2d'); x.setTransform(2, 0, 0, 2, 0, 0); x.clearRect(0, 0, 90, 40);
+    const c = sh ? [[40, 30, 26], [40, 30, 26], [40, 30, 26]] : [[236, 238, 240], [206, 212, 220], [62, 64, 76]], el = (cx, cy, rx, ry, f) => { x.fillStyle = f; x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, 7); x.fill(); };
+    [1, -1].forEach(s => { P.stroke(x, 45, 19, s > 0 ? .1 : Math.PI - .1, 19, 4.2, c[0], .95, s > 0 ? -.12 : .12); P.stroke(x, 45 + s * 18, 20.6, s > 0 ? .2 : Math.PI - .2, 15, 3, c[1], .95, s > 0 ? .1 : -.1); P.stroke(x, 45 + s * 31.5, 23.4, s > 0 ? .3 : Math.PI - .3, 6, 2.2, c[2], .9, 0); });
+    const b = sh ? '#281E1A' : '#F2F2F0'; el(45, 20.5, 3.3, 8.2, b); el(45, 11.6, 2.7, 2.7, b); el(45, 29.4, 2.6, 2.1, b);
+    if (!sh) { el(45, 21.5, 2.2, 4.6, 'rgba(176,184,196,.75)'); el(45, 8.9, .8, 1, '#D8B24A'); } }
+  bgulls(t) {
+    const q = this.q5, Lr = q && q.bgl; if (!Lr) return; const W = this.W, H = this.H, o = sm(12.9, 13.7, t) * (1 - sm(QA, QA + .25, t)), on = o > .01 && !!(this.wEl[4] && this.wEl[4]._on);
+    this.S(Lr, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
+    if (!Lr._k) { const ss = [...Lr.querySelectorAll('[data-bgs]')], gg = [...Lr.querySelectorAll('[data-bgg]')]; ss.forEach(cv => this.gullTop(cv, 1)); gg.forEach(cv => this.gullTop(cv, 0)); Lr._k = { ss, gg, a: [1, 1, 1], f: 0, box: [] }; }
+    const K = Lr._k, P = window.Painter, S = this.S6; let dv = [.62, .48];
+    try { const c = this.qs ? this.qs.c6 : (sm(TB1, 14.05, t) < .999 ? this.cam6(t) : S.camO), a0 = P.cam6.proj(c, S.Xb, 0, S.Zb), a1 = P.cam6.proj(c, S.Xb + S.sun[0], 0, S.Zb + S.sun[1]), l = Math.hypot(a1[0] - a0[0], a1[1] - a0[1]); if (l > 1e-3) dv = [(a1[0] - a0[0]) / l, (a1[1] - a0[1]) / l]; } catch { /* keep the default shadow direction */ }
+    if (!(K.f++ % 10)) { K.box = (this.blocks || []).filter(b => b.el.style.visibility !== 'hidden').map(b => b.el.getBoundingClientRect()).filter(r => r.width > 0); const sb = this.st.sandboard; if (sb && sb.sx != null) K.box.push({ left: sb.sx * W - 90, right: sb.sx * W + 90, top: sb.sy * H - 170, bottom: sb.sy * H + 40 }); }
+    const U = Math.max(.6, Math.min(W, 1.6 * H) / 1440) * 1.6, now = this.now || 0;
+    const G = [{ p: [[1.08, .2], [.86, .04], [.6, -.14]], T: 26, ph: 0, s: 1, h: 1 }, { p: [[.62, 1.14], [.86, .66], [1.14, .54]], T: 22, ph: 9, s: .78, h: .7 }, { p: [[-.12, .8], [.14, .92], [.38, 1.16]], T: 30, ph: 17, s: .62, h: .45 }];
+    G.forEach((g, i) => { const gs = K.gg[i], sd = K.ss[i]; if (!gs || !sd) return; const u = ((now + g.ph) % (g.T * 1.35)) / g.T;
+      if (u > 1) { this.S(gs, 'opacity', '0'); this.S(sd, 'opacity', '0'); return; }
+      const [p0, p1, p2] = g.p, v = 1 - u, X = (v * v * p0[0] + 2 * v * u * p1[0] + u * u * p2[0]) * W, Y = (v * v * p0[1] + 2 * v * u * p1[1] + u * u * p2[1]) * H;
+      const dx = (2 * v * (p1[0] - p0[0]) + 2 * u * (p2[0] - p1[0])) * W, dy = (2 * v * (p1[1] - p0[1]) + 2 * u * (p2[1] - p1[1])) * H, rot = Math.atan2(dy, dx) + Math.PI / 2;
+      const k = g.s * U, fl = 1 + .05 * Math.sin(now * 1.3 + i * 2), hit = K.box.some(r => X > r.left - 50 * k && X < r.right + 50 * k && Y > r.top - 30 * k && Y < r.bottom + 30 * k);
+      K.a[i] = mx(K.a[i], hit ? 0 : 1, .08); const al = o * K.a[i], off = 70 * g.h * U, sx = X + dv[0] * off, sy = Y + dv[1] * off;
+      this.S(gs, 'transform', `translate(${(X - 45).toFixed(1)}px,${(Y - 20).toFixed(1)}px) rotate(${rot.toFixed(3)}rad) scale(${k.toFixed(3)},${(k * fl).toFixed(3)})`); this.S(gs, 'opacity', al.toFixed(3));
+      this.S(sd, 'transform', `translate(${(sx - 45).toFixed(1)}px,${(sy - 20).toFixed(1)}px) rotate(${rot.toFixed(3)}rad) scale(${(k * .72).toFixed(3)},${(k * .72 * fl).toFixed(3)})`); this.S(sd, 'opacity', (al * .32).toFixed(3)); });
   }
   /* into the queen: one camera from the overhead board view, down to the crown, through its front arch into the arcade */
   qstate(t) {
@@ -578,19 +605,22 @@ export class HomeEngine {
     /* the door ends the hall from the first frame: closed, edge-lit (brighter per founder passed); after the last founder it swings inward with scroll.
        Frame, jambs, step and the door's light are 3D (scene3d); the painted wood leaf is perspective-mapped onto its hinge here. */
     const D = this.dk6 || (this.dk6 = Object.fromEntries([...q.door.querySelectorAll('[data-dk]')].map(e => [e.dataset.dk, e])));
-    const op = sm(21.5, 22.3, t), sw = sm(21.5, 22.85, t), th = sw * DSW; a8.door = [th, op, sw];
+    const op = sm(21.5, 22.3, t), sw = sm(21.5, 22.3, t), th = sw * DSW; a8.door = [th, op, sw];
     this.d6 = { cz: cm.C[2] }; this.gap = null; this.gapPoly = null;
     const P = (x, y, z) => { const p = pj(x, y, z); return p[2] > .02 ? p : null; };
-    const fo = [P(-DHW, DHH, DZF), P(DHW, DHH, DZF), P(DHW, DTS, DZF), P(-DHW, DTS, DZF)], lq = this.leafQuad(P, th);
+    /* the room fills the opening from the frame's front edge, so its walls, ceiling and floor meet the jambs, lintel and threshold edge to edge */
+    const ZR = DOORZ - .185, fo = [P(-DHW, DHH, ZR), P(DHW, DHH, ZR), P(DHW, DTS, ZR), P(-DHW, DTS, ZR)], lo = [P(-DHW, DHH, DZL), P(DHW, DHH, DZL), P(DHW, DTS, DZL), P(-DHW, DTS, DZL)], lq = this.leafQuad(P, th);
     if (dzD > .05 && fo.every(Boolean)) {
       const fx = fo.map(p => p[0]), fy = fo.map(p => p[1]); this.gap = [Math.min(...fx), Math.min(...fy), Math.max(...fx), Math.max(...fy)];
       const zi = String(Math.max(1, Math.round(1000 - dzD * 10)));
       this.S(q.door, 'visibility', 'visible'); this.S(q.door, 'zIndex', zi); this.S(q.leafw, 'visibility', 'visible'); this.S(q.leafw, 'zIndex', zi);
       if (D.room) D.room.setAttribute('points', fo.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '));
       this.leafPose(q.leaf, lq, sw);
+      { this.S(q.leafw, 'clipPath', lo.every(Boolean) ? 'polygon(' + lo.map(p => p[0].toFixed(1) + 'px ' + p[1].toFixed(1) + 'px').join(',') + ')' : 'none'); }
+      this.stopPose(q.leafw, P);
       /* the room (world 7) shows through the back of the doorway minus whatever the leaf still covers */
       if (sw > 0) {
-        const G = this.gap, pth = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z';
+        const G = lo.every(Boolean) ? [Math.min(...lo.map(p => p[0])), Math.min(...lo.map(p => p[1])), Math.max(...lo.map(p => p[0])), Math.max(...lo.map(p => p[1]))] : this.gap, pth = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z';
         let leaf = lq.every(Boolean) ? lq.map(p => [p[0], p[1]]) : null;
         if (leaf) [[0, G[0], 1], [0, G[2], -1], [1, G[1], 1], [1, G[3], -1]].forEach(([k, v, sg]) => { if (!leaf || !leaf.length) return; const o = []; for (let i = 0; i < leaf.length; i++) { const A = leaf[i], B = leaf[(i + 1) % leaf.length], ia = (A[k] - v) * sg >= 0, ib = (B[k] - v) * sg >= 0; if (ia) o.push(A); if (ia !== ib) { const u = (v - A[k]) / (B[k] - A[k]); o.push([A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u]); } } leaf = o; });
         this.gapPoly = `path(evenodd, "${pth(fo)}${leaf && leaf.length > 2 ? ' ' + pth(leaf) : ''}")`;
@@ -611,7 +641,11 @@ export class HomeEngine {
     const K = el._k, sh = (1 - sm(0, .35, sw)).toFixed(3); this.S(K.lsh, 'opacity', sh); this.S(K.lsh2, 'opacity', sh); this.S(K.ldk, 'opacity', (.06 + .3 * sm(0, .6, sw)).toFixed(3)); }
   leafB(t) { const q = this.q7; if (!q || !q.leafB) return; const on = t >= 22.9; this.S(q.leafBw, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
     if (!this._lqB) { const z = pathv(99, CPTS), pj = this.proj6({ C: [0, 1, z], L: [0, 1, z + 1], fov: this.fovW, oy: .06 }); this._lqB = this.leafQuad((x, y, zz) => { const p = pj(x, y, zz); return p[2] > .02 ? p : null; }, DSW); }
-    this.S(q.leafBw, 'transform', this.cam7 || 'none'); this.leafPose(q.leafB, this._lqB, 1); }
+    this.S(q.leafBw, 'transform', this.cam7 || 'none'); this.leafPose(q.leafB, this._lqB, 1);
+    if (!this._spB) { const z = pathv(99, CPTS), pj = this.proj6({ C: [0, 1, z], L: [0, 1, z + 1], fov: this.fovW, oy: .06 }); this._spB = (x, y, zz) => { const p = pj(x, y, zz); return p[2] > .02 ? p : null; }; } this.stopPose(q.leafBw, this._spB); }
+  /* small brass doorstop on the inside wall where the open leaf lands */
+  stopPose(wrap, P) { const el = wrap && (wrap._st || (wrap._st = wrap.querySelector('[data-dstop]'))); if (!el) return; const p = P(DSTOP[0], DSTOP[1], DSTOP[2]); if (!p) { this.S(el, 'visibility', 'hidden'); return; }
+    this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${(p[0] - 10).toFixed(1)}px,${(p[1] - 12).toFixed(1)}px) scale(${(p[3] * .07 / 20).toFixed(4)})`); }
   paintDoor(cv) { if (!cv) return; const W = 480, H = 944, x = cv.getContext('2d'); let sd = 7; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
     const grain = (x0, y0, w, h, vert, n) => { x.save(); x.beginPath(); x.rect(x0, y0, w, h); x.clip();
       for (let i = 0; i < n; i++) { const o = r() * (vert ? w : h), a = 1 + r() * 4, f = .004 + r() * .01, ph = r() * 6.28, dk = r() < .62, L = vert ? h : w;
