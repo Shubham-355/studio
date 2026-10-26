@@ -123,12 +123,18 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
                   <a href="#companies" onClick={(e) => go("companies", e)} className={`${s.navLink} ${s.focusRing}`}>Companies</a>
                   <a href="#how-we-build" onClick={(e) => go("how", e)} className={`${s.navLink} ${s.focusRing}`}>How we build</a>
                   <a href="#studio" className={`${s.navLink} ${s.focusRing}`}>Studio</a>
-                  {/* five bars that rise into a slow wave while sound is on; the label shows on hover or focus */}
-                  <button onClick={toggleSound} aria-label="Sound" aria-pressed={sound} className={s.waveBtn}>
-                    <span data-wavebox className={s.waveBox}>
-                      {[0, 1, 2, 3, 4].map((k) => <span key={k} data-wave className={s.wave} />)}
+                  {/* a muted speaker while sound is off; it crossfades into five bars moving as a slow wave when sound is on */}
+                  <button onClick={toggleSound} aria-label="Sound" aria-pressed={sound} title={sound ? "Sound on" : "Sound off"} className={s.waveBtn}>
+                    <span className={s.waveIcon}>
+                      <svg data-spkx width="20" height="16" viewBox="0 0 20 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={s.spkx}>
+                        <path d="M2.5 6h2.5l3.75-3v10L5 10H2.5z" />
+                        <path d="M12.5 6l4 4" />
+                        <path d="M16.5 6l-4 4" />
+                      </svg>
+                      <span data-wavebox aria-hidden className={s.waveBox}>
+                        {[0, 1, 2, 3, 4].map((k) => <span key={k} data-wave className={s.wave} />)}
+                      </span>
                     </span>
-                    <span aria-hidden className={s.waveTip}>{sound ? "Sound on" : "Sound off"}</span>
                   </button>
                 </div>
               </div>

@@ -874,18 +874,19 @@ export class HomeEngine {
 
   /* ---------- sound (engine: lib/painter/sound17.js) ---------- */
   snd() { if (!this._snd && window.HPSound) this._snd = new window.HPSound({ getT: () => this.t || 0, reduced: () => this.red(), bars: () => this.$$('[data-bar]'), sides: () => (this.px6 || [-1, 1, -1, 1]).map(x => (x < 0 ? -1 : 1) * (this.n ? .3 : .55)) }); return this._snd; }
-  // the desktop sound button: five bars that rise into a slow wave while sound is on, and settle flat when it is off
+  // the desktop sound button: a muted speaker crossfades into five bars that move as a slow wave while sound is on
   wave() {
     if (this._wr) return; let last = performance.now(); this._wp = this.state.sound ? 1 : 0;
     const PAT = [.45, .8, 1, .7, .5], f = () => {
       this._wr = requestAnimationFrame(f); const n = performance.now(), dt = Math.min(.1, (n - last) / 1000); last = n;
-      const p = this._wp = Math.max(0, Math.min(1, this._wp + (this.state.sound ? dt : -dt) / .4));
-      if (p === 0 && this._wf) return; this._wf = p === 0;
-      const e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2, red = this.red(), s = n / 1000;
-      const box = this.$$('[data-wavebox]'); box.forEach(b => { b.style.opacity = (.6 + .4 * e).toFixed(3); });
-      this.$$('[data-wave]').forEach((b, i) => {
-        const r = red ? PAT[i] : .3 + .7 * (.5 + .5 * Math.sin(s * (.85 + i * .19) + i * 1.7)) * (.75 + .25 * Math.sin(s * .41 + i * 2.3));
-        b.style.transform = 'scaleY(' + (.125 + (r - .125) * e).toFixed(3) + ')';
+      const p = this._wp = Math.max(0, Math.min(1, this._wp + (this.state.sound ? dt : -dt) / .3)), red = this.red();
+      if (p === 0 && this._wf) return; if (p === 1 && red && this._wf === 2) return; this._wf = p === 0 ? 1 : p === 1 && red ? 2 : 0;
+      const e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2, s = n / 1000;
+      this.$$('[data-spkx]').forEach(g => { g.style.opacity = (1 - e).toFixed(3); });
+      this.$$('[data-wavebox]').forEach(g => { g.style.opacity = e.toFixed(3); });
+      this.$$('[data-wave]').forEach((w, k) => {
+        const r = red ? PAT[k] : .3 + .7 * (.5 + .5 * Math.sin(s * (.85 + k * .19) + k * 1.7)) * (.75 + .25 * Math.sin(s * .41 + k * 2.3));
+        w.style.transform = 'scaleY(' + (.125 + (r - .125) * e).toFixed(3) + ')';
       });
     }; f();
   }
