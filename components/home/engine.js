@@ -27,7 +27,6 @@ const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
 const AK = 1 / .14, ZE = -2 - 1 / QS;
 const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [22.9, 26.8]];
 const BEATS = [.05, 2.0, 2.95, 12.45].concat([14.3, 14.74, 15.24, 15.73, 16.23, 16.6, 17.65, 18.6, 19.35, 20.05, 20.75, 21.45, 22.1, 23.6, 25.7, 27.1, 28.4]);
-const BEDS = [{ f: 420, g: .5, s: .05 }, { f: 800, g: .26, s: .2 }, { f: 1100, g: .3, s: .65 }, { f: 170, g: .8, s: .04 }, { f: 1000, g: .28, s: .55 }, { f: 300, g: .45, s: 0 }, { f: 260, g: .04, s: 0 }, { f: 520, g: .32, s: .45 }];
 export const NOTES = [
   'Time 0–1.58 (1.2 screens of scroll). The eye looks down first, then one camera pitch from the sky to the horizon: the peach horizon glow rises at the bottom while the tear is still leaving the top. Three cloud layers: far 0.92×, mid 1×, near 1.45×. Horizon at 45% when settled.',
   'Apple on the checkerboard, one-point perspective, low sun on the left: cast shadows, contact shadows and the glossy reflection are computed on the real floor. One bite 2.62–2.76. Push 3.2–4.4: the camera travels along the ray into the bite; the beach is a live render behind it, flesh warms to sand.',
@@ -74,7 +73,7 @@ export class HomeEngine {
   destroy() {
     this._alive = false; removeEventListener('resize', this._onResize);
     document.removeEventListener('visibilitychange', this._onVis); ACT.forEach(e => removeEventListener(e, this._onAct));
-    this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lidT); clearTimeout(this._lt); clearInterval(this._fx); this._ac && this._ac.close();
+    this.disposeAll(); this._cursorCleanup && this._cursorCleanup(); clearTimeout(this._blinkT); clearTimeout(this._lidT); clearTimeout(this._lt); this._snd && this._snd.dispose(); cancelAnimationFrame(this._wr);
   }
   async waitLibs() { for (let i = 0; i < 400 && !(window.Painter && window.Painter.beach6cfg && window.Painter.apple8Sky && window.Painter.cloud10 && window.Painter.eye12 && window.Painter.blink14 && window.Painter.paint16 && window.Painter.room17 && window.Scene3D); i++) await new Promise(r => setTimeout(r, 30)); }
   pal() { return window.Painter.cloudPal10 || { day: {}, warm: {}, night: {} }; }
@@ -101,7 +100,9 @@ export class HomeEngine {
     this.grain(); this.relayout(false); this.queuePaint();
     const qt = parseFloat(this.q('t')); if (!isNaN(qt) && qt >= 0 && qt <= TEND + 1) { scrollTo(0, VI(qt) * innerHeight); this.t = qt; this._introT0 = performance.now() - 5000; }
     if (this.state.loader) this.runLoader(); else if (!this._introT0) this._introT0 = performance.now() + 100;
-    this.initCursor(); this.blink();
+    this.initCursor(); this.blink(); this.snd(); this.wave();
+    // sound stays on across reloads: the first tap or key press (outside the sound button) brings it back, as browsers require a gesture
+    try { if (sessionStorage.getItem('hpSound') === '1') { const ev = ['pointerdown', 'keydown'], g = e => { if (e.target && e.target.closest && e.target.closest('[aria-label="Ambient sound"],[aria-label="Sound"]')) return; ev.forEach(k => removeEventListener(k, g, true)); if (!this.state.sound) this.toggleSound(); }; ev.forEach(k => addEventListener(k, g, true)); } } catch { /* storage blocked */ }
     this._loopF = () => this.loop(); this._loopF();
     const o = this.q('open'); if (o) setTimeout(() => this.forceOpen(o), 1800);
   }
@@ -709,7 +710,7 @@ export class HomeEngine {
       if (k !== this._k8) { this._k8 = k; const o = this.ct8; if (o) { q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(o.map(([x, y]) => [g.cx + (x - g.cx) * k, g.cy + (y - g.cy) * k]))}")`; if (q.ncl) q.ncl.style.clipPath = q.plate.style.clipPath; }
         if (q.rimcv) { q.rimcv.style.visibility = 'visible'; q.rimcv.style.transform = `scale(${k.toFixed(4)})`; }
         const AE = this.armEls; if (AE) { const cp = this.armClip(k); AE.wraps.slice(0, 2).forEach(e => { e.style.clipPath = cp; }); if (AE.flapG) AE.flapG.setAttribute('transform', `translate(${g.cx.toFixed(1)} ${g.cy.toFixed(1)}) scale(${k.toFixed(4)}) translate(${(-g.cx).toFixed(1)} ${(-g.cy).toFixed(1)})`); } }
-      if (qo > .4 && !this._tore2) { this._tore2 = true; this.paper(); }
+      if (qo > .4 && !this._tore2) { this._tore2 = true; }
     } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; if (q.ncl) q.ncl.style.clipPath = 'none'; if (q.rimcv) q.rimcv.style.visibility = 'hidden'; if (qo <= 0) this._tore2 = false; }
     /* the arm: reaches out of the tear, sways while it waits; hover brings the letter toward you */
     const now = this.now || 0, AR = this.arm, AE = this.armEls;
@@ -764,9 +765,8 @@ export class HomeEngine {
     if (wi !== this._wi) {
       this._wi = wi; const c = INK[wi] ? '#1B1D24' : '#F3EEE4';
       const nav = this.ch.nav; if (nav) { nav.style.color = c; nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
-      this.bed(wi); if (this.props.notes || this.q('notes') === '1') this.setState({ world: wi });
+      if (this.props.notes || this.q('notes') === '1') this.setState({ world: wi });
     }
-    if (this._ac && this.state.sound && t > QA && t < QB) this.bedMix(sm(QA + .64, QA + 1.12, t));
     const pr = this.ch.prog; if (pr) this.S(pr, 'transform', `scaleX(${(t / TEND).toFixed(4)})`);
     // The nav call to action slides in once the hero is left behind (with a little hysteresis), pushing the links aside.
     const nc = this.ch.cta, nl = this.ch.links;
@@ -818,7 +818,7 @@ export class HomeEngine {
     clearTimeout(this._blinkT);
     this._blinkT = setTimeout(() => { if (!this.red() && (this.t || 0) < .8 && !document.hidden) this.startBlink(Math.random() < .2); this.blink(); }, 3000 + Math.random() * 5000);
   }
-  startBlink(dbl) { if (!this._bk) this._bk = { t0: performance.now(), dbl }; this._act = performance.now(); }
+  startBlink(dbl) { if (!this._bk) { this._bk = { t0: performance.now(), dbl }; this._snd && this._snd.blink(); } this._act = performance.now(); }
   /* lid closure 0..1: close 110ms ease-in, hold 50ms, open 190ms ease-out; a double blink repeats after 70ms */
   blinkC(now) {
     const b = this._bk; if (!b) return 0; const C = 110, Hd = 50, O = 190, T1 = C + Hd + O, GAP = 70, e = now - b.t0;
@@ -867,42 +867,31 @@ export class HomeEngine {
     // the panel itself follows in w6, and only slides out while the founder is at a readable distance
     this.fHover[i] = on; if (on) this.paper(.35);
   }
-  cardHover(on) { this._chov = on ? 1 : 0; this._act = performance.now(); }
+  cardHover(on) { if (on && !this._chov) this.paper(.3); this._chov = on ? 1 : 0; this._act = performance.now(); }
   forceOpen(o) {
         const m = /^f(\d)$/.exec(o || ''); if (m) setTimeout(() => this.founderHover(+m[1], true), 600);
   }
 
-  /* ---------- sound ---------- */
-  toggleSound() {
-    if (!this._ac) {
-      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      const ac = new AC(), len = ac.sampleRate * 4, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
-      let b0 = 0, b1 = 0, b2 = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = .99765 * b0 + w * .099; b1 = .963 * b1 + w * .2965; b2 = .57 * b2 + w * 1.0526; d[i] = (b0 + b1 + b2 + w * .1848) * .12; }
-      const src = () => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; return s; };
-      const master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
-      const w = src(), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; const bg = ac.createGain(); bg.gain.value = .5; w.connect(lp).connect(bg).connect(master);
-      const wl = ac.createOscillator(), wlg = ac.createGain(); wl.frequency.value = .06; wlg.gain.value = 160; wl.connect(wlg).connect(lp.frequency);
-      const s = src(), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 560; bp.Q.value = .6; const sg = ac.createGain(); sg.gain.value = 0; const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = .09; lg.gain.value = 0; lfo.connect(lg).connect(sg.gain); s.connect(bp).connect(sg).connect(master);
-      w.start(); s.start(0, 1.3); wl.start(); lfo.start();
-      Object.assign(this, { _ac: ac, _master: master, _noise: buf, _lp: lp, _bg: bg, _sg: sg, _lg: lg });
-      this._fx = setInterval(() => { if (!this.state.sound) return; const wi = this._wi; if (wi === 6) this.tick(); if ((wi === 2 || wi === 4) && Math.random() < .45) this.gull(); }, 1000);
-    }
-    const on = !this.state.sound; this._ac.resume();
-    this._master.gain.setTargetAtTime(on ? .55 : 0, this._ac.currentTime, .6);
-    this.$$('[data-bar]').forEach((b, i) => { b._a && b._a.cancel(); b._a = null; if (on && !this.red()) b._a = b.animate([{ transform: 'scaleY(.3)' }, { transform: 'scaleY(1)' }, { transform: 'scaleY(.5)' }, { transform: 'scaleY(.3)' }], { duration: 1400 + i * 260, iterations: Infinity, easing: 'ease-in-out' }); });
-    this.setState({ sound: on }, () => this.bed(this._wi || 0));
+  /* ---------- sound (engine: lib/painter/sound17.js) ---------- */
+  snd() { if (!this._snd && window.HPSound) this._snd = new window.HPSound({ getT: () => this.t || 0, reduced: () => this.red(), bars: () => this.$$('[data-bar]'), sides: () => (this.px6 || [-1, 1, -1, 1]).map(x => (x < 0 ? -1 : 1) * (this.n ? .3 : .55)) }); return this._snd; }
+  // the desktop sound button: five bars that rise into a slow wave while sound is on, and settle flat when it is off
+  wave() {
+    if (this._wr) return; let last = performance.now(); this._wp = this.state.sound ? 1 : 0;
+    const PAT = [.45, .8, 1, .7, .5], f = () => {
+      this._wr = requestAnimationFrame(f); const n = performance.now(), dt = Math.min(.1, (n - last) / 1000); last = n;
+      const p = this._wp = Math.max(0, Math.min(1, this._wp + (this.state.sound ? dt : -dt) / .4));
+      if (p === 0 && this._wf) return; this._wf = p === 0;
+      const e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2, red = this.red(), s = n / 1000;
+      const box = this.$$('[data-wavebox]'); box.forEach(b => { b.style.opacity = (.6 + .4 * e).toFixed(3); });
+      this.$$('[data-wave]').forEach((b, i) => {
+        const r = red ? PAT[i] : .3 + .7 * (.5 + .5 * Math.sin(s * (.85 + i * .19) + i * 1.7)) * (.75 + .25 * Math.sin(s * .41 + i * 2.3));
+        b.style.transform = 'scaleY(' + (.125 + (r - .125) * e).toFixed(3) + ')';
+      });
+    }; f();
   }
-  bed(wi) { if (!this._ac) return; const b = BEDS[wi] || BEDS[0], T = this._ac.currentTime; this._lp.frequency.setTargetAtTime(b.f, T, 1.2); this._bg.gain.setTargetAtTime(b.g, T, 1.2); this._sg.gain.setTargetAtTime(b.s * .5, T, 1.2); this._lg.gain.setTargetAtTime(b.s * .45, T, 1.2); }
-  bedMix(k) { const A = BEDS[4], B = BEDS[5], T = this._ac.currentTime, f = (a, b) => a + (b - a) * k; this._lp.frequency.setTargetAtTime(f(A.f, B.f), T, .15); this._bg.gain.setTargetAtTime(f(A.g, B.g), T, .15); this._sg.gain.setTargetAtTime(f(A.s, B.s) * .5, T, .15); this._lg.gain.setTargetAtTime(f(A.s, B.s) * .45, T, .15); }
-  tick() { const ac = this._ac, s = ac.createBufferSource(); s.buffer = this._noise; const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 2600; const g = ac.createGain(), t = ac.currentTime; g.gain.setValueAtTime(.35, t); g.gain.exponentialRampToValueAtTime(.001, t + .03); s.connect(f).connect(g).connect(this._master); s.start(t, Math.random() * 3); s.stop(t + .05); }
-  gull() { const ac = this._ac, o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = 'triangle'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(1050, t + .28); o.frequency.setValueAtTime(1450, t + .34); o.frequency.exponentialRampToValueAtTime(1000, t + .62); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.03, t + .04); g.gain.linearRampToValueAtTime(.0, t + .3); g.gain.linearRampToValueAtTime(.025, t + .38); g.gain.linearRampToValueAtTime(0, t + .66); o.connect(g).connect(this._master); o.start(t); o.stop(t + .7); }
-  paper(vol = 1) {
-    if (!this.state.sound || !this._ac) return;
-    const ac = this._ac, s = ac.createBufferSource(); s.buffer = this._noise; const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1800;
-    const g = ac.createGain(), t = ac.currentTime; g.gain.setValueAtTime(0, t); for (let i = 0; i < 8; i++) g.gain.linearRampToValueAtTime((.15 + Math.random() * .35) * vol, t + .03 + i * .04); g.gain.linearRampToValueAtTime(0, t + .4);
-    s.connect(f).connect(g).connect(ac.destination); s.start(t, Math.random() * 3); s.stop(t + .45);
-  }
-  crunch() { if (!this.state.sound || !this._ac) return; const ac = this._ac, s = ac.createBufferSource(); s.buffer = this._noise; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 1.2; const g = ac.createGain(), t = ac.currentTime; g.gain.setValueAtTime(0, t); for (let i = 0; i < 5; i++) g.gain.linearRampToValueAtTime(.3 + Math.random() * .4, t + .02 + i * .03); g.gain.linearRampToValueAtTime(0, t + .22); s.connect(f).connect(g).connect(ac.destination); s.start(t, Math.random() * 3); s.stop(t + .25); }
+  toggleSound() { const S = this.snd(); if (!S) return; const on = !this.state.sound; if (S.setOn(on)) this.setState({ sound: on }); }
+  paper(vol = 1) { this._snd && this._snd.paper(vol); }
+  crunch() { /* the bite is an event inside sound17 */ }
 
   go(to, e) { e && e.preventDefault && e.preventDefault(); if (this.state.menu) this.setState({ menu: false }); scrollTo({ top: VI(JUMP[to] ?? 0) * (this.H || innerHeight), behavior: this.red() ? 'auto' : 'smooth' }); }
 }

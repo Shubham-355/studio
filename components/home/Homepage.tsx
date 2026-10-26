@@ -123,11 +123,12 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
                   <a href="#companies" onClick={(e) => go("companies", e)} className={`${s.navLink} ${s.focusRing}`}>Companies</a>
                   <a href="#how-we-build" onClick={(e) => go("how", e)} className={`${s.navLink} ${s.focusRing}`}>How we build</a>
                   <a href="#studio" className={`${s.navLink} ${s.focusRing}`}>Studio</a>
-                </div>
-                <div className={s.navEnd}>
-                  <button onClick={toggleSound} aria-label="Ambient sound" aria-pressed={sound} className={`${s.soundBtn} ${s.focusRing}`}>
-                    <Bars />
-                    {vw >= 1120 && <span>{sound ? "Sound on" : "Sound off"}</span>}
+                  {/* five bars that rise into a slow wave while sound is on; the label shows on hover or focus */}
+                  <button onClick={toggleSound} aria-label="Sound" aria-pressed={sound} className={s.waveBtn}>
+                    <span data-wavebox className={s.waveBox}>
+                      {[0, 1, 2, 3, 4].map((k) => <span key={k} data-wave className={s.wave} />)}
+                    </span>
+                    <span aria-hidden className={s.waveTip}>{sound ? "Sound on" : "Sound off"}</span>
                   </button>
                 </div>
               </div>
