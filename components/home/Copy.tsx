@@ -62,9 +62,6 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
           <a href="#start" onClick={(e) => go("contact", e)} data-magnet className={`${s.pill} ${s.pillMd}`}>
             Start a company
           </a>
-          <a href="#companies" onClick={(e) => go("companies", e)} className={s.underline}>
-            See the companies
-          </a>
         </div>
       </section>
 
