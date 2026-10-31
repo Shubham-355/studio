@@ -22,7 +22,7 @@ const QS = .95, QY = .04, QZ = -3.5, QX = .5, YC = 1.335, QR = y => y <= 1.24 ? 
 export const NAMES = ['The sky with an eye', 'The apple on the board', 'The beach', 'The underwater hall', 'The board in the sand', 'The desert arcade', 'The quiet room', 'The night sea'];
 const INK = [0, 1, 1, 0, 1, 1, 1, 0], SOFT = [0, 0, 1, 0, 1, 0, 1, 0];
 // door in the back wall: half width, height and threshold top; the leaf hinges at DZL, the doorway's far face is DZF; it swings to DSW
-const CZ = [6, 11, 16, 21], DOORZ = 27, DHW = .47, DHH = 1.92, DTS = .07, DZL = DOORZ + .1, DZF = DOORZ + .25, DSW = 170 * Math.PI / 180, DSTOP = [DHW + 2 * DHW * Math.cos(10 * Math.PI / 180) + .05, 0, DZF + .03];
+const CZ = [6, 11, 16, 21], DOORZ = 27, DHW = .47, DHH = 1.92, DTS = .07, DZL = DOORZ + .27, DZF = DOORZ + .25, DSW = 170 * Math.PI / 180, DSTOP = [DHW + 2 * DHW * Math.cos(10 * Math.PI / 180) + .05, 0, DZF + .03];
 const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
 const AK = 1 / .14, ZE = -2 - 1 / QS;
 const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [22.9, 26.8]];
@@ -606,20 +606,17 @@ export class HomeEngine {
        Frame, jambs, step and the door's light are 3D (scene3d); the painted wood leaf is perspective-mapped onto its hinge here. */
     { const rc = this.q7 && this.q7.rcv; if (rc && this.room) a8.room = { cv: rc, v: rc._pv || 0, rk: [this.F6 / W, this.F6 / H, this.hy6 / H, CPTS[CPTS.length - 1][1]], b: this.room.b }; }
     const op = sm(21.5, 22.3, t), sw = sm(21.5, 22.3, t), th = sw * DSW; a8.door = [th, op, sw];
+    if (!this._dcv && q.leaf) { const cv = q.leaf.querySelector('[data-leafcv]'); if (cv) { this.paintDoor(cv); this._dcv = cv; } } a8.leafCv = this._dcv || null; a8.leafOn = t < 22.9;
     this.d6 = { cz: cm.C[2] }; this.gap = null; this.gapPoly = null;
     const P = (x, y, z) => { const p = pj(x, y, z); return p[2] > .02 ? p : null; };
     /* the room fills the opening from the frame's front edge, so its walls, ceiling and floor meet the jambs, lintel and threshold edge to edge */
-    const ZR = DZF, fo = [P(-DHW, DHH, ZR), P(DHW, DHH, ZR), P(DHW, DTS, ZR), P(-DHW, DTS, ZR)], lo = [P(-DHW, DHH, DZL), P(DHW, DHH, DZL), P(DHW, DTS, DZL), P(-DHW, DTS, DZL)], lq = this.leafQuad(P, th);
+    const ZR = DZF, fo = [P(-DHW, DHH, ZR), P(DHW, DHH, ZR), P(DHW, DTS, ZR), P(-DHW, DTS, ZR)], lq = this.leafQuad(P, th);
     if (dzD > .05 && fo.every(Boolean)) {
       const fx = fo.map(p => p[0]), fy = fo.map(p => p[1]); this.gap = [Math.min(...fx), Math.min(...fy), Math.max(...fx), Math.max(...fy)];
-      const zi = String(Math.max(1, Math.round(1000 - dzD * 10)));
-      this.S(q.door, 'visibility', 'visible'); this.S(q.door, 'zIndex', zi); this.S(q.leafw, 'visibility', 'visible'); this.S(q.leafw, 'zIndex', zi);
-      this.leafPose(q.leaf, lq, sw);
-      { const kc = sm(1.05, 2.1, th), lc = lo.every(Boolean) ? lo.map((p, i) => [mx(p[0], fo[i][0], kc), mx(p[1], fo[i][1], kc)]) : lo; this.S(q.leafw, 'clipPath', lc.every(Boolean) ? 'polygon(' + lc.map(p => p[0].toFixed(1) + 'px ' + p[1].toFixed(1) + 'px').join(',') + ')' : 'none'); }
-      this.stopPose(q.leafw, P);
+      this.S(q.door, 'visibility', 'hidden'); this.S(q.leafw, 'visibility', 'hidden');
       /* the room (world 7) shows through the back of the doorway minus whatever the leaf still covers */
       if (sw > 0) {
-        const G = lo.every(Boolean) ? [Math.min(...lo.map(p => p[0])), Math.min(...lo.map(p => p[1])), Math.max(...lo.map(p => p[0])), Math.max(...lo.map(p => p[1]))] : this.gap, pth = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z';
+        const G = this.gap, pth = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z';
         let leaf = lq.every(Boolean) ? lq.map(p => [p[0], p[1]]) : null;
         if (leaf) [[0, G[0], 1], [0, G[2], -1], [1, G[1], 1], [1, G[3], -1]].forEach(([k, v, sg]) => { if (!leaf || !leaf.length) return; const o = []; for (let i = 0; i < leaf.length; i++) { const A = leaf[i], B = leaf[(i + 1) % leaf.length], ia = (A[k] - v) * sg >= 0, ib = (B[k] - v) * sg >= 0; if (ia) o.push(A); if (ia !== ib) { const u = (v - A[k]) / (B[k] - A[k]); o.push([A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u]); } } leaf = o; });
         this.gapPoly = `path(evenodd, "${pth(fo)}${leaf && leaf.length > 2 ? ' ' + pth(leaf) : ''}")`;
@@ -629,7 +626,7 @@ export class HomeEngine {
     this.S(q.train, 'transform', `translate(${(((this.now * 22) % (W * 1.5)) - W * .25).toFixed(1)}px,${(hy - 10).toFixed(1)}px)`);
   }
   /* door leaf: hinge on the screen-left jamb (world +x), swings inward; 4 projected corners: hinge-top, free-top, free-bottom, hinge-bottom */
-  leafQuad(P, th) { const c = Math.cos(th), s = Math.sin(th), L = 2 * DHW, lp = (u, v) => P(DHW - u * L * c, DHH - v * (DHH - DTS), DZL + u * L * s); return [lp(0, 0), lp(1, 0), lp(1, 1), lp(0, 1)]; }
+  leafQuad(P, th) { const c = Math.cos(th), s = Math.sin(th), L = 2 * DHW + .009, x0 = DHW + .012, y0 = DHH - .003, y1 = DTS + .003, lp = (u, v) => P(x0 - u * L * c, y0 - v * (y0 - y1), DZL + u * L * s); return [lp(0, 0), lp(1, 0), lp(1, 1), lp(0, 1)]; }
   h3d(w, h, p) { const [x0, y0] = p[0], [x1, y1] = p[1], [x2, y2] = p[2], [x3, y3] = p[3];
     const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3, den = dx1 * dy2 - dx2 * dy1 || 1e-9;
     const g = (sx * dy2 - dx2 * sy) / den, k = (dx1 * sy - sx * dy1) / den, a = (x1 - x0 + g * x1) / w, b = (x3 - x0 + k * x3) / h, d = (y1 - y0 + g * y1) / w, e = (y3 - y0 + k * y3) / h;
@@ -700,7 +697,7 @@ export class HomeEngine {
   }
   w8(t) {
     const W = this.W, H = this.H, q = this.q8, g = this.g8, P = window.Painter; if (!q) return;
-    const w = this.win; q.world.style.clipPath = t < 25.1 && w ? `polygon(${w[0].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[3].toFixed(1)}px,${w[0].toFixed(1)}px ${w[3].toFixed(1)}px)` : 'none';
+    let w = this.win; if (w && t < 22.9) { const g = this.gap; const ins = g && w[0] >= g[0] - .5 && w[1] >= g[1] - .5 && w[2] <= g[2] + .5 && w[3] <= g[3] + .5; if (!ins) w = [0, 0, 0, 0]; } q.world.style.clipPath = t < 25.1 && w ? `polygon(${w[0].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[3].toFixed(1)}px,${w[0].toFixed(1)}px ${w[3].toFixed(1)}px)` : 'none';
     const e7 = sm(24.1, 25.1, t), z = mx(1.22, 1, e7), foot = sm(27.7, 28.5, t), ty = -H * .36 * foot - H * .06 * (1 - e7);
     this.S(q.cam, 'transform', `translate(${(W / 2 * (1 - z)).toFixed(1)}px,${(H / 2 * (1 - z) + ty).toFixed(1)}px) scale(${z.toFixed(4)})`);
     const fm = this._rm ? 0 : 1; this.S(q.moon, 'transform', `translate(${(this.moon0[0] + (this.mx || 0) * 12 * fm).toFixed(1)}px,${(this.moon0[1] + (this.my || 0) * 8 * fm).toFixed(1)}px)`);
@@ -744,7 +741,8 @@ export class HomeEngine {
     this.dvEls.forEach((el, k) => { const p = this.dovePos(k, t); if (!p) { this.S(el, 'visibility', 'hidden'); [...el.children].forEach(c => this.S(c, 'visibility', 'hidden')); return; } const up = ((this.now * 7 + k * .37) | 0) % 2;
       this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) scale(${(p[2] * p[3]).toFixed(3)},${p[2].toFixed(3)})`); this.S(el, 'filter', p[2] > 2.2 ? `blur(${((p[2] - 2.2) * 1.5).toFixed(1)}px)` : 'none');
       const cs = el.children; if (cs[0]) this.S(cs[0], 'visibility', up ? 'visible' : 'hidden'); if (cs[1]) this.S(cs[1], 'visibility', up ? 'hidden' : 'visible'); });
-    const wc = this.q7 && this.q7.wincam; if (wc) { const v = t >= 21.4 && t < 25.1 && this.cam7; this.S(wc, 'visibility', v ? 'visible' : 'hidden'); if (v) { this.S(wc, 'transform', this.cam7); wc.parentElement.style.clipPath = this.wEl[6].style.clipPath; } }
+    const wc = this.q7 && this.q7.wincam; if (wc) { const v = t >= 21.4 && t < 25.1 && this.cam7; let wo = 1; if (v && t < 22.9) { const g = this.gap, w = this.win; if (g && w) { const ia = Math.max(0, Math.min(w[2], g[2]) - Math.max(w[0], g[0])) * Math.max(0, Math.min(w[3], g[3]) - Math.max(w[1], g[1])), wa = Math.max(1, (w[2] - w[0]) * (w[3] - w[1])); wo = ia / wa > .995 ? 1 : 0; } else wo = 0; }
+      this.S(wc, 'opacity', wo.toFixed(3)); this.S(wc, 'visibility', v && wo > 0 ? 'visible' : 'hidden'); if (v) { this.S(wc, 'transform', this.cam7); wc.parentElement.style.clipPath = this.wEl[6].style.clipPath; } }
   }
   introK() { if (!this._introT0) return 0; return lin(0, 1.6, (performance.now() - this._introT0) / 1000); }
   copy(t) {
