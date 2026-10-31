@@ -37,7 +37,7 @@ export const COMPANIES: Company[] = [
 export const KEEP: Keep[] = [
   { n: "01", t: "A brand book", d: "Name, mark, type, color and voice, written down.", kind: "book", p: [0.07, 0.99], pn: [0.14, 0.99] },
   { n: "02", t: "A design system", d: "Every component documented and ready to extend.", kind: "box", p: [0.29, 0.99], pn: [0.62, 0.99] },
-  { n: "03", t: "A live product", d: "Shipped, monitored and in customers’ hands.", kind: "screen", p: [0.6, 0.99], pn: [0.8, 0.64] },
+  { n: "03", t: "A live product", d: "Shipped, monitored and in customers’ hands.", kind: "screen", p: [0.55, 0.99], pn: [0.8, 0.64] },
   { n: "04", t: "The source code", d: "In your repository, readable by your next hire.", kind: "scroll", p: [0.18, 0.99], pn: [0.38, 0.99] },
   { n: "05", t: "Cloud accounts in your name", d: "You own the infrastructure and the bill.", kind: "dome", p: [0.77, 0.99], pn: [0.84, 0.82] },
   { n: "06", t: "A team trained to run it", d: "Your people, onboarded before we step back.", kind: "pawns", p: [0.89, 0.99], pn: [0.86, 0.99] },
