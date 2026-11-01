@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from "react";
+import type { CSSProperties, MouseEvent, ReactNode } from "react";
 import { COMPANIES, STAGES } from "./content";
 import s from "./home.module.css";
 
@@ -46,14 +46,14 @@ function ArmLayer({ svg }: { svg: "thumb" | "front" }) {
 
 export default function Copy({ studioName, heroRow, L, email, copied, go, onFounder, onCard, onCopy }: Props) {
   return (
-    <main data-copylayer className={s.copyLayer}>
+    <main data-copylayer className={s.copyLayer} style={{ "--gx": L.gx } as CSSProperties}>
       <section
         data-copy
         data-a="-1"
         data-b=".36"
         data-hero
         className={`${s.copy} ${s.wide} ${s.hero}`}
-        style={{ bottom: L.heroB, flexDirection: heroRow ? "row" : "column", alignItems: heroRow ? "baseline" : "flex-start" }}
+        style={{ left: "clamp(20px,4.44vw,64px)", right: "clamp(20px,4.44vw,64px)", bottom: L.heroB, flexDirection: heroRow ? "row" : "column", alignItems: heroRow ? "baseline" : "flex-start" }}
       >
         <h1 className={s.heroTitle}>
           <W>We</W> <W italic>build</W> <W>companies.</W>
@@ -71,20 +71,20 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
         </p>
       </section>
 
-      <section data-copy data-a="2.58" data-b="3.24" className={`${s.copy} ${s.wide}`} style={{ top: L.tA, bottom: L.b1, display: "flex", flexDirection: "column", gap: 14, maxWidth: L.wA, color: "var(--ink)" }}>
-        <h2 className={s.display} style={{ fontSize: "clamp(34px,3.7vw,60px)" }}>
+      <section data-copy data-a="2.58" data-b="3.24" className={`${s.copy} ${s.wide}`} style={{ top: L.tA, bottom: L.b1, display: "flex", flexDirection: "column", gap: 8, maxWidth: L.wA, color: "var(--ink)" }}>
+        <h2 className={s.display} style={{ fontSize: "clamp(36px,3.9vw,64px)" }}>
           <W>Your</W> <W>idea</W> <W>has</W> <W>a</W> <W italic className={s.accent}>whole company</W> <W>inside</W> <W>it.</W>
         </h2>
         <p data-w className={s.body} style={{ maxWidth: "32ch", fontSize: 16, padding: "16px 26px", marginLeft: -26, background: "radial-gradient(closest-side,rgba(250,232,212,.94),rgba(250,232,212,.7) 60%,rgba(250,232,212,0))" }}>We find the brand, the product and the business model in it. Then we build each one.</p>
       </section>
 
       <section id="how-we-build" data-copy data-a="13.85" data-b="16.76" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--ink)" }}>
-        <h2 className={s.display} style={{ maxWidth: L.wB, fontSize: "clamp(40px,4.8vw,80px)", textShadow: "0 0 30px rgba(239,224,194,.9)" }}>
+        <h2 data-bh className={s.display} style={{ maxWidth: L.wB, fontSize: "clamp(36px,3.9vw,64px)", textShadow: "0 0 30px rgba(239,224,194,.9)" }}>
           <Words text="A pawn that crosses the board becomes *a queen.*" />
         </h2>
       </section>
       {STAGES.map((g, i) => (
-        <div key={g.num} data-copy="m" data-id={`stg${i}`} className={`${s.copy} ${s.stageCard}`} style={{ left: L.mL, right: L.mR, top: L.mT, bottom: L.mB }}>
+        <div key={g.num} data-copy="m" data-id={`stg${i}`} className={`${s.copy} ${s.stageCard}`} style={{ left: 0, right: "auto", top: 0, bottom: "auto", width: "min(320px,calc(100vw - 32px))" }}>
           <span data-w className={s.stageNum}>{g.num}</span>
           <span data-w className={s.cardTitle}>{g.name}</span>
           <span data-w className={s.stageText}>{g.d}</span>
@@ -92,7 +92,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
       ))}
 
       <section id="companies" data-copy data-a="18.3" data-b="19.1" className={`${s.copy} ${s.wide}`} style={{ top: L.t1, bottom: L.b1, color: "var(--ink)" }}>
-        <h2 className={s.display} style={{ maxWidth: L.w1, fontSize: "clamp(44px,5.6vw,92px)", textShadow: "0 0 30px rgba(237,187,128,.8)" }}>
+        <h2 className={s.display} style={{ maxWidth: L.w1, fontSize: "clamp(36px,3.9vw,64px)", textShadow: "0 0 30px rgba(237,187,128,.8)" }}>
           <Words text="They came in *overthinking.* They left with *companies.*" />
         </h2>
       </section>
@@ -120,20 +120,20 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
       </div>
 
       <section data-copy data-a="23.05" data-b="24.15" className={`${s.copy} ${s.wide}`} style={{ top: L.tRoom, bottom: "auto", color: "var(--ink)" }}>
-        <h2 className={s.display} style={{ maxWidth: L.wRoom, fontSize: "clamp(44px,5.2vw,88px)", textShadow: "0 0 30px rgba(230,220,203,.9)" }}>
+        <h2 className={s.display} style={{ maxWidth: L.wRoom, fontSize: "clamp(36px,3.9vw,64px)", textShadow: "0 0 30px rgba(230,220,203,.9)" }}>
           <Words text="The company is yours. *All of it.*" />
         </h2>
       </section>
 
       <figure data-copy data-a="25.25" data-b="26.25" className={`${s.copy} ${s.wide}`} style={{ top: L.tQuote, margin: 0, display: "flex", flexDirection: "column", gap: 24, color: "var(--paper)" }}>
-        <blockquote className={s.quote} style={{ maxWidth: L.w1 }}>
+        <blockquote className={s.quote} style={{ maxWidth: L.wQ }}>
           <W>“We came with one sentence.</W> <W>Eleven months later we had a brand,</W> <W>a product and a team to run both.”</W>
         </blockquote>
         <figcaption data-w className={s.eyebrow}>Ines Varga, founder and CEO, Halcyon Freight</figcaption>
       </figure>
 
       <section id="start" data-copy data-a="26.45" data-b="27.6" className={`${s.copy} ${s.wide}`} style={{ bottom: L.bContact, display: "flex", flexDirection: "column", gap: 28, maxWidth: L.wC, color: "var(--paper)" }}>
-        <h2 className={s.display} style={{ fontSize: "clamp(44px,5vw,84px)", textShadow: "0 2px 36px rgba(10,16,34,.8)" }}>
+        <h2 className={s.display} style={{ fontSize: "clamp(36px,3.9vw,64px)", textShadow: "0 2px 36px rgba(10,16,34,.8)" }}>
           <W>Bring</W> <W>the</W> <W>idea.</W> <W italic>We’ll build the company</W> <W italic>around it.</W>
         </h2>
         <div data-w className={s.ctaRow} style={{ flex: "initial" }}>

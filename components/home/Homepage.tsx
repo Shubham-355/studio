@@ -9,8 +9,8 @@ import s from "./home.module.css";
 type State = { loader: boolean; sound: boolean; menu: boolean; world: number; notes: boolean };
 type Target = "home" | "companies" | "how" | "contact";
 
-const NARROW: Layout = { tA: "auto", wA: "100%", wB: "100%", heroB: "104px", t1: "auto", b1: "92px", w1: "100%", w2: "100%", mL: "20px", mR: "20px", mT: "auto", mB: "92px", tBeach: "84px", linkB: "20px", tRoom: "84px", wRoom: "100%", wC: "100%", tagT: "15px", tagW: "104px", tQuote: "96px", bContact: "92px", tFoot: "30vh", refl: "22vw" };
-const WIDE: Layout = { tA: "clamp(100px,14vh,160px)", wA: "min(36vw,560px)", wB: "min(34vw,520px)", heroB: "clamp(56px,10vh,120px)", t1: "clamp(116px,17vh,180px)", b1: "auto", w1: "min(66vw,1080px)", w2: "min(44vw,660px)", mL: "0px", mR: "auto", mT: "0px", mB: "auto", tBeach: "clamp(116px,17vh,180px)", linkB: "20px", tRoom: "clamp(116px,17vh,180px)", wRoom: "min(34vw,560px)", wC: "min(40vw,620px)", tagT: "18px", tagW: "min(160px,10.5vw)", tQuote: "clamp(120px,18vh,190px)", bContact: "clamp(56px,12vh,130px)", tFoot: "46vh", refl: "12vw" };
+const NARROW: Layout = { gx: "16px", wQ: "100%", tA: "84px", wA: "100%", wB: "100%", heroB: "104px", t1: "84px", b1: "auto", w1: "100%", w2: "100%", mL: "20px", mR: "20px", mT: "auto", mB: "92px", tBeach: "84px", linkB: "20px", tRoom: "84px", wRoom: "100%", wC: "100%", tagT: "15px", tagW: "104px", tQuote: "84px", bContact: "92px", tFoot: "30vh", refl: "22vw" };
+const WIDE: Layout = { gx: "clamp(28px,4.44vw,64px)", wQ: "min(66vw,1080px)", tA: "max(15vh,112px)", wA: "min(38vw,600px)", wB: "min(38vw,600px)", heroB: "clamp(56px,10vh,120px)", t1: "max(15vh,112px)", b1: "auto", w1: "min(38vw,600px)", w2: "min(44vw,660px)", mL: "0px", mR: "auto", mT: "0px", mB: "auto", tBeach: "max(15vh,112px)", linkB: "20px", tRoom: "max(15vh,112px)", wRoom: "min(38vw,600px)", wC: "min(40vw,620px)", tagT: "18px", tagW: "min(160px,10.5vw)", tQuote: "max(15vh,112px)", bContact: "clamp(56px,12vh,130px)", tFoot: "46vh", refl: "12vw" };
 
 const onResize = (cb: () => void) => {
   addEventListener("resize", cb);
