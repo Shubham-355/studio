@@ -115,7 +115,7 @@ export class HomeEngine {
   /* ---------- layout ---------- */
   relayout(repaint) {
     this.W = innerWidth; this.H = innerHeight; this.n = this.state.narrow;
-    this.wEl = [1, 2, 3, 4, 5, 6, 7, 8].map(k => this.$(`[data-world="${k}"]`)); this.wEl.forEach(e => { if (e) { e._on = undefined; } });
+    this._stgY = null; this.wEl = [1, 2, 3, 4, 5, 6, 7, 8].map(k => this.$(`[data-world="${k}"]`)); this.wEl.forEach(e => { if (e) { e._on = undefined; } });
     this.layout1(); this.layout2(); this.layout3(); this.layout4(); this.layout6(); this.layout7(); this.layout8();
     this.blocks = this.$$('[data-copy]').map(el => ({ el, m: el.dataset.copy === 'm', id: el.dataset.id, a: +el.dataset.a, b: +el.dataset.b, hero: el.hasAttribute('data-hero'), w: this.$$('[data-w]', el), v: -1 }));
     this.dvEls = this.$$('[data-dove]'); this.fEls = this.$$('[data-founder]');
@@ -483,6 +483,9 @@ export class HomeEngine {
     P.ball6(x, cp[0], cp[1], R, b.rho, this.ballTex);
   }
   w4() { /* the underwater hall is not part of this cut */ }
+  /* the side gutter every block lines up on; the stage cards sit under the beach headline */
+  gutter() { return this.n ? 16 : cl(this.W * .0444, 28, 64); }
+  stgSpot() { if (this._stgY == null) { const h = this.$('[data-bh]'); if (!h) return null; const r = h.getBoundingClientRect(); if (!(r.height > 0)) return null; this._stgY = r.bottom + 48; } return [this.gutter(), this._stgY]; }
   w5(t) {
     const W = this.W, H = this.H, q = this.q5, S = this.S6; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
     const e = sm(TB1, 14.05, t), ty = -1.2 * H, C = this.cam3(t), Q = this.qs;
@@ -502,7 +505,7 @@ export class HomeEngine {
     if (q.sx5 && !(Q && Q.inside)) { const k = q.s5._k, cc = Q ? Q.c6 : S.camO; P.surf6(q.sx5, Object.assign({}, cc, { f: cc.f * k, cx: cc.cx * k, cy: cc.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.s5.width, q.s5.height); }
     const f = Math.min(1, p / .86) * 5;
     for (let k = 0; k < 5; k++) { let v = 1 - sm(.42, .56, Math.abs(f - k - .5)); if (k === 0 && f < .5) v = t < 14.25 ? sm(13.9, 14.1, t) : 1; if (k === 4 && f >= 4.5) v = 1; if (t < 13.9) v = 0; if (t > QA) v = k === 4 ? 1 - sm(QA, QA + .16, t) : 0; this.mv['stg' + k] = v; }
-    if (!this.n && sb.sx != null) { const P0 = t > QA && this._stgP ? this._stgP : (this._stgP = [sb.sx * W + 110, Math.min(ty + 1.2 * H + sb.sy * H - 150, H - 250)]); for (let k = 0; k < 5; k++) this.pos['stg' + k] = P0; }
+    { const P0 = this.stgSpot(); if (P0) for (let k = 0; k < 5; k++) this.pos['stg' + k] = P0; }
     this.bgulls(t);
   }
   /* overhead board: the beach gulls seen from above, gliding low over the sand with soft shadows offset away from the sun; they keep clear of the pawn, queen and copy */
@@ -600,7 +603,7 @@ export class HomeEngine {
       this.S(fs.head, 'transform', `rotate(${((1 - R) * 7 - R * 4).toFixed(2)}deg)`);
       this.S(fs.body, 'transform', `rotate(${((1 - R) * .8).toFixed(2)}deg) scaleY(${(1 - (1 - R) * .014).toFixed(4)})`);
       this.mv['card' + i] = sm(3.9, 3.1, dz) * sm(1.0, 1.6, dz);
-      if (!n) this.pos['card' + i] = this.px6[i] < 0 ? [X + 150 * k + 24, Yb - 400 * k] : [X - 150 * k - 344, Yb - 400 * k];
+      if (!n) { const gx = this.gutter(); this.pos['card' + i] = X < W / 2 ? [W - gx - 320, 'mid'] : [gx, 'mid']; }
     });
     /* the door ends the hall from the first frame: closed, edge-lit (brighter per founder passed); after the last founder it swings inward with scroll.
        Frame, jambs, step and the door's light are 3D (scene3d); the painted wood leaf is perspective-mapped onto its hinge here. */
@@ -752,7 +755,7 @@ export class HomeEngine {
       if (b.m && !this.n && b.id !== 'ccard' && !this.pos[b.id]) v = 0;
       if (b.hero) v *= ik;
       if (b.id === 'ccard') { if (this.cardT) this.S(b.el, 'transform', this.cardT); }
-      else if (b.m && !this.n) { const p = this.pos[b.id]; if (p) { const bh = b.h || (b.h = b.el.offsetHeight || 0), bw = b.ow || (b.ow = b.el.offsetWidth || 0), y = cl(p[1], 104, Math.max(104, this.H - bh - 20)), x = cl(p[0], 20, Math.max(20, this.W - bw - 76)); this.S(b.el, 'transform', `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`); } }
+      else if (b.m && (!this.n || /^stg/.test(b.id))) { const p = this.pos[b.id]; if (p) { const bh = b.h || (b.h = b.el.offsetHeight || 0), bw = b.ow || (b.ow = b.el.offsetWidth || 0), py = p[1] === 'mid' ? this.H * .525 - bh / 2 : p[1], y = /^stg/.test(b.id) ? py : cl(py, 104, Math.max(104, this.H - bh - 20)), x = /^stg/.test(b.id) ? p[0] : cl(p[0], 16, Math.max(16, this.W - bw - 16)); this.S(b.el, 'transform', `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`); } }
       if (Math.abs(v - b.v) < .003 && !(v === 0 && b.v !== 0) && !(v === 1 && b.v !== 1)) continue; b.v = v;
       b.el.style.visibility = v > 0 ? 'visible' : 'hidden'; b.el.style.pointerEvents = v > .6 ? 'auto' : 'none'; if (b.m) b.el.style.opacity = sm(0, .45, v).toFixed(3);
       const N = b.w.length || 1;
