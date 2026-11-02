@@ -122,6 +122,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
             <div data-cam className={s.fill}>
               <div data-tall className={s.abs} style={{ width: "100%", height: "220%", transformOrigin: "50% 0" }}>
                 <canvas data-paint="b6tall" aria-hidden style={plate({ left: "-6%", top: 0, width: "112%", height: "100%" })} />
+                <canvas data-paint="b6left" aria-hidden style={plate({ left: 0, top: 0, width: 0, height: "100%", WebkitMaskImage: "linear-gradient(90deg,#000 calc(100% - 40px),transparent)", maskImage: "linear-gradient(90deg,#000 calc(100% - 40px),transparent)" })} />
                 <div data-3d="sandboard" style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
                 <canvas data-surf5 aria-hidden style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
               </div>
