@@ -188,7 +188,6 @@ export class HomeEngine {
     const S = this.S6 = P.beach6cfg(W, H, n), px = (el, w, h) => el && Object.assign(el.style, { width: w + 'px', height: h + 'px' });
     /* board slides right so the headline column sits over open sand/sea */
     this.bdx = 0; if (!n && S.board) { const xs = S.board.map(([X, Z]) => P.cam6.proj(S.camO, X, 0, Z)[0]), x0 = Math.min(...xs), x1 = Math.max(...xs), gx = this.gutter(), need = gx + Math.max(Math.min(W * .38, 600), 320) + 40; this.bdx = Math.max(0, Math.min(need - x0, W - gx - x1)); }
-    { const lc = this.$('[data-paint="b6left"]'), D = Math.ceil(this.bdx) + 8; if (lc) Object.assign(lc.style, { left: -(.06 * W + D) + 'px', width: (D + 48) + 'px', transformOrigin: D + 'px 0px', display: this.bdx > 0 ? '' : 'none' }); }
     const sky = this.$('[data-sky6]', w3), g0 = this.$('[data-g0]', w3), g1 = this.$('[data-g1]', w3), surf = this.$('[data-surf3]', w3), bc = this.$('[data-ball6]'), s5 = this.$('[data-surf5]');
     px(sky, W * 1.08, H * 1.08); px(g0, W * 1.2, H); px(g1, W * 1.2, H);
     [[surf, .6], [bc, .9], [s5, .6]].forEach(([c, k]) => { if (c) { c.width = Math.round(W * k); c.height = Math.round(H * k); c._k = k; } });
@@ -222,6 +221,12 @@ export class HomeEngine {
     const w5 = this.wEl[4]; if (!w5) return; const s5 = this.$('[data-surf5]', w5);
     this.q5 = { bgl: this.$('[data-bgl]'), world: w5, clip: this.$('[data-w5clip]'), wcam: this.$('[data-w5cam]'), tall: this.$('[data-tall]', w5), s5, sx5: s5 && s5.getContext('2d'), b6: this.$('[data-paint="b6tall"]', w5), ql: this.$('[data-qlayer]') };
     if (this.q5.b6) this.q5.b6.style.transformOrigin = '0 0'; this.st.sandboard.qel = this.q5.ql;
+    { const W = this.W, H = this.H, g = this.$('[data-g18]'), fo = this.$('[data-f18]'), M = Math.ceil(this.bdx || 0) + 24, cw = W + 2 * M;
+      [g, fo].forEach(el => el && Object.assign(el.style, { left: -M + 'px', width: cw + 'px', height: H + 'px' }));
+      if (g && !g._G) g._G = window.Ground18 ? window.Ground18(g) : { ok: false };
+      const dpr = Math.min(devicePixelRatio || 1, 1.5, Math.sqrt(3.2e6 / (cw * H)));
+      if (fo) { fo.width = Math.round(cw * .6); fo.height = Math.round(H * .6); fo._k = .6; }
+      Object.assign(this.q5, { g18: g, f18: fo, fx: fo && fo.getContext('2d'), gM: M, gB: [Math.round(cw * dpr), Math.round(H * dpr)] }); }
     w5.style.maskSize = w5.style.webkitMaskSize = '100% 100%, 100% 100%'; w5.style.maskRepeat = w5.style.webkitMaskRepeat = 'no-repeat';
   }
   layout6() {
@@ -328,7 +333,7 @@ export class HomeEngine {
       [1, 'a8sky', cv => P.apple9Sky(cv, this.g2)],
       [2, 'b3c', cv => P.deck10(cv, this.decks.b3[+cv.dataset.l])], [7, 'n8c', cv => P.deck10(cv, this.decks.n8[+cv.dataset.l])],
       [2, 'b6sky', cv => P.beach6Sky(cv, this.S6)], [2, 'b6g0', cv => P.beach6Ground(cv, this.S6, 0)], [2, 'b6gull', cv => P.gull6(cv)], [2, 'b6g1', cv => P.beach6Ground(cv, this.S6, 1)],
-            [4, 'b6tall', cv => P.beach6Tall(cv, this.S6)], [4, 'b6left', cv => this.paintLeft(cv)],
+            [4, 'b6tall', cv => P.beach6Tall(cv, this.S6)],
       [5, 'desert', cv => P.arcade7(cv, { hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 })], [5, 'founder', cv => P.founder7(cv, +cv.dataset.v)], [5, 'head', cv => P.head7(cv, +cv.dataset.v)], [5, 'thought', cv => P.thought7(cv, cv.dataset.kind)], [5, 'resolved', cv => P.resolved(cv, +cv.dataset.v)], [5, 'planet', cv => P.planet(cv, cv.dataset.col)],
       [6, 'room', cv => P.room(cv, R)],
       [7, 'night', cv => P.nightSea(cv, { hy: .413, mx: this.g8.mx })], [7, 'morning', cv => P.morning9(cv, this.tearSky())], [7, 'moon', cv => P.moon(cv)],
@@ -406,7 +411,7 @@ export class HomeEngine {
     this._mq = this._mq || matchMedia('(prefers-reduced-motion: reduce)'); this._rm = this.props.motion === false || this._mq.matches;
     this.mv = {}; this.m3 = 'none'; this.tilt = this.tiltAt(t); this.qstate(t); this.boardShift(t);
     for (let k = 0; k < 8; k++) { const el = this.wEl[k]; if (!el) continue; const on = t >= RANGE[k][0] && t < RANGE[k][1]; if (el._on !== on) { el._on = on; el.style.visibility = on ? 'visible' : 'hidden'; el.style.display = on ? '' : 'none'; } if (on) this['w' + (k + 1)](t); }
-    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); if (this.q5 && this.q5.bgl && !(this.wEl[4] && this.wEl[4]._on)) this.S(this.q5.bgl, 'visibility', 'hidden'); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
+    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); if (this.q5 && !(this.wEl[4] && this.wEl[4]._on)) [this.q5.bgl, this.q5.g18, this.q5.f18].forEach(el => this.S(el, 'visibility', 'hidden')); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
     this.carry(t); this.copy(t); this.ui(t); this.mounts(t); this.drive();
   }
 
@@ -465,8 +470,8 @@ export class HomeEngine {
     const hm = (el, pose) => { if (!el) return; const z1 = Math.max(c.z, pose.z) + 1.6, pts = [[c.x - 1.5, z1], [c.x + 1.5, z1], [c.x + 1.5, z1 + 6], [c.x - 1.5, z1 + 6]];
       this.S(el, 'transform', P.homog(pts.map(([X, Z]) => { const p = pr(pose, X, 0, Z); return [p[0] + .1 * W, p[1]]; }), pts.map(([X, Z]) => pr(c, X, 0, Z)))); };
     hm(q.g0, S.pose0); hm(q.g1, S.poseE); this.S(q.g1, 'opacity', '1');
-    if (q.sx) { const k = q.surf._k; P.surf6(q.sx, Object.assign({}, c, { f: c.f * k, cx: c.cx * k, cy: c.cy * k }), S, this.now, 0, k, q.surf.width, q.surf.height); }
-    const gOn = t > 2.6 && t < 12.9 && c.ph < .3;
+    if (q.sx && !this._g18full) { const k = q.surf._k; P.surf6(q.sx, Object.assign({}, c, { f: c.f * k, cx: c.cx * k, cy: c.cy * k }), S, this.now, 0, k, q.surf.width, q.surf.height); }
+    const gOn = false; /* the beach gulls live in the world layer now (wgulls) */
     q.gulls.forEach((el, i) => { if (!gOn) { this.S(el, 'visibility', 'hidden'); return; } const a = this.now * (.05 + i * .012) + i * 2.1, x = W * (n ? .3 + i * .2 : .26 + i * .13) + Math.sin(a) * W * (n ? .12 : .07), y = Math.max(n ? 132 : 124, H * (.1 + i * .045)) + Math.sin(a * 1.7) * 10 - (vh - S.hy), s2 = (n ? .45 : .6) + i * .12, fl = .7 + Math.sin(this.now * 3.2 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
       this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
   }
@@ -487,13 +492,8 @@ export class HomeEngine {
   }
   w4() { /* the underwater hall is not part of this cut */ }
   /* the strip of sky and sand the board leaves behind on the left when it slides right; the slide eases in with the overhead view */
-  paintLeft(cv) {
-    const P = window.Painter, S = this.S6; if (!S || !(this.bdx > 0) || !P._skyStops6) return;
-    const W = S.W, H = S.H, k = S.n ? 1.2 : .85, D = Math.ceil(this.bdx) + 8, bx = .06 * W + D, hf = S.hy / (2.2 * H);
-    return P.sky(cv, { seed: 62, w: D + 48, h: 2.2 * H, k, stops: P._skyStops6(hf), after: () => {}, post: (ctx, w, h, r) => { const c = Object.assign({}, S.camO, { f: S.camO.f * k, cx: (S.camO.cx + bx) * k, cy: (S.camO.cy + 1.2 * H) * k }); P.ground6(ctx, c, w, Math.round(H * k), h, S, r, k, {}); } });
-  }
   boardShift(t) {
-    const f = this.bdx > 0 ? this.bdx * sm(TB1, 14.05, t) * (t >= QB ? 0 : 1 - (this.qs ? sm(0, .3, this.qs.p) : 0)) : 0, v = f > .05 ? f.toFixed(1) + 'px 0px' : 'none';
+    const f = this.bdx > 0 ? this.bdx * sm(TB1, 14.05, t) * (t >= QB ? 0 : 1 - (this.qs ? sm(0, .3, this.qs.p) : 0)) : 0, v = f > .05 ? f.toFixed(1) + 'px 0px' : 'none'; this._bf = f > .05 ? f : 0;
     [this.q5 && this.q5.clip, this.$('[data-ball6]'), this.q5 && this.q5.ql, this.wEl && this.wEl[5]].forEach(el => this.S(el, 'translate', v));
   }
   /* the side gutter every block lines up on; the stage cards sit under the beach headline */
@@ -507,19 +507,28 @@ export class HomeEngine {
     this.S(q.tall, 'transform', `translate(0px,${ty.toFixed(1)}px)`);
     this.S(q.tall, 'filter', Q && Q.blur > .05 ? `blur(${Q.blur.toFixed(2)}px)` : 'none');
     this.S(q.tall, 'visibility', Q && Q.inside ? 'hidden' : 'visible');
+    /* one continuous ground (ground18) from the crane on: replaces the tall plate's ground, the sea strip and both foam canvases */
+    const G18 = q.g18 && q.g18._G, gon = !!(G18 && G18.ok) && t > TB1 - .2 && !(Q && Q.inside), ga = sm(TB1 - .2, TB1, t);
+    this._g18full = gon && ga > .999; this.S(q.g18, 'visibility', gon ? 'visible' : 'hidden'); this.S(q.f18, 'visibility', gon ? 'visible' : 'hidden');
+    this.S(q.b6, 'visibility', gon ? 'hidden' : 'visible'); this.S(q.s5, 'visibility', gon ? 'hidden' : 'visible'); this.S(q.world, 'background', gon ? 'transparent' : '#E0CCA4');
+    { const bl = Q && Q.blur > .05 ? `blur(${Q.blur.toFixed(2)}px)` : 'none'; this.S(q.g18, 'filter', bl); this.S(q.f18, 'filter', bl); }
     if (q.b6) { let tf = 'none'; if (Q) { const o = [-.06 * W, ty], G = [[-2, -2.5], [2, -2.5], [2, -6], [-2, -6]].map(([x, z]) => [S.Xb + x * S.q, S.Zb - z * S.q]), d = G.map(([X, Z]) => pr(Q.c6, X, 0, Z));
       if (d.every(v => v[2] > .05)) tf = P.homog(G.map(([X, Z]) => { const s = pr(S.camO, X, 0, Z); return [s[0] - o[0], s[1] - o[1]]; }), d.map(v => [v[0] - o[0], v[1] - o[1]])); }
-      this.S(q.b6, 'transform', tf); if (!q.b6l) q.b6l = this.$('[data-paint="b6left"]'); this.S(q.b6l, 'transform', tf); }
+      this.S(q.b6, 'transform', tf); }
     if (e < .999) { const c = this.cam6(t); this.S(q.world, 'transform', P.homog(S.board.map(([X, Z]) => pr(S.camO, X, 0, Z)), S.board.map(([X, Z]) => pr(c, X, 0, Z))));
       const R = Math.max(1, sm(.3, .85, e) * 1.35 * Math.hypot(W, H)), m = `${this.w5mask}, radial-gradient(circle ${R.toFixed(0)}px at ${this.w5c[0].toFixed(0)}px ${this.w5c[1].toFixed(0)}px, #000 55%, transparent 100%)`;
       this.S(q.world, 'maskImage', m); this.S(q.world, 'webkitMaskImage', m); }
     else { this.S(q.world, 'transform', 'none'); this.S(q.world, 'maskImage', 'none'); this.S(q.world, 'webkitMaskImage', 'none'); }
     const p = lin(14.25, 16.55, t), sb = this.st.sandboard; sb.p = p; sb.pk = sm(13.1, 13.9, t);
-    if (q.sx5 && !(Q && Q.inside)) { const k = q.s5._k, cc = Q ? Q.c6 : S.camO; P.surf6(q.sx5, Object.assign({}, cc, { f: cc.f * k, cx: cc.cx * k, cy: cc.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.s5.width, q.s5.height); }
+    if (gon) { const cc = Q ? Q.c6 : this.cam6(t), cm = Object.assign({}, cc, { cx: cc.cx + q.gM }), sky = t >= RANGE[2][1], k = q.f18._k;
+      this.S(q.g18, 'opacity', ga.toFixed(3)); this.S(q.f18, 'opacity', ga.toFixed(3)); this.S(q.g18, 'backgroundColor', sky ? '#D9C3A0' : 'transparent');
+      G18.draw({ cam: cm, S, now: this.now || 0, sky, w: W + 2 * q.gM, h: H, bw: q.gB[0], bh: q.gB[1] });
+      if (q.fx) P.surf6(q.fx, Object.assign({}, cm, { f: cm.f * k, cx: cm.cx * k, cy: cm.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.f18.width, q.f18.height); }
+    if (q.sx5 && !gon && !(Q && Q.inside)) { const k = q.s5._k, cc = Q ? Q.c6 : S.camO; P.surf6(q.sx5, Object.assign({}, cc, { f: cc.f * k, cx: cc.cx * k, cy: cc.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.s5.width, q.s5.height); }
     const f = Math.min(1, p / .86) * 5;
     for (let k = 0; k < 5; k++) { let v = 1 - sm(.42, .56, Math.abs(f - k - .5)); if (k === 0 && f < .5) v = t < 14.25 ? sm(13.9, 14.1, t) : 1; if (k === 4 && f >= 4.5) v = 1; if (t < 13.9) v = 0; if (t > QA) v = k === 4 ? 1 - sm(QA, QA + .16, t) : 0; this.mv['stg' + k] = v; }
     { const P0 = this.stgSpot(); if (P0) for (let k = 0; k < 5; k++) this.pos['stg' + k] = P0; }
-    this.bgulls(t);
+    this.wgulls(t);
   }
   /* overhead board: the beach gulls seen from above, gliding low over the sand with soft shadows offset away from the sun; they keep clear of the pawn, queen and copy */
   gullTop(cv, sh) { const P = window.Painter, x = cv.getContext('2d'); x.setTransform(2, 0, 0, 2, 0, 0); x.clearRect(0, 0, 90, 40);
@@ -527,23 +536,44 @@ export class HomeEngine {
     [1, -1].forEach(s => { P.stroke(x, 45, 19, s > 0 ? .1 : Math.PI - .1, 19, 4.2, c[0], .95, s > 0 ? -.12 : .12); P.stroke(x, 45 + s * 18, 20.6, s > 0 ? .2 : Math.PI - .2, 15, 3, c[1], .95, s > 0 ? .1 : -.1); P.stroke(x, 45 + s * 31.5, 23.4, s > 0 ? .3 : Math.PI - .3, 6, 2.2, c[2], .9, 0); });
     const b = sh ? '#281E1A' : '#F2F2F0'; el(45, 20.5, 3.3, 8.2, b); el(45, 11.6, 2.7, 2.7, b); el(45, 29.4, 2.6, 2.1, b);
     if (!sh) { el(45, 21.5, 2.2, 4.6, 'rgba(176,184,196,.75)'); el(45, 8.9, .8, 1, '#D8B24A'); } }
-  bgulls(t) {
-    const q = this.q5, Lr = q && q.bgl; if (!Lr) return; const W = this.W, H = this.H, o = sm(12.9, 13.7, t) * (1 - sm(QA, QA + .25, t)), on = o > .01 && !!(this.wEl[4] && this.wEl[4]._on);
-    this.S(Lr, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
-    if (!Lr._k) { const ss = [...Lr.querySelectorAll('[data-bgs]')], gg = [...Lr.querySelectorAll('[data-bgg]')]; ss.forEach(cv => this.gullTop(cv, 1)); gg.forEach(cv => this.gullTop(cv, 0)); Lr._k = { ss, gg, a: [1, 1, 1], f: 0, box: [] }; }
-    const K = Lr._k, P = window.Painter, S = this.S6; let dv = [.62, .48];
-    try { const c = this.qs ? this.qs.c6 : (sm(TB1, 14.05, t) < .999 ? this.cam6(t) : S.camO), a0 = P.cam6.proj(c, S.Xb, 0, S.Zb), a1 = P.cam6.proj(c, S.Xb + S.sun[0], 0, S.Zb + S.sun[1]), l = Math.hypot(a1[0] - a0[0], a1[1] - a0[1]); if (l > 1e-3) dv = [(a1[0] - a0[0]) / l, (a1[1] - a0[1]) / l]; } catch { /* keep the default shadow direction */ }
+  /* gulls are world objects at real heights (camera tops out ~2.35 above the sand): seen side-on against the sky from the beach, from above over the board; they enter and leave only off-frame */
+  wgulls(t) {
+    const q = this.q5, Lr = q && q.bgl, S = this.S6; if (!Lr || !S) return; const W = this.W, H = this.H, Q = this.qs, P = window.Painter, pr = P.cam6.proj, n = this.n;
+    const on = t > 2.6 && !(Q && Q.inside); this.S(Lr, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
+    if (!Lr._k) { const ss = [...Lr.querySelectorAll('[data-bgs]')], gg = [...Lr.querySelectorAll('[data-bgg]')], sv = [...Lr.querySelectorAll('[data-wgs]')]; ss.forEach(cv => this.gullTop(cv, 1)); gg.forEach(cv => this.gullTop(cv, 0)); Lr._k = { ss, gg, sv, B: [], a: [], f: 0, box: [], tn: 0 }; }
+    const K = Lr._k, c = Q ? Q.c6 : this.cam6(t), now = this.now || 0, rm = this._rm, dt = cl(now - (K.tn || now), 0, .1), bf = this._bf || 0; K.tn = now;
     if (!(K.f++ % 10)) { K.box = (this.blocks || []).filter(b => b.el.style.visibility !== 'hidden').map(b => b.el.getBoundingClientRect()).filter(r => r.width > 0); const sb = this.st.sandboard; if (sb && sb.sx != null) K.box.push({ left: sb.sx * W - 90, right: sb.sx * W + 90, top: sb.sy * H - 170, bottom: sb.sy * H + 40 }); }
-    const U = Math.max(.6, Math.min(W, 1.6 * H) / 1440) * 1.6, now = this.now || 0;
-    const G = [{ p: [[1.08, .2], [.86, .04], [.6, -.14]], T: 26, ph: 0, s: 1, h: 1 }, { p: [[.62, 1.14], [.86, .66], [1.14, .54]], T: 22, ph: 9, s: .78, h: .7 }, { p: [[-.12, .8], [.14, .92], [.38, 1.16]], T: 30, ph: 17, s: .62, h: .45 }];
-    G.forEach((g, i) => { const gs = K.gg[i], sd = K.ss[i]; if (!gs || !sd) return; const u = ((now + g.ph) % (g.T * 1.35)) / g.T;
-      if (u > 1) { this.S(gs, 'opacity', '0'); this.S(sd, 'opacity', '0'); return; }
-      const [p0, p1, p2] = g.p, v = 1 - u, X = (v * v * p0[0] + 2 * v * u * p1[0] + u * u * p2[0]) * W, Y = (v * v * p0[1] + 2 * v * u * p1[1] + u * u * p2[1]) * H;
-      const dx = (2 * v * (p1[0] - p0[0]) + 2 * u * (p2[0] - p1[0])) * W, dy = (2 * v * (p1[1] - p0[1]) + 2 * u * (p2[1] - p1[1])) * H, rot = Math.atan2(dy, dx) + Math.PI / 2;
-      const k = g.s * U, fl = 1 + .05 * Math.sin(now * 1.3 + i * 2), hit = K.box.some(r => X > r.left - 50 * k && X < r.right + 50 * k && Y > r.top - 30 * k && Y < r.bottom + 30 * k);
-      K.a[i] = mx(K.a[i], hit ? 0 : 1, .08); const al = o * K.a[i], off = 70 * g.h * U, sx = X + dv[0] * off, sy = Y + dv[1] * off;
-      this.S(gs, 'transform', `translate(${(X - 45).toFixed(1)}px,${(Y - 20).toFixed(1)}px) rotate(${rot.toFixed(3)}rad) scale(${k.toFixed(3)},${(k * fl).toFixed(3)})`); this.S(gs, 'opacity', al.toFixed(3));
-      this.S(sd, 'transform', `translate(${(sx - 45).toFixed(1)}px,${(sy - 20).toFixed(1)}px) rotate(${rot.toFixed(3)}rad) scale(${(k * .72).toFixed(3)},${(k * .72 * fl).toFixed(3)})`); this.S(sd, 'opacity', (al * .32).toFixed(3)); });
+    const HT = [1.28, 1.52, 1.74, 1.4], SP = [.11, .085, .062, .095], N = rm ? 2 : 4, mg = 80, cs = Math.cos(c.ph), sn = Math.sin(c.ph);
+    const inV = p => p[2] > .05 && p[0] + bf > -mg && p[0] + bf < W + mg && p[1] > -mg && p[1] < H + mg;
+    const spawn = (i, mid) => { const Y = HT[i];
+      for (let k = 0; k < 16; k++) { const u = (n ? mx(.12, .88, Math.random()) : mx(.52, .94, Math.random())) * W - bf, v = mx(n ? .42 : .12, .88, Math.random()) * H;
+        const a = (u - c.cx) / c.f, b = -(v - c.cy) / c.f, dy = b * cs - sn, dz = b * sn + cs, tt = (Y - c.y) / dy; if (!(tt > .2 && tt < 30)) continue;
+        const T = [c.x + tt * a, c.z + tt * dz], th = rm ? (Math.random() < .5 ? .15 : Math.PI - .15) : Math.random() * Math.PI * 2, d = [Math.cos(th), Math.sin(th)];
+        const reach = sg => { let s = 0; while (s < 60 && inV(pr(c, T[0] + sg * d[0] * s, Y, T[1] + sg * d[1] * s))) s += .02 + s * .04; return s; };
+        const s0 = reach(-1), s1 = reach(1), L = s0 + s1; if (L < .1) continue; const fr = mid ? mx(.15, .6, Math.random()) : 0;
+        return { X: T[0] + d[0] * (L * fr - s0), Y, Z: T[1] + d[1] * (L * fr - s0), th, v: cl(L / mx(14, 22, Math.random()), .02, .5), age: 0, seen: false, ph: Math.random() * 6.28 }; }
+      return null; };
+    for (let i = 0; i < 4; i++) { const gs = K.gg[i], sd = K.ss[i], sv = K.sv[i]; if (!gs || !sd || !sv) continue;
+      let b = i < N ? K.B[i] || (K.B[i] = spawn(i, true)) : null; const hide = () => { this.S(gs, 'opacity', '0'); this.S(sd, 'opacity', '0'); this.S(sv, 'opacity', '0'); };
+      if (!b) { hide(); continue; }
+      const thv = b.th + (rm ? 0 : .22 * Math.sin(now * .06 + b.ph)); b.X += Math.cos(thv) * b.v * dt; b.Z += Math.sin(thv) * b.v * dt; b.age += dt;
+      let p = pr(c, b.X, b.Y, b.Z); const vis = inV(p); if (vis) b.seen = true;
+      if (!vis && (b.seen || b.age > 40)) { K.B[i] = spawn(i, false); hide(); continue; }
+      if (p[2] < .08) { hide(); continue; }
+      const k = cl(c.f * SP[i] / p[2] / 80, .04, 3.2), el = Math.atan2(c.y - b.Y, Math.hypot(b.X - c.x, b.Z - c.z)), wt = sm(.12, .55, el);
+      const p2 = pr(c, b.X + Math.cos(thv) * .03, b.Y, b.Z + Math.sin(thv) * .03), rot = Math.atan2(p2[1] - p[1], p2[0] - p[0]);
+      const X = p[0] + bf, Y = p[1], hit = K.box.some(r => X > r.left - 50 * k && X < r.right + 50 * k && Y > r.top - 30 * k && Y < r.bottom + 30 * k);
+      K.a[i] = mx(K.a[i] == null ? 1 : K.a[i], hit ? 0 : 1, .08); const al = K.a[i];
+      const flap = rm ? 0 : Math.pow(Math.max(0, Math.sin(now * .37 + b.ph)), 8) * (.5 + .5 * Math.sin(now * 7 + i)), fx = 1 - .35 * flap;
+      this.S(gs, 'transform', `translate(${(p[0] - 45).toFixed(1)}px,${(p[1] - 20).toFixed(1)}px) rotate(${(rot + Math.PI / 2).toFixed(3)}rad) scale(${(k * fx).toFixed(3)},${k.toFixed(3)})`); this.S(gs, 'opacity', (al * wt).toFixed(3));
+      const fl = rm ? 1 : .7 + Math.sin(now * 3.2 + i * 1.3) * .3, dir = Math.cos(rot) >= 0 ? 1 : -1;
+      this.S(sv, 'transform', `translate(${(p[0] - 45).toFixed(1)}px,${(p[1] - 20).toFixed(1)}px) scale(${(k * dir).toFixed(3)},${(k * fl).toFixed(3)})`); this.S(sv, 'opacity', (al * (1 - wt)).toFixed(3));
+      /* blob shadow straight down along the sun (offset shortened so it stays near its bird in the overhead frame); higher = smaller, softer, fainter */
+      const gx = b.X + S.sun[0] * b.Y * .4, gz = b.Z + S.sun[1] * b.Y * .4, ps = pr(c, gx, 0, gz);
+      if (ps[2] > .05) { const ks = c.f * SP[i] * (1.05 - .2 * b.Y) / ps[2] / 80, eg = sm(.35, .9, Math.atan2(c.y, Math.hypot(gx - c.x, gz - c.z))), ps2 = pr(c, gx + Math.cos(thv) * .03, 0, gz + Math.sin(thv) * .03), rs = Math.atan2(ps2[1] - ps[1], ps2[0] - ps[0]);
+        this.S(sd, 'transform', `translate(${(ps[0] - 45).toFixed(1)}px,${(ps[1] - 20).toFixed(1)}px) rotate(${(rs + Math.PI / 2).toFixed(3)}rad) scale(${(ks * fx).toFixed(3)},${ks.toFixed(3)})`);
+        this.S(sd, 'filter', `blur(${(1.2 + (b.Y - 1.2) * 4).toFixed(1)}px)`); this.S(sd, 'opacity', (al * eg * cl(.44 - .16 * b.Y, .12, .3)).toFixed(3)); }
+      else this.S(sd, 'opacity', '0'); }
   }
   /* into the queen: one camera from the overhead board view, down to the crown, through its front arch into the arcade */
   qstate(t) {

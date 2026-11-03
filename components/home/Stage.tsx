@@ -118,20 +118,22 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
       {/* 5 · the board in the sand, mapped onto the beach */}
       <div data-w5clip className={s.fill} style={{ zIndex: 5, pointerEvents: "none", filter: WARM }}>
         <div data-w5cam className={s.cam}>
+          {/* one continuous ground (sea, foam, wet and dry sand) drawn for the live camera */}
+          <canvas data-g18 aria-hidden className={s.abs} style={{ width: "100%", height: "100%", visibility: "hidden", pointerEvents: "none" }} />
           <div data-world="5" className={s.world} style={{ background: "#E0CCA4", transformOrigin: "0 0" }}>
             <div data-cam className={s.fill}>
               <div data-tall className={s.abs} style={{ width: "100%", height: "220%", transformOrigin: "50% 0" }}>
-                <canvas data-paint="b6tall" aria-hidden style={plate({ left: "-6%", top: 0, width: "112%", height: "100%" })} />
-                <canvas data-paint="b6left" aria-hidden style={plate({ left: 0, top: 0, width: 0, height: "100%", WebkitMaskImage: "linear-gradient(90deg,#000 calc(100% - 40px),transparent)", maskImage: "linear-gradient(90deg,#000 calc(100% - 40px),transparent)" })} />
-                <div data-3d="sandboard" style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
+                <canvas data-paint="b6tall" aria-hidden style={plate({ left: "-6%", top: 0, width: "112%", height: "100%" })} />                <div data-3d="sandboard" style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
                 <canvas data-surf5 aria-hidden style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
               </div>
             </div>
           </div>
-          {/* gulls seen from above over the board, with soft shadows on the sand */}
-          <div data-bgl aria-hidden className={s.fill} style={{ pointerEvents: "none", overflow: "hidden", visibility: "hidden" }}>
-            {[0, 1, 2].map((g) => <canvas key={`s${g}`} data-bgs width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", filter: "blur(2.5px)", mixBlendMode: "multiply", opacity: 0 }} />)}
-            {[0, 1, 2].map((g) => <canvas key={`g${g}`} data-bgg width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
+          <canvas data-f18 aria-hidden className={s.abs} style={{ width: "100%", height: "100%", visibility: "hidden", pointerEvents: "none" }} />
+          {/* gulls flying in the world: from above over the board, side-on against the sky, with soft shadows on the sand */}
+          <div data-bgl aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden" }}>
+            {[0, 1, 2, 3].map((g) => <canvas key={`s${g}`} data-bgs width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", mixBlendMode: "multiply", opacity: 0 }} />)}
+            {[0, 1, 2, 3].map((g) => <canvas key={`g${g}`} data-bgg width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
+            {[0, 1, 2, 3].map((g) => <canvas key={`w${g}`} data-paint="b6gull" data-wgs aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
           </div>
         </div>
       </div>
