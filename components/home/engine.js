@@ -354,6 +354,7 @@ export class HomeEngine {
     const remote = canPaintRemotely() && !this.q('noworker');
     const at = parseFloat(this.q('at')), aw = isNaN(at) ? -1 : this.worldAt(at);
     this.pq = []; J.forEach(([w, k, fn]) => { if (aw >= 0 && Math.abs(w - aw) > 1 && !(aw === 1 && w === 2)) return; this.$$(`[data-paint="${k}"]`).forEach(cv => this.pq.push({ w, cv, fn, rm: remote && RM[k] })); });
+    this._hero = this.pq.filter(j => j.w === 0).map(j => j.cv);
     const token = (this._pt = (this._pt || 0) + 1);
     // Plates near the visible world get a deadline; far ones wait for genuinely idle time so they never stall a scroll.
     const idle = (f, urgent) => window.requestIdleCallback ? requestIdleCallback(f, urgent ? { timeout: 100 } : undefined) : setTimeout(f, urgent ? 16 : 120);
@@ -378,7 +379,7 @@ export class HomeEngine {
       const j = this.pq.splice(bi, 1)[0], cv = j.cv;
       cv.getBoundingClientRect = () => ({ width: cv.offsetWidth, height: cv.offsetHeight, left: 0, top: 0, right: cv.offsetWidth, bottom: cv.offsetHeight });
       const wd = cv.closest('[data-world]'), hid = wd && wd.style.display === 'none'; if (hid) wd.style.display = '';
-      try { j.fn(cv); cv._pv = (cv._pv || 0) + 1; } catch (e) { console.warn('paint ' + (cv.dataset.paint || '') + ': ' + (e && e.message || String(e))); } delete cv.getBoundingClientRect; if (hid) wd.style.display = 'none';
+      try { j.fn(cv); cv._pv = (cv._pv || 0) + 1; } catch (e) { cv._pf = 1; console.warn('paint ' + (cv.dataset.paint || '') + ': ' + (e && e.message || String(e))); } delete cv.getBoundingClientRect; if (hid) wd.style.display = 'none';
       const [nb, nd] = nearest(false);
       if (nb >= 0) idle(step, nd <= 1.5); else done();
     };
@@ -854,12 +855,21 @@ export class HomeEngine {
     L.style.clipPath = `polygon(0 0,${pts.join(',')},0 100%)`; R.style.clipPath = `polygon(${pts.join(',')},100% 100%,100% 0)`;
     this.$('[data-lrim]', L).style.clipPath = `polygon(${pts.join(',')},${line.map(([x, y], i) => `calc(50% + ${(x - rimW[i]).toFixed(1)}px) ${y}%`).reverse().join(',')})`;
     this.$('[data-lrim]', R).style.clipPath = `polygon(${pts.join(',')},${line.map(([x, y], i) => `calc(50% + ${(x + rimW[i]).toFixed(1)}px) ${y}%`).reverse().join(',')})`;
-    if (red) { this.$('[data-loader]').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, delay: 500, fill: 'forwards' }); setTimeout(() => this.setState({ loader: false }), 1250); this._introT0 = performance.now() + 900; return; }
-    this.$$('[data-lword]').forEach(w => { w.style.webkitMaskImage = w.style.maskImage = 'linear-gradient(90deg,#000 42%,rgba(0,0,0,.35) 50%,transparent 58%)'; w.style.webkitMaskSize = w.style.maskSize = '260% 100%'; w.animate([{ maskPosition: '100% 0', webkitMaskPosition: '100% 0' }, { maskPosition: '0% 0', webkitMaskPosition: '0% 0' }], { duration: 900, easing: 'cubic-bezier(.5,.1,.3,1)', fill: 'both' }); });
-    const o = { duration: 760, delay: 980, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' };
-    L.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(-62%) rotate(-3deg)', opacity: .2 }], o);
-    R.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(62%) rotate(3deg)', opacity: .2 }], o);
-    this._introT0 = performance.now() + 1150; setTimeout(() => this.setState({ loader: false }), 1780);
+    const t0 = performance.now();
+    if (!red) this.$$('[data-lword]').forEach(w => { w.style.webkitMaskImage = w.style.maskImage = 'linear-gradient(90deg,#000 42%,rgba(0,0,0,.35) 50%,transparent 58%)'; w.style.webkitMaskSize = w.style.maskSize = '260% 100%'; w.animate([{ maskPosition: '100% 0', webkitMaskPosition: '100% 0' }, { maskPosition: '0% 0', webkitMaskPosition: '0% 0' }], { duration: 900, easing: 'cubic-bezier(.5,.1,.3,1)', fill: 'both' }); });
+    // the page only tears open once the first scene (sky, face, eye, skin) is painted, capped so a slow device is never stuck here
+    this.heroReady(6000).then(() => {
+      if (!this._alive) return;
+      if (red) { const d = Math.max(100, 500 - (performance.now() - t0)); this.$('[data-loader]').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, delay: d, fill: 'forwards' }); setTimeout(() => this.setState({ loader: false }), d + 750); this._introT0 = performance.now() + d + 400; return; }
+      const d = Math.max(60, 980 - (performance.now() - t0)), o = { duration: 760, delay: d, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' };
+      L.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(-62%) rotate(-3deg)', opacity: .2 }], o);
+      R.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(62%) rotate(3deg)', opacity: .2 }], o);
+      this._introT0 = performance.now() + d + 170; setTimeout(() => this.setState({ loader: false }), d + 800);
+    });
+  }
+  heroReady(cap) {
+    const cvs = this._hero || [], t0 = performance.now();
+    return new Promise(res => { const tick = () => { if (!this._alive || performance.now() - t0 > cap || cvs.every(cv => cv._pv || cv._pf)) res(); else setTimeout(tick, 50); }; tick(); });
   }
   // every 3 to 8 seconds while the eye is on screen, one in five a double blink
   blink() {
