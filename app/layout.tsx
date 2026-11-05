@@ -23,7 +23,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Odysseys",
-  description: "A venture studio that builds companies with founders: brand, product, software and the team to run it.",
+  description: "We make the thing you keep thinking about. A studio that builds companies from the idea that won’t leave you alone.",
 };
 
 export const viewport: Viewport = {
