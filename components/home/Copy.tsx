@@ -53,10 +53,11 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
         data-b=".36"
         data-hero
         className={`${s.copy} ${s.wide} ${s.hero}`}
-        style={{ left: "clamp(20px,4.44vw,64px)", right: "clamp(20px,4.44vw,64px)", bottom: L.heroB, flexDirection: heroRow ? "row" : "column", alignItems: heroRow ? "baseline" : "flex-start" }}
+        style={{ left: "clamp(20px,4.44vw,64px)", right: "clamp(20px,4.44vw,64px)", bottom: L.heroB, flexDirection: heroRow ? "row" : "column", alignItems: heroRow ? "last baseline" : "flex-start" }}
       >
-        <h1 className={s.heroTitle}>
-          <W>We</W> <W italic>build</W> <W>companies.</W>
+        <h1 className={s.heroTitle} style={{ whiteSpace: heroRow ? "nowrap" : "normal" }}>
+          <W>We</W> <W>make</W> <W>the</W> <W>thing</W> {heroRow && <br />}
+          <W>you</W> <W italic>keep</W> <W italic>thinking</W> <W italic>about<span style={{ fontStyle: "normal" }}>.</span></W>
         </h1>
         <div data-w data-herocta className={s.ctaRow}>
           <a href="#start" onClick={(e) => go("contact", e)} data-magnet className={`${s.pill} ${s.pillMd}`}>
