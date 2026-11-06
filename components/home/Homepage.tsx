@@ -138,7 +138,7 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
                   </button>
                 </div>
               </div>
-              <a href="#start" onClick={(e) => go("contact", e)} data-magnet data-navcta tabIndex={-1} aria-hidden="true" className={`${s.pill} ${s.pillSm} ${s.navCta}`}>Start a company</a>
+              <a href="#start" onClick={(e) => go("contact", e)} data-magnet data-navcta tabIndex={-1} aria-hidden="true" className={`${s.pill} ${s.pillSm} ${s.navCta}`}>Tell us your idea</a>
             </div>
           </div>
         )}

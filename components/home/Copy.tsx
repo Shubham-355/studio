@@ -61,7 +61,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
         </h1>
         <div data-w data-herocta className={s.ctaRow}>
           <a href="#start" onClick={(e) => go("contact", e)} data-magnet className={`${s.pill} ${s.pillMd}`}>
-            Start a company
+            Tell us about it
           </a>
         </div>
       </section>
