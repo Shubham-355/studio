@@ -277,9 +277,9 @@ export class HomeEngine {
   layoutArm() {
     const g = this.g8, W = this.W, H = this.H, n = this.n, Gl = window.Glove, out = this.ct8, cc = this.cardEl; if (!g || !Gl || !out) return;
     const s = n ? cl(Math.min(H / 800, W / 560), .6, 1) : cl(H / 800, .62, 1.15), cs = n ? cl(Math.min(H / 820, W / 420), .78, 1) : cl(H / 820, .8, 1.05);
-    const cw = (cc && cc.offsetWidth || 236) * cs, ch = (cc && cc.offsetHeight || 124) * cs, WC = [15.3, -108.5], C0 = [-10, -9], HG = 3.5 * Math.PI / 180, sn = Math.sin(HG), co = Math.cos(HG);
+    const cw = (cc && cc.offsetWidth || 236) * cs, ch = (cc && cc.offsetHeight || 124) * cs, WC = [40, -102.5], C0 = [-10, -9], HG = 3.5 * Math.PI / 180, sn = Math.sin(HG), co = Math.cos(HG);
     const c = [g.cx, g.cy], ea = 150 * Math.PI / 180, E0 = [c[0] + Math.cos(ea) * g.rx * 1.02, c[1] + Math.sin(ea) * g.ry * 1.02];
-    const G = [E0[0] - Math.SQRT1_2 * 110 * s - WC[0] * s, E0[1] + Math.SQRT1_2 * 110 * s - WC[1] * s];
+    const G = [E0[0] - .62 * 150 * s - WC[0] * s, E0[1] + .78 * 150 * s - WC[1] * s];
     // keep the letter clear of the contact headline and buttons
     const sec = this.$('#start'), boxes = [];
     if (sec) { const sl = sec.offsetLeft, st = sec.offsetTop, h2 = sec.querySelector('h2'), row = h2 && h2.nextElementSibling;
@@ -293,16 +293,17 @@ export class HomeEngine {
     }
     const Wr = [G[0] + WC[0] * s, G[1] + WC[1] * s], A = [c[0] + g.rx * .12, c[1] - g.ry * .12], fl = Math.hypot(A[0] - Wr[0], A[1] - Wr[1]) || 1, f0 = [(A[0] - Wr[0]) / fl, (A[1] - Wr[1]) / fl];
     const inside = (p, poly) => { let r = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) r = !r; } return r; };
-    let E = A; for (let d = 0; d < fl; d += 2) { const p = [Wr[0] + f0[0] * d, Wr[1] + f0[1] * d]; if (inside(p, out)) { E = p; break; } }
-    const S0 = [Wr[0] + f0[0] * 12 * s, Wr[1] + f0[1] * 12 * s], Le = Math.hypot(c[0] - S0[0], c[1] - S0[1]) / s;
+    const S0 = [Wr[0] + f0[0] * 9 * s, Wr[1] + f0[1] * 9 * s], Le = Math.hypot(A[0] - S0[0], A[1] - S0[1]) / s;
+    let E = A; if (Gl.curve) { const cvL = Gl.curve({ f: f0, Le }); for (let i = 0; i < cvL.P.length - 1; i++) { const a = cvL.P[i], b = cvL.P[i + 1]; let hit = false; for (let u = 0; u < 1; u += .1) { const p = [G[0] + (a[0] + (b[0] - a[0]) * u) * s, G[1] + (a[1] + (b[1] - a[1]) * u) * s]; if (inside(p, out)) { E = p; hit = true; break; } } if (hit) break; } }
+    else for (let d = 0; d < fl; d += 2) { const p = [Wr[0] + f0[0] * d, Wr[1] + f0[1] * d]; if (inside(p, out)) { E = p; break; } }
     const cwl = cw / s, chl = ch / s, card = [C0, [C0[0] + cwl * co, C0[1] + cwl * sn], [C0[0] + cwl * co - chl * sn, C0[1] + cwl * sn + chl * co], [C0[0] - chl * sn, C0[1] + chl * co]];
     this.arm = { G, E, f0, s, cs, D: Math.hypot(c[0] - G[0], c[1] - G[1]), C0 };
     const back = this.$('[data-armback]'), wraps = this.$$('[data-armwrap]'), sv = k => this.$(`[data-armsvg="${k}"]`);
-    const o = { f: f0, Le, card };
+    const o = { f: f0, Le, card, R: Math.min(g.rx, g.ry) / s };
     if (sv('back')) sv('back').innerHTML = Gl.build('gk', o).back;
     if (sv('thumb')) sv('thumb').innerHTML = Gl.build('ga', o).thumb;
     if (sv('front')) sv('front').innerHTML = Gl.build('gb', o).front;
-    const flapG = this.$('[data-armflap]'); if (flapG) flapG.innerHTML = Gl.flap(out, E, c, 34 * s, 11);
+    const flapG = this.$('[data-armflap]'); if (flapG) flapG.innerHTML = (Gl.edge || Gl.flap)(out, E, c, 40 * s, 11);
     this.armEls = { back, wraps, movers: this.$$('[data-armmove]'), flapG };
     if (cc) cc.style.transformOrigin = '0px 0px';
     this._k8 = null;
@@ -310,12 +311,8 @@ export class HomeEngine {
   // The thumb and front layers are cut along the tear on the elbow's side, so the arm reads as coming out of it.
   armClip(k) {
     const AR = this.arm, g = this.g8, o = this.ct8; if (!AR || !g || !o) return 'none';
-    const c = [g.cx, g.cy], f = AR.f0, pp = [-f[1], f[0]], B = 4000, side = p => (p[0] - c[0]) * f[0] + (p[1] - c[1]) * f[1];
-    const pts = o.map(([x, y]) => [c[0] + (x - c[0]) * k, c[1] + (y - c[1]) * k]), res = [];
-    for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length], sa = side(a), sb = side(b);
-      if (sa <= 0) res.push(a); if ((sa <= 0) !== (sb <= 0)) { const t = sa / (sa - sb); res.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } }
-    const q = [[c[0] + pp[0] * B, c[1] + pp[1] * B], [c[0] + pp[0] * B - f[0] * B, c[1] + pp[1] * B - f[1] * B], [c[0] - pp[0] * B - f[0] * B, c[1] - pp[1] * B - f[1] * B], [c[0] - pp[0] * B, c[1] - pp[1] * B]];
-    const P = window.Painter; return `path(evenodd, "${P.toPath(q)}${res.length > 2 ? ' ' + P.toPath(res) : ''}")`;
+    const c = [g.cx, g.cy], B = 6000, pts = o.map(([x, y]) => [c[0] + (x - c[0]) * k, c[1] + (y - c[1]) * k]);
+    const q = [[-B, -B], [B, -B], [B, B], [-B, B]], P = window.Painter; return `path(evenodd, "${P.toPath(q)} ${P.toPath(pts)}")`;
   }
   // the day sky behind the night tear puts its clouds around the opening
   tearSky() { const g = this.g8; return { cx: g.cx, cy: g.cy, rx: g.rx }; }
