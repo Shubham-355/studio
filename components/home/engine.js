@@ -822,10 +822,10 @@ export class HomeEngine {
       else { const y0 = VI(.3) * this.H; if (!on && scrollY > y0 + 20) on = true; else if (on && scrollY < y0 - 20) on = false; }
       if (on !== this._navOn || this._navW !== nc.offsetWidth) {
         this._navOn = on; this._navW = nc.offsetWidth;
-        nc.style.transitionDelay = on ? '0ms,0ms,100ms,100ms' : '0ms';
+        nc.style.transitionDelay = on ? '0ms,0ms,220ms,220ms' : '0ms';
         nc.style.opacity = on ? '1' : '0'; nc.style.translate = on ? '0px 0' : '32px 0'; nc.style.pointerEvents = on ? 'auto' : 'none';
         nc.tabIndex = on ? 0 : -1; nc.setAttribute('aria-hidden', on ? 'false' : 'true');
-        if (nl) { nl.style.transitionDelay = on ? '0ms' : '100ms'; nl.style.transform = `translateX(${on ? -(nc.offsetWidth + 16) : 0}px)`; }
+        if (nl) { nl.style.transitionDelay = on ? '0ms' : '100ms'; const lg = nl.firstElementChild ? parseFloat(getComputedStyle(nl.firstElementChild).columnGap) || 24 : 24; nl.style.transform = `translateX(${on ? -(nc.offsetWidth + lg) : 0}px)`; }
       }
     }
   }
