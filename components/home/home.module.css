@@ -591,9 +591,9 @@
   left: 0;
   top: 0;
   display: block;
-  width: 236px;
+  width: 300px;
   visibility: hidden;
-  color: #2A2622;
+  color: #2B2A2E;
   text-decoration: none;
   filter: drop-shadow(0 10px 14px rgba(4, 6, 14, 0.5)) drop-shadow(0 2px 3px rgba(4, 6, 14, 0.35));
 }
@@ -632,24 +632,25 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 22px 24px;
+  gap: 10px;
+  padding: 28px 26px 26px;
 }
 
 .letterTo {
   font-family: var(--serif);
   font-weight: 500;
-  font-size: 23px;
+  font-size: 25px;
   line-height: 1.05;
   letter-spacing: -0.01em;
   overflow-wrap: anywhere;
+  align-self: flex-start;
 }
 
 .letterNote {
   font-family: var(--serif);
   font-style: italic;
   font-weight: 500;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.3;
 }
 
