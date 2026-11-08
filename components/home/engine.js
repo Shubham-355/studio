@@ -35,7 +35,7 @@ export const NOTES = [
   'Board reached from the beach rise (ends 14.05, pawn emerges 13.1–13.9); pawn crosses 14.25–16.55, wave makes the queen. Into the queen 16.6–18.2 (1.2 screens of scroll): settle over the crown, push into the front arch (board blurs by depth), sunset light stains the porcelain stroke by stroke, the arch widens into the arcade and the board squares become its floor.',
   'One camera: the arcade is a 3D hall rendered from the queen camera mapped through the crown arch (no copy), so the camera walks on into it from 18.2. Founders at z 6/11/16/21: thoughts resolve as the camera nears (dz 4.9→3.2) and scatter again on the way back. Hover: object turns, panel slides out.',
   'Door in the back wall from the first frame (perspective-mapped wood leaf, hinge screen-left); it swings inward to 170° with scroll 21.5–22.3, flat against the inside wall on a brass stop before the camera reaches the doorway while the camera walks straight through it (21.45–22.9). Dolly 22.9–24.1. Window 24.1–25.1: camera turns into the lower-left pane, world 8 visible through the glass throughout.',
-  'Quote 25.25–26.25. Tear opens 26.2–26.85; arm emerges from shadow inside it and holds the card (thumb in front, fingers behind). Card leaves 27.4; tear closes 27.55–28.05 as the camera lowers to the water; footer from 27.75.',
+  'Quote 25.25–26.25. Tear rips open from a crack in three stages 26.2–26.66; the letter slides out of its lower-left edge on its own (pushed from behind) 26.66–26.9, back in 27.3–27.54; tear closes along its edges 27.55–28.05 as the camera lowers to the water; footer from 27.75.',
 ];
 
 export class HomeEngine {
@@ -262,7 +262,7 @@ export class HomeEngine {
     ];
     this.$$('[data-n8c]', w8).forEach(cv => { const L = this.decks.n8[+cv.dataset.l]; if (L) Object.assign(cv.style, { left: L.x0 + 'px', top: L.y0 + 'px', width: L.w + 'px', height: L.h + 'px' }); });
     this.q8 = { world: w8, ncl: this.$('[data-ncl]', w8), n8c: this.$$('[data-n8c]', w8), cam: this.$('[data-cam]', w8), plate: this.$('[data-nightplate]', w8), rimcv: this.$('[data-crimcv]', w8), moon, refl: this.$('[data-reflect]', w8) };
-    const T = this.ctear, inn = T.at(g.cx, g.cy, g.rx, g.ry, 0), out = T.at(g.cx, g.cy, g.rx, g.ry, 1); this.ct8 = out; this._k8 = null;
+    const T = this.ctear, inn = T.at(g.cx, g.cy, g.rx, g.ry, 0), out = T.at(g.cx, g.cy, g.rx, g.ry, 1); this.ct8 = out; this._k8 = null; this._rip = null;
     // the torn paper rim is painted once at full size; opening and closing the tear only scales it
     const rc = this.q8.rimcv; if (rc) { const d = Math.min(2, devicePixelRatio || 1); rc.width = Math.round(W * d); rc.height = Math.round(H * d); rc.style.transformOrigin = `${g.cx.toFixed(1)}px ${g.cy.toFixed(1)}px`; rc.style.visibility = 'hidden'; try { P.tearRim6(rc.getContext('2d'), inn, out, T, g.cx, g.cy, d); } catch (e) { console.warn('rim8: ' + e.message); } }
     const cc = this.cardEl = this.$('[data-id="ccard"]'); this.cardSheen = this.$('[data-sheen]');
@@ -271,48 +271,77 @@ export class HomeEngine {
       for (let i = 39; i >= 0; i--) pts.push(`${(i * 2.5).toFixed(1)}% calc(100% - ${j()}px)`); for (let i = 19; i >= 1; i--) pts.push(`${j()}px ${(i * 5).toFixed(1)}%`);
       this._deckle = `polygon(${pts.join(',')})`; }
     if (cc) cc.querySelectorAll('[data-deckle],[data-sheen]').forEach(el => { el.style.clipPath = this._deckle; });
-    try { this.layoutArm(); } catch (e) { console.warn('arm8: ' + e.message); }
+    this._tp = null; try { this.layoutTips(); } catch (e) { console.warn('tips8: ' + e.message); }
   }
-  /* the founder's arm: white glove out of a charcoal sleeve, through the lower-left edge of the tear; the letter hangs from the pinch */
-  layoutArm() {
-    const g = this.g8, W = this.W, H = this.H, n = this.n, Gl = window.Glove, out = this.ct8, cc = this.cardEl; if (!g || !Gl || !out) return;
-    const s = n ? cl(Math.min(H / 800, W / 560), .6, 1) : cl(H / 800, .62, 1.15), cs = n ? cl(Math.min(H / 820, W / 420), .78, 1) : cl(H / 820, .8, 1.05);
-    const cw = (cc && cc.offsetWidth || 236) * cs, ch = (cc && cc.offsetHeight || 124) * cs, WC = [40, -102.5], C0 = [-10, -9], HG = 3.5 * Math.PI / 180, sn = Math.sin(HG), co = Math.cos(HG);
-    const c = [g.cx, g.cy], ea = 150 * Math.PI / 180, E0 = [c[0] + Math.cos(ea) * g.rx * 1.02, c[1] + Math.sin(ea) * g.ry * 1.02];
-    const G = [E0[0] - .62 * 150 * s - WC[0] * s, E0[1] + .78 * 150 * s - WC[1] * s];
-    // keep the letter clear of the contact headline and buttons
-    const sec = this.$('#start'), boxes = [];
+  /* letter handover: the tear rips open from a crack; gloved fingertips push the letter out through its lower-left edge */
+  layoutTips() {
+    const g = this.g8, W = this.W, H = this.H, n = this.n, Tp = window.Tips, out = this.ct8, cc = this.cardEl; this.tip = null; if (!g || !Tp || !out || !cc) return;
+    const c = [g.cx, g.cy], Wc = cc.offsetWidth || 300, Hc = cc.offsetHeight || 170, sc = n ? cl(Math.min(H / 820, W / 400), .7, 1) : cl(H / 780, .84, 1), r = -6 * Math.PI / 180, co = Math.cos(r), sn = Math.sin(r);
+    const wp = (p, P) => [P[0] + (p[0] * co - p[1] * sn) * sc, P[1] + (p[0] * sn + p[1] * co) * sc];
+    const inside = (p, poly) => { let q = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) q = !q; } return q; };
+    const sec = this.$('#start'), boxes = [[0, 0, W, 100]];
     if (sec) { const sl = sec.offsetLeft, st = sec.offsetTop, h2 = sec.querySelector('h2'), row = h2 && h2.nextElementSibling;
-      if (h2) { let l = 1e9, r = -1e9; h2.querySelectorAll('[data-w]').forEach(w => { l = Math.min(l, w.offsetLeft); r = Math.max(r, w.offsetLeft + w.offsetWidth); }); if (r > l) boxes.push([sl + l, st + h2.offsetTop, sl + r, st + h2.offsetTop + h2.offsetHeight]); }
+      if (h2) { let l = 1e9, rr = -1e9; h2.querySelectorAll('[data-w]').forEach(w => { l = Math.min(l, w.offsetLeft); rr = Math.max(rr, w.offsetLeft + w.offsetWidth); }); if (rr > l) boxes.push([sl + l, st + h2.offsetTop, sl + rr, st + h2.offsetTop + h2.offsetHeight]); }
       if (row) [...row.children].forEach(e => boxes.push([sl + e.offsetLeft, st + e.offsetTop, sl + e.offsetLeft + e.offsetWidth, st + e.offsetTop + e.offsetHeight])); }
-    const box = P => { const x0 = P[0] + C0[0] * s, y0 = P[1] + C0[1] * s, m = 10; return [x0 - ch * sn - m, y0 - m, x0 + cw * co + m, y0 + cw * sn + ch * co + m]; };
-    const M = 44, ov = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
-    for (let it = 0; it < 4; it++) {
-      boxes.forEach(F0 => { const F = [F0[0] - M, F0[1] - M, F0[2] + M, F0[3] + M], B = box(G); if (!ov(B, F)) return; const dx = F[2] - B[0]; if (B[2] + dx <= W - 12) G[0] += dx; else G[1] -= B[3] - F[1]; });
-      const B = box(G); if (B[2] > W - 12) G[0] -= B[2] - (W - 12); if (B[3] > H - 12) G[1] -= B[3] - (H - 12); if (B[0] < 12) G[0] += 12 - B[0];
+    const M = 22, inBox = p => p[0] < 12 || p[1] < 12 || p[0] > W - 12 || p[1] > H - 12 || boxes.some(B => p[0] > B[0] - M && p[0] < B[2] + M && p[1] > B[1] - M && p[1] < B[3] + M);
+    const grid = []; for (let i = 0; i <= 10; i++) for (let j = 0; j <= 5; j++) grid.push([Wc * i / 10, Hc * j / 5]); 
+    const em = cc.querySelector('[data-w]'), ex0 = em ? em.offsetLeft : 26, ey0 = em ? em.offsetTop : 28, ew = em ? Math.min(em.scrollWidth, em.offsetWidth) : 220, eh = em ? em.offsetHeight : 28;
+    const eBox = []; for (let i = 0; i <= 6; i++) for (let j = 0; j <= 1; j++) eBox.push([ex0 + ew * i / 6 + 4, ey0 + eh * j]);
+    const AN = [Wc * .8, Hc * .5]; let best = null;
+    for (let deg = 115; deg <= 215; deg += 2.5) {
+      const a = deg * Math.PI / 180; let bi = 0, bd = 1e9; out.forEach((q, i) => { const d = Math.abs(Math.atan2((q[1] - c[1]) / g.ry, (q[0] - c[0]) / g.rx) - Math.atan2(Math.sin(a), Math.cos(a))); const dd = Math.min(d, Math.PI * 2 - d); if (dd < bd) { bd = dd; bi = i; } });
+      const B = out[bi], inw = [c[0] - B[0], c[1] - B[1]], il = Math.hypot(inw[0], inw[1]) || 1, Kw = [B[0] + inw[0] / il * 7, B[1] + inw[1] / il * 7];
+      const k0 = wp(AN, [0, 0]), P = [Kw[0] - k0[0], Kw[1] - k0[1]];
+      let hidden = 0; [[Wc, 0], [Wc, Hc * .25], [Wc, Hc * .5], [Wc, Hc * .75], [Wc, Hc]].forEach(q => { if (!inside(wp(q, P), out)) hidden++; });
+      let vis = 0, bad = 0, eh2 = 0; grid.forEach(q => { const w = wp(q, P); if (!inside(w, out)) { vis++; if (inBox(w)) bad++; } }); eBox.forEach(q => { if (inside(wp(q, P), out)) eh2++; });
+      const dw = [-co, -sn], al = dw[0] * inw[0] / -il + dw[1] * inw[1] / -il;
+      const f = vis / grid.length, score = hidden * 3 + bad / grid.length * 12 + eh2 * 1.5 + Math.abs(f - .75) * 2 + (1 - al) * 4 + Math.abs(deg - 155) / 300;
+      if (!best || score < best.score) best = { score, P, Kw, deg };
     }
-    const Wr = [G[0] + WC[0] * s, G[1] + WC[1] * s], A = [c[0] + g.rx * .12, c[1] - g.ry * .12], fl = Math.hypot(A[0] - Wr[0], A[1] - Wr[1]) || 1, f0 = [(A[0] - Wr[0]) / fl, (A[1] - Wr[1]) / fl];
-    const inside = (p, poly) => { let r = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) r = !r; } return r; };
-    const S0 = [Wr[0] + f0[0] * 9 * s, Wr[1] + f0[1] * 9 * s], Le = Math.hypot(A[0] - S0[0], A[1] - S0[1]) / s;
-    let E = A; if (Gl.curve) { const cvL = Gl.curve({ f: f0, Le }); for (let i = 0; i < cvL.P.length - 1; i++) { const a = cvL.P[i], b = cvL.P[i + 1]; let hit = false; for (let u = 0; u < 1; u += .1) { const p = [G[0] + (a[0] + (b[0] - a[0]) * u) * s, G[1] + (a[1] + (b[1] - a[1]) * u) * s]; if (inside(p, out)) { E = p; hit = true; break; } } if (hit) break; } }
-    else for (let d = 0; d < fl; d += 2) { const p = [Wr[0] + f0[0] * d, Wr[1] + f0[1] * d]; if (inside(p, out)) { E = p; break; } }
-    const cwl = cw / s, chl = ch / s, card = [C0, [C0[0] + cwl * co, C0[1] + cwl * sn], [C0[0] + cwl * co - chl * sn, C0[1] + cwl * sn + chl * co], [C0[0] - chl * sn, C0[1] + chl * co]];
-    this.arm = { G, E, f0, s, cs, D: Math.hypot(c[0] - G[0], c[1] - G[1]), C0 };
-    const back = this.$('[data-armback]'), wraps = this.$$('[data-armwrap]'), sv = k => this.$(`[data-armsvg="${k}"]`);
-    const o = { f: f0, Le, card, R: Math.min(g.rx, g.ry) / s };
-    if (sv('back')) sv('back').innerHTML = Gl.build('gk', o).back;
-    if (sv('thumb')) sv('thumb').innerHTML = Gl.build('ga', o).thumb;
-    if (sv('front')) sv('front').innerHTML = Gl.build('gb', o).front;
-    const flapG = this.$('[data-armflap]'); if (flapG) flapG.innerHTML = (Gl.edge || Gl.flap)(out, E, c, 40 * s, 11);
-    this.armEls = { back, wraps, movers: this.$$('[data-armmove]'), flapG };
-    if (cc) cc.style.transformOrigin = '0px 0px';
-    this._k8 = null;
+    // start hidden inside the hole: drawn back toward its centre and a little smaller (deeper), then pushed out to the final pose
+    const aS = [-co, -sn], ctr = wp([Wc / 2, Hc / 2 - 20], best.P); let V = [c[0] - ctr[0], c[1] - ctr[1]], ks = 1, found = false;
+    const wps = (p, P, k) => [P[0] + (p[0] * co - p[1] * sn) * sc * k, P[1] + (p[0] * sn + p[1] * co) * sc * k];
+    for (const k of [1, .9, .8, .7, .6, .5]) { for (let l = 0; l <= 1.2 && !found; l += .05) { const ck = wps([Wc / 2, Hc / 2 - 20], [0, 0], k), P = [c[0] - ck[0] + (1 - l) * 0 - V[0] * (1 - l) * 0, c[1] - ck[1]];
+        const Pl = [mx(best.P[0], P[0], l), mx(best.P[1], P[1], l)], kl = mx(1, k, l); if ([[0, 0], [Wc, 0], [Wc, Hc], [0, Hc]].every(q => inside(wps(q, Pl, kl), out))) { V = [Pl[0] - best.P[0], Pl[1] - best.P[1]]; ks = kl; found = true; } } if (found) break; }
+    if (!found) { const ck = wps([Wc / 2, Hc / 2 - 20], [0, 0], .5); V = [c[0] - ck[0] - best.P[0], c[1] - ck[1] - best.P[1]]; ks = .5; }
+    this.tip = { P: best.P, Kw: best.Kw, r, sc, aS, V, ks, Wc, Hc };
+    // no hand: the letter is pushed out from the other side on its own
+    const sv = k => this.$(`[data-armsvg="${k}"]`); if (sv('thumb')) sv('thumb').innerHTML = ''; if (sv('front')) sv('front').innerHTML = '';
+    const back = this.$('[data-armback]'); if (back) back.style.display = 'none';
+    const pad = 12 * sc;
+    const near = q => (() => { const d = [q[0] - best.P[0], q[1] - best.P[1]], lx = (d[0] * co + d[1] * sn) / sc, ly = (-d[0] * sn + d[1] * co) / sc; return lx > -pad && lx < Wc + pad && ly > -pad && ly < Hc + pad; })();
+    const idxs = []; out.forEach((q, i) => { if (near(q)) idxs.push(i); });
+    const flapG = this.$('[data-armflap]'); if (flapG) { flapG.innerHTML = Tp.edge(out, idxs, c, 11); flapG.removeAttribute('transform'); }
+    const xq = wp([Wc * .4, Hc * .4], best.P), exl = Math.hypot(xq[0] - c[0], xq[1] - c[1]) || 1, ex = [(xq[0] - c[0]) / exl, (xq[1] - c[1]) / exl];
+    let th = 1e9; grid.forEach(q => { const w = wp(q, best.P); if (!inside(w, out)) th = Math.min(th, (w[0] - c[0]) * ex[0] + (w[1] - c[1]) * ex[1]); });
+    this.tipX = { ex, th: Math.min(th - 14, Math.min(g.rx, g.ry) * .35) };
+    const wraps = this.$$('[data-armwrap]'), cp = this.exitClip(q => q);
+    wraps.slice(0, 2).forEach(e => { e.style.clipPath = cp; });
+    this.armEls = { wraps, movers: this.$$('[data-armmove]'), flapG };
+    cc.style.transformOrigin = '0px 0px'; this._cardClip = null;
   }
-  // The thumb and front layers are cut along the tear on the elbow's side, so the arm reads as coming out of it.
-  armClip(k) {
-    const AR = this.arm, g = this.g8, o = this.ct8; if (!AR || !g || !o) return 'none';
-    const c = [g.cx, g.cy], B = 6000, pts = o.map(([x, y]) => [c[0] + (x - c[0]) * k, c[1] + (y - c[1]) * k]);
-    const q = [[-B, -B], [B, -B], [B, B], [-B, B]], P = window.Painter; return `path(evenodd, "${P.toPath(q)} ${P.toPath(pts)}")`;
+  exitClip(tf) {
+    const g = this.g8, X = this.tipX, o = this.ct8, P = window.Painter, c = [g.cx, g.cy], f = X.ex, pp = [-f[1], f[0]], B = 6000, side = p => (p[0] - c[0]) * f[0] + (p[1] - c[1]) * f[1] - X.th, res = [];
+    for (let i = 0; i < o.length; i++) { const a = o[i], b = o[(i + 1) % o.length], sa = side(a), sb = side(b);
+      if (sa >= 0) res.push(a); if ((sa >= 0) !== (sb >= 0)) { const t = sa / (sa - sb); res.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } }
+    const b0 = [c[0] + f[0] * X.th, c[1] + f[1] * X.th], q = [[b0[0] + pp[0] * B, b0[1] + pp[1] * B], [b0[0] + pp[0] * B + f[0] * B, b0[1] + pp[1] * B + f[1] * B], [b0[0] - pp[0] * B + f[0] * B, b0[1] - pp[1] * B + f[1] * B], [b0[0] - pp[0] * B, b0[1] - pp[1] * B]];
+    return `path(evenodd, "${P.toPath(q.map(tf))}${res.length > 2 ? ' ' + P.toPath(res.map(tf)) : ''}")`;
+  }
+  /* the tear at rip progress p: a crack that rips open along its edges in three quick stages (paper thickness and fibres throughout) */
+  tearAt(p) {
+    const g = this.g8, T = this.ctear; if (!g || !T) return null;
+    if (!this._rip) { const inn = T.at(g.cx, g.cy, g.rx, g.ry, 0), out = T.at(g.cx, g.cy, g.rx, g.ry, 1), a = -.32, u = [Math.cos(a), Math.sin(a)], nu = [-u[1], u[0]], R = window.Painter.rng(61);
+      const pr = inn.map(q => (q[0] - g.cx) * u[0] + (q[1] - g.cy) * u[1]), mxp = Math.max(...pr.map(Math.abs)) || 1;
+      this._rip = { inn, out, u, nu, pr, mxp, side: inn.map(q => ((q[0] - g.cx) * nu[0] + (q[1] - g.cy) * nu[1]) >= 0 ? 1 : -1), dl: pr.map(v => .07 * Math.abs(v) / mxp + .03 * R()) }; }
+    const K = this._rip, Lf = mx(.22, 1, sm(0, .42, p)), zz = v => 4 * Math.sin(v * .09) + 2.4 * Math.sin(v * .23 + 1);
+    const inn = [], out = [], e = [];
+    for (let i = 0; i < K.inn.length; i++) {
+      const d = K.dl[i], ei = .36 * sm(.16 + d, .3 + d, p) + .34 * sm(.46 + d, .6 + d, p) + .3 * sm(.76 + d * .5, .9 + d * .5, p);
+      const v = K.pr[i] * Lf, ck = [g.cx + K.u[0] * v + K.nu[0] * (zz(K.pr[i]) * Lf + K.side[i] * 2.6), g.cy + K.u[1] * v + K.nu[1] * (zz(K.pr[i]) * Lf + K.side[i] * 2.6)];
+      const I = [mx(ck[0], K.inn[i][0], ei), mx(ck[1], K.inn[i][1], ei)], th = .3 + .7 * ei;
+      inn.push(I); out.push([I[0] + (K.out[i][0] - K.inn[i][0]) * th, I[1] + (K.out[i][1] - K.inn[i][1]) * th]); e.push(ei);
+    }
+    return { inn, out, e };
   }
   // the day sky behind the night tear puts its clouds around the opening
   tearSky() { const g = this.g8; return { cx: g.cx, cy: g.cy, rx: g.rx }; }
@@ -748,33 +777,31 @@ export class HomeEngine {
     const fm = this._rm ? 0 : 1; this.S(q.moon, 'transform', `translate(${(this.moon0[0] + (this.mx || 0) * 12 * fm).toFixed(1)}px,${(this.moon0[1] + (this.my || 0) * 8 * fm).toFixed(1)}px)`);
     const v8 = this._rm ? 0 : cl(-(t - 26.6) * H * .03, -H * .08, H * .08);
     q.n8c.forEach((cv, i) => { const L = this.decks.n8 && this.decks.n8[i]; if (L) this.S(cv, 'transform', `translate(${this.drift(i).toFixed(1)}px,${(v8 * this.pf(L.f)).toFixed(1)}px)`); });
-    const qo = sm(26.2, 26.85, t), cz = sm(27.55, 28.05, t);
-    if (qo > 0 && cz < .999) {
-      const k = (.08 + .92 * qo) * (1 - cz * .94);
-      if (k !== this._k8) { this._k8 = k; const o = this.ct8; if (o) { q.plate.style.clipPath = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(o.map(([x, y]) => [g.cx + (x - g.cx) * k, g.cy + (y - g.cy) * k]))}")`; if (q.ncl) q.ncl.style.clipPath = q.plate.style.clipPath; }
-        if (q.rimcv) { q.rimcv.style.visibility = 'visible'; q.rimcv.style.transform = `scale(${k.toFixed(4)})`; }
-        const AE = this.armEls; if (AE) { const cp = this.armClip(k); AE.wraps.slice(0, 2).forEach(e => { e.style.clipPath = cp; }); if (AE.flapG) AE.flapG.setAttribute('transform', `translate(${g.cx.toFixed(1)} ${g.cy.toFixed(1)}) scale(${k.toFixed(4)}) translate(${(-g.cx).toFixed(1)} ${(-g.cy).toFixed(1)})`); } }
-      if (qo > .4 && !this._tore2) { this._tore2 = true; }
-    } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; if (q.ncl) q.ncl.style.clipPath = 'none'; if (q.rimcv) q.rimcv.style.visibility = 'hidden'; if (qo <= 0) this._tore2 = false; }
-    /* the arm: reaches out of the tear, sways while it waits; hover brings the letter toward you */
-    const now = this.now || 0, AR = this.arm, AE = this.armEls;
+    const rO = lin(26.2, 26.66, t), rC = lin(27.55, 28.05, t), rp = rC > 0 ? 1 - rC : rO;
+    if (rp > 0) {
+      if (this._k8 == null || Math.abs(rp - this._k8) > .0015 || (rp === 1 && this._k8 !== 1)) { this._k8 = rp; const TA = this.tearAt(rp);
+        if (TA) { const cp = `path(evenodd, "M0 0H${W}V${H * 1.5}H0Z ${P.toPath(TA.out)}")`; q.plate.style.clipPath = cp; if (q.ncl) q.ncl.style.clipPath = cp;
+          const rc = q.rimcv; if (rc) { const T = this.ctear, d = Math.min(2, devicePixelRatio || 1), Tq = { pat: T.pat, fib: T.fib, curls: T.curls, off: T.off.map((o, i) => o * (TA.e[i] || 0)) };
+            rc.style.transform = 'none'; rc.style.visibility = 'visible'; try { P.tearRim6(rc.getContext('2d'), TA.inn, TA.out, Tq, g.cx, g.cy, d); } catch { /* keep the last rim */ } T.pat = Tq.pat; } } }
+    } else if (this._k8 !== 0) { this._k8 = 0; q.plate.style.clipPath = 'none'; if (q.ncl) q.ncl.style.clipPath = 'none'; if (q.rimcv) q.rimcv.style.visibility = 'hidden'; }
+    /* the letter slides out once the tear is fully open, and back in before it closes */
+    const now = this.now || 0, TP = this.tip, AE = this.armEls, red = this.red(), eo = x => 1 - Math.pow(1 - x, 3);
     this._hv = mx(this._hv || 0, this._chov ? 1 : 0, .14); const hv = this._hv < .002 ? 0 : this._hv;
+    const sl = rp >= 1 ? Math.min(eo(lin(26.66, 26.9, t)), eo(1 - lin(27.3, 27.54, t))) : 0, on = sl > .001;
     const ox = W / 2 * (1 - z), oy = H / 2 * (1 - z) + ty;
-    if (AR && AE) {
-      const rq = sm(.35, .75, qo), vis = qo > .35 && cz < .4, op = (sm(.35, .5, qo) * (1 - sm(.25, .4, cz))).toFixed(3), red = this.red();
-      const retr = (1 - rq) + cz * .9, sw = red ? 0 : 1.5 * Math.sin(now * Math.PI / 2), sk = AR.s * (1 + .05 * hv);
-      const tx = AR.G[0] - AR.E[0] + AR.f0[0] * retr * AR.D, tyy = AR.G[1] - AR.E[1] + AR.f0[1] * retr * AR.D;
-      const mvT = `translate(${AR.E[0].toFixed(1)}px,${AR.E[1].toFixed(1)}px) rotate(${sw.toFixed(3)}deg) translate(${tx.toFixed(1)}px,${tyy.toFixed(1)}px) scale(${sk.toFixed(4)})`;
-      const camT = `translate(${ox.toFixed(1)}px,${oy.toFixed(1)}px) scale(${z.toFixed(4)})`, vv = vis ? 'visible' : 'hidden';
-      if (AE.back) { this.S(AE.back, 'visibility', vv); this.S(AE.back, 'opacity', op); this.S(AE.back, 'transform', mvT); }
-      AE.wraps.forEach(e => { this.S(e, 'visibility', vv); this.S(e, 'opacity', op); this.S(e, 'transform', camT); });
-      AE.movers.forEach(e => this.S(e, 'transform', mvT));
-      const px = tx + AR.C0[0] * sk, py = tyy + AR.C0[1] * sk, r = sw * Math.PI / 180, qx = AR.E[0] + px * Math.cos(r) - py * Math.sin(r), qy = AR.E[1] + px * Math.sin(r) + py * Math.cos(r);
-      const hang = 3.5 + (red ? 0 : Math.sin(now * .43 + .6) * .5);
-      this.cardT = `translate(${(ox + qx * z).toFixed(1)}px,${(oy + qy * z).toFixed(1)}px) rotate(${(hang + sw).toFixed(2)}deg) perspective(800px) rotateX(3deg) rotateY(${(-5 + hv * 3).toFixed(1)}deg) scale(${(AR.cs * (1 + .05 * hv) * z).toFixed(4)})`;
+    if (TP && AE) {
+      const u = 1 - sl, ho = 14 * hv * sl, kt = mx(1, TP.ks, u), Pt = [TP.P[0] + TP.V[0] * u + TP.aS[0] * ho, TP.P[1] + TP.V[1] * u + TP.aS[1] * ho], Kt = [TP.Kw[0] + TP.V[0] * u + TP.aS[0] * ho, TP.Kw[1] + TP.V[1] * u + TP.aS[1] * ho];
+      const sw = red ? 0 : .6 * Math.sin(now * Math.PI / 2), s = TP.sc * kt * (1 + .015 * hv), rd = TP.r * 180 / Math.PI;
+      const M = `translate(${Kt[0].toFixed(1)}px,${Kt[1].toFixed(1)}px) rotate(${sw.toFixed(3)}deg) translate(${(Pt[0] - Kt[0]).toFixed(1)}px,${(Pt[1] - Kt[1]).toFixed(1)}px) rotate(${rd.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+      const camT = `translate(${ox.toFixed(1)}px,${oy.toFixed(1)}px) scale(${z.toFixed(4)})`, vv = on ? 'visible' : 'hidden';
+      AE.wraps.forEach((e, i) => { this.S(e, 'visibility', i < 2 ? vv : (on ? 'visible' : 'hidden')); this.S(e, 'opacity', i < 2 ? '1' : sm(0, .2, sl).toFixed(3)); this.S(e, 'transform', camT); });
+      AE.movers.forEach(e => this.S(e, 'transform', M));
+      this.cardT = camT + ' ' + M;
+      if (on) { const a = (TP.r + sw * Math.PI / 180), ca = Math.cos(a), sa = Math.sin(a), sr = sw * Math.PI / 180, O = [Kt[0] + (Pt[0] - Kt[0]) * Math.cos(sr) - (Pt[1] - Kt[1]) * Math.sin(sr), Kt[1] + (Pt[0] - Kt[0]) * Math.sin(sr) + (Pt[1] - Kt[1]) * Math.cos(sr)];
+        const cp = this.exitClip(([x, y]) => { const dx = x - O[0], dy = y - O[1]; return [(dx * ca + dy * sa) / s, (-dx * sa + dy * ca) / s]; }); if (cp !== this._cardClip && this.cardEl) { this._cardClip = cp; this.cardEl.style.clipPath = cp; } }
     }
     if (this.cardSheen) this.S(this.cardSheen, 'opacity', (hv * .9).toFixed(3));
-    this.mv.ccard = sm(26.55, 26.9, t) * (1 - sm(27.4, 27.58, t));
+    this.mv.ccard = on ? 1 : 0;
     this.S(q.refl, 'transform', `translateX(${(Math.sin(this.now * .7) * 5).toFixed(1)}px)`);
   }
   dovePos(k, t) {
