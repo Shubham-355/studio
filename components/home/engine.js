@@ -9,10 +9,12 @@ const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lin = (a, b, x) => 
 const EASE = 'cubic-bezier(.2,.7,.2,1)';
 export const TEND = 28.6;
 export const SPACER_VH = 2120;
-const RANGE = [[0, 1.62], [-1, 4.42], [2.6, 14.06], [-2, -1], [2.6, 18.21], [16.6, 22.91], [21.4, 25.11], [24.1, 99]];
-const NAVT = [0, 1.0, 4.3, 13.0, 13.0, 17.5, 22.5, 24.6];
+const RANGE = [[0, 1.62], [-1, 4.72], [2.6, 14.06], [-2, -1], [2.6, 18.21], [16.6, 22.91], [21.4, 25.11], [24.1, 99]];
+const NAVT = [0, 1.0, 4.1, 13.0, 13.0, 17.5, 22.5, 24.6];
 const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
-const PA = 3.2, PB = 4.4, TB1 = 12.4, GAP = TB1 - PB;
+const PA = 3.2, PB = 4.7, TB1 = 12.4, GAP = TB1 - PB;
+/* apple -> beach: tilt to the floor (0-.3), dive into one cream tile (.3-.6, handover at .6), rise onto the beach (.6-1) */
+const DU1 = .3, DU2 = .6, TH = PA + DU2 * (PB - PA), DTILE = [-2, 2];
 const V1 = s => s <= PB ? s : s + GAP, VI1 = t => t <= PB ? t : t <= TB1 ? PB : t - GAP;
 const QA = 16.6, QB = 18.2, QL = 1.2, QK = (QB - QA) / QL, QD = QB - QA - QL;
 // The sky tilt (0.08 to 1.58) gets 1.2 screens of scroll instead of 1.5.
@@ -29,8 +31,8 @@ const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.
 const BEATS = [.05, 2.0, 2.95, 12.45].concat([14.3, 14.74, 15.24, 15.73, 16.23, 16.6, 17.65, 18.6, 19.35, 20.05, 20.75, 21.45, 22.1, 23.6, 25.7, 27.1, 28.4]);
 export const NOTES = [
   'Time 0–1.58 (1.2 screens of scroll). The eye looks down first, then one camera pitch from the sky to the horizon: the peach horizon glow rises at the bottom while the tear is still leaving the top. Three cloud layers: far 0.92×, mid 1×, near 1.45×. Horizon at 45% when settled.',
-  'Apple on the checkerboard, one-point perspective, low sun on the left: cast shadows, contact shadows and the glossy reflection are computed on the real floor. One bite 2.62–2.76. Push 3.2–4.4: the camera travels along the ray into the bite; the beach is a live render behind it, flesh warms to sand.',
-  'Lands on the beach frame with the ball rolling to rest in front of the 8×8 board. Rise 12.4–14.05 into the overhead view.',
+  'Apple on the checkerboard, one-point perspective, low sun on the left: cast shadows, contact shadows and the glossy reflection are computed on the real floor. One bite 2.62–2.76. 3.2–4.7 (1.5 screens), one camera: tilt down to the cream tile at (−2, 2) 0–30%, dive straight down into it 30–60% while its paint turns to sand from the centre out, handover at 60% to the beach camera looking straight down at the same sand, rise to the beach frame 60–100%.',
+  'Lands on the beach frame with the ball rolling to rest in front of the 8×8 board. One ground (ground18) + one flat sky. Rise 12.4–14.05 into the overhead view.',
   '',
   'Board reached from the beach rise (ends 14.05, pawn emerges 13.1–13.9); pawn crosses 14.25–16.55, wave makes the queen. Into the queen 16.6–18.2 (1.2 screens of scroll): settle over the crown, push into the front arch (board blurs by depth), sunset light stains the porcelain stroke by stroke, the arch widens into the arcade and the board squares become its floor.',
   'One camera: the arcade is a 3D hall rendered from the queen camera mapped through the crown arch (no copy), so the camera walks on into it from 18.2. Founders at z 6/11/16/21: thoughts resolve as the camera nears (dz 4.9→3.2) and scatter again on the way back. Hover: object turns, panel slides out.',
@@ -182,15 +184,33 @@ export class HomeEngine {
     this.q2 = { world: w2, plate, sea, sx: sea && sea.getContext('2d'), gulls: this.$$('[data-gull2]', w2), alay: this.$('[data-applelayer]'), skycl: this.$('[data-skycl]'), skl: this.$$('[data-skyl]') };
     Object.assign(this.st.apple8, { cam: null, peb });
   }
-  tiltAt(t) { const G = this.g2; if (!G) return null; const e = sm(.08, 1.58, t), tn = mx(G.tan0, G.tan1, e); return { e, tn, top: this.H / 2 + G.F * tn - G.Yh, topE: this.H - G.L }; }
+  diveH() { const G = this.g2; return .47 / (Math.tan(G.fov * Math.PI / 360) * Math.max(1, this.W / this.H)); }
+  beachPatch() { const S = this.S6, G = this.g2; return { X0: S.Xb, Z0: S.Zend + 1.05, yb: this.diveH() * S.F / G.F }; }
+  dive(t) {
+    const G = this.g2, u = lin(PA, PB, t), y0 = G.yaw, n = this.n, E = x => .5 * x + .5 * x * x * (3 - 2 * x), T = DTILE, hE = this.diveH();
+    const p0 = Math.atan(G.tan1), p1 = (n ? -80 : -78) * Math.PI / 180, d1 = n ? 2.8 : 3.0;
+    const fw = (p, y) => [-Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p)], at = (p, d, y) => { const f = fw(p, y); return [T[0] - d * f[0], -d * f[1], T[1] - d * f[2]]; };
+    let P, pitch, yaw = y0;
+    if (u <= DU1) { const e = E(u / DU1), P1 = at(p1, d1, y0); P = G.C.map((v, i) => mx(v, P1[i], e)); pitch = mx(p0, p1, e); }
+    else { const e = E(Math.min(1, (u - DU1) / (DU2 - DU1))); pitch = mx(p1, -Math.PI / 2, e); yaw = mx(y0, 0, e); P = at(pitch, Math.exp(mx(Math.log(d1), Math.log(hE), e)), yaw); }
+    const S = this.S6, sp = sm(DU1 + .05, DU2 - .02, u), q5 = this.q5;
+    let dv = null; if (S && sp > 0) { const B = this.beachPatch(); dv = { tx: T[0], tz: T[1], X0: B.X0, Z0: B.Z0, sp, yb: B.yb, cy: 1, sy: 0, xs: S.Xs(S.Zb), xb: S.Xb, zb: S.Zb, gd: q5 && q5.gB ? q5.gB[0] / (this.W + 2 * q5.gM) : 1, fm: this.fm3 }; }
+    return { P, pitch, yaw, dv };
+  }
+  tiltAt(t) { const G = this.g2; if (!G) return null; const e = sm(.08, 1.58, t); let tn = mx(G.tan0, G.tan1, e); if (t > PA) tn = Math.max(-60, Math.tan(this.dive(t).pitch)); return { e, tn, top: this.H / 2 + G.F * tn - G.Yh, topE: this.H - G.L }; }
   layout3() {
     const W = this.W, H = this.H, n = this.n, w3 = this.wEl[2], P = window.Painter; if (!w3) return;
     const S = this.S6 = P.beach6cfg(W, H, n), px = (el, w, h) => el && Object.assign(el.style, { width: w + 'px', height: h + 'px' });
     /* board slides right so the headline column sits over open sand/sea */
     this.bdx = 0; if (!n && S.board) { const xs = S.board.map(([X, Z]) => P.cam6.proj(S.camO, X, 0, Z)[0]), x0 = Math.min(...xs), x1 = Math.max(...xs), gx = this.gutter(), need = gx + Math.max(Math.min(W * .38, 600), 320) + 40; this.bdx = Math.max(0, Math.min(need - x0, W - gx - x1)); }
-    const sky = this.$('[data-sky6]', w3), g0 = this.$('[data-g0]', w3), g1 = this.$('[data-g1]', w3), surf = this.$('[data-surf3]', w3), bc = this.$('[data-ball6]'), s5 = this.$('[data-surf5]');
-    px(sky, W * 1.08, H * 1.08); px(g0, W * 1.2, H); px(g1, W * 1.2, H);
-    [[surf, .6], [bc, .9], [s5, .6]].forEach(([c, k]) => { if (c) { c.width = Math.round(W * k); c.height = Math.round(H * k); c._k = k; } });
+    const bc = this.$('[data-ball6]');
+    { /* CSS filter on the beach layers (sepia .28, saturate 1.06, hue-rotate -9deg, brightness 1.02) as one matrix, so the tile's sand matches the beach pixel for pixel */
+      const mul = (A, B) => A.map((_, i) => { const r = Math.floor(i / 3), c = i % 3; return A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c]; }), b = .72, s = 1.06, hc = Math.cos(-9 * Math.PI / 180), hs = Math.sin(-9 * Math.PI / 180), br = 1.02;
+      const sep = [.393 + .607 * b, .769 - .769 * b, .189 - .189 * b, .349 - .349 * b, .686 + .314 * b, .168 - .168 * b, .272 - .272 * b, .534 - .534 * b, .131 + .869 * b];
+      const sat = [.213 + .787 * s, .715 - .715 * s, .072 - .072 * s, .213 - .213 * s, .715 + .285 * s, .072 - .072 * s, .213 - .213 * s, .715 - .715 * s, .072 + .928 * s];
+      const hue = [.213 + hc * .787 - hs * .213, .715 - hc * .715 - hs * .715, .072 - hc * .072 + hs * .928, .213 - hc * .213 + hs * .143, .715 + hc * .285 + hs * .140, .072 - hc * .072 - hs * .283, .213 - hc * .213 - hs * .787, .715 - hc * .715 + hs * .715, .072 + hc * .928 + hs * .072];
+      this.fm3 = mul([br, 0, 0, 0, br, 0, 0, 0, br], mul(hue, mul(sat, sep))); }
+    [[bc, .9]].forEach(([c, k]) => { if (c) { c.width = Math.round(W * k); c.height = Math.round(H * k); c._k = k; } });
     const pr = P.cam6.proj, pts = S.board.map(([X, Z]) => pr(S.camO, X, 0, Z)).map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
     this.w5mask = 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '"><filter id="f"><feGaussianBlur stdDeviation="2.5"/></filter><polygon points="' + pts + '" fill="#fff" filter="url(#f)"/></svg>') + '")';
     this.w5c = pr(S.camO, S.Xb, 0, S.Zb); this.ballTex = this.ballTex || P.ballTex();
@@ -201,26 +221,22 @@ export class HomeEngine {
       { w: W * 1.08, h: H * .5, k: .45, x0: 0, y0: -H * .04, f: 1.4, seed: 37, col: Object.assign({ blur: 3 }, PAL.day), list: n ? [[.04, .32, .1], [.97, .26, .085]] : [[.02, .34, .06], [.98, .24, .05]] },
     ];
     this.$$('[data-b3c]', w3).forEach(cv => { const L = this.decks.b3[+cv.dataset.l]; if (L) px(cv, L.w, L.h); });
-    this.q3 = { world: w3, cam: this.$('[data-cam]', w3), sky, g0, g1, surf, sx: surf && surf.getContext('2d'), chair: this.$('[data-chair]', w3), umb: this.$('[data-umb]', w3), gulls: this.$$('[data-gull]', w3), ball: bc, bx: bc && bc.getContext('2d'), b3c: this.$$('[data-b3c]', w3) };
-  }
-  cam3(t) {
-    const st = this.st.apple8; if (t >= PB || !st || !st.Ds) return { cx: 0, cy: 0, cs: 1 };
-    const W = this.W, H = this.H, e = sm(PA, PB, t), k0 = .15, D = st.Ds, C0 = [W * .55, H * .66], R = st.pm ? st.pm[2] : 0;
-    let k = Math.pow(k0, 1 - e), C = C0;
-    for (let i = 0; i < 3; i++) { const dm = Math.max(1, Math.min(C[0], W - C[0], C[1], H - C[1])); k = Math.min(1, Math.max(Math.pow(k0, 1 - e), R * 1.08 / dm)); const u = (k - k0) / (1 - k0); C = [mx(C0[0], D[0], u), mx(C0[1], D[1], u)]; }
-    return { cx: D[0] - k * C[0], cy: D[1] - k * C[1], cs: k };
+    this.q3 = { world: w3, cam: this.$('[data-cam]', w3), ball: bc, bx: bc && bc.getContext('2d'), b3c: this.$$('[data-b3c]', w3) };
   }
   cam6(t) {
-    const S = this.S6, e0 = sm(PA, PB, t);
-    const c = { x: S.Xb, y: 1, z: S.Zend + .2 - .6 * (1 - e0), ph: 0, f: S.F, cx: this.W / 2, cy: S.hy };
+    const S = this.S6, W = this.W, H = this.H;
+    const c = { x: S.Xb, y: 1, z: S.Zend + .2, ph: 0, f: S.F, cx: W / 2, cy: S.hy };
+    /* rise: from straight down at the sand patch (same pixels as the dived-into tile) up to the beach frame */
+    if (t < PB) { const u = lin(TH, PB, t), e = .5 * u * u * (3 - 2 * u) + .5 * (1 - (1 - u) * (1 - u)), B = this.beachPatch();
+      return { x: mx(B.X0, c.x, e), y: mx(B.yb, 1, e), z: mx(B.Z0, c.z, e), ph: mx(Math.PI / 2 - 1e-4, 0, e), f: S.F, cx: W / 2, cy: mx(H / 2, S.hy, e) }; }
     const e = sm(TB1, 14.05, t); if (e <= 0) return c; const O = S.camO;
     return { x: mx(c.x, O.x, e), y: mx(1, O.y, e), z: mx(c.z, O.z, e), ph: mx(0, O.ph, e), f: Math.exp(mx(Math.log(c.f), Math.log(O.f), e)), cx: mx(c.cx, O.cx, e), cy: mx(c.cy, O.cy, e) };
   }
   ball6At(t) { const S = this.S6, b = S.rest, a = { X: b.X + .6, Z: b.Z - .05 }, u = sm(PA + .45 * (PB - PA), PB, t), L = Math.hypot(b.X - a.X, b.Z - a.Z) + .1; return { X: mx(a.X, b.X, u), Z: mx(a.Z, b.Z, u), rho: u * L / S.br }; }
   layout4() {
-    const w5 = this.wEl[4]; if (!w5) return; const s5 = this.$('[data-surf5]', w5);
-    this.q5 = { bgl: this.$('[data-bgl]'), world: w5, clip: this.$('[data-w5clip]'), wcam: this.$('[data-w5cam]'), tall: this.$('[data-tall]', w5), s5, sx5: s5 && s5.getContext('2d'), b6: this.$('[data-paint="b6tall"]', w5), ql: this.$('[data-qlayer]') };
-    if (this.q5.b6) this.q5.b6.style.transformOrigin = '0 0'; this.st.sandboard.qel = this.q5.ql;
+    const w5 = this.wEl[4]; if (!w5) return;
+    this.q5 = { bgl: this.$('[data-bgl]'), world: w5, clip: this.$('[data-w5clip]'), wcam: this.$('[data-w5cam]'), tall: this.$('[data-tall]', w5), ql: this.$('[data-qlayer]') };
+    this.st.sandboard.qel = this.q5.ql;
     { const W = this.W, H = this.H, g = this.$('[data-g18]'), fo = this.$('[data-f18]'), M = Math.ceil(this.bdx || 0) + 24, cw = W + 2 * M;
       [g, fo].forEach(el => el && Object.assign(el.style, { left: -M + 'px', width: cw + 'px', height: H + 'px' }));
       if (g && !g._G) g._G = window.Ground18 ? window.Ground18(g) : { ok: false };
@@ -358,22 +374,21 @@ export class HomeEngine {
       [0, 'skin', cv => P.skinField6(cv, g.PW, g.PH, g.E, g.ox, g.oy)],
       [1, 'a8sky', cv => P.apple9Sky(cv, this.g2)],
       [2, 'b3c', cv => P.deck10(cv, this.decks.b3[+cv.dataset.l])], [7, 'n8c', cv => P.deck10(cv, this.decks.n8[+cv.dataset.l])],
-      [2, 'b6sky', cv => P.beach6Sky(cv, this.S6)], [2, 'b6g0', cv => P.beach6Ground(cv, this.S6, 0)], [2, 'b6gull', cv => P.gull6(cv)], [2, 'b6g1', cv => P.beach6Ground(cv, this.S6, 1)],
-            [4, 'b6tall', cv => P.beach6Tall(cv, this.S6)],
+      [2, 'b6gull', cv => P.gull6(cv)],
       [5, 'desert', cv => P.arcade7(cv, { hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 })], [5, 'founder', cv => P.founder7(cv, +cv.dataset.v)], [5, 'head', cv => P.head7(cv, +cv.dataset.v)], [5, 'thought', cv => P.thought7(cv, cv.dataset.kind)], [5, 'resolved', cv => P.resolved(cv, +cv.dataset.v)], [5, 'planet', cv => P.planet(cv, cv.dataset.col)],
       [6, 'room', cv => P.room(cv, R)],
       [7, 'night', cv => P.nightSea(cv, { hy: .413, mx: this.g8.mx })], [7, 'morning', cv => P.morning9(cv, this.tearSky())], [7, 'moon', cv => P.moon(cv)],
     ];
     // The heavy plates (up to several seconds of brushwork each) are painted in a worker when the browser allows it.
     // Each entry says which painter to call there and with what; non-plain inputs are rebuilt worker-side.
-    const B = { $beach: [this.W, this.H, n] }, RM = {
+    const RM = {
       near1: () => ['deck11', [this.decks.sk[2]]], sk1: cv => ['deck11', [this.decks.sk[+cv.dataset.l]]],
       b3c: cv => ['deck10', [this.decks.b3[+cv.dataset.l]]], n8c: cv => ['deck10', [this.decks.n8[+cv.dataset.l]]],
       sky1: cv => ['sky', [{ seed: 1, w: cv.offsetWidth, h: cv.offsetHeight, stops: [[0, '#79A6DC'], [.4, '#4F84C8'], [1, '#3E78C4']], clouds: 0 }]],
       face: () => ['face6', [g.fw, g.fh, { noUp: true }]], eyeball: () => ['eyeball6', [g.fw, g.fh]], iris: () => ['iris6', [g.ir, n ? 1600 : 3200]],
       eyeshade: () => ['eyeShade6', [g.fw, g.fh]], eyeglint: () => ['eyeGlint6', [g.fw, g.fh, g.ir]],
       skin: () => ['skinField6', [g.PW, g.PH, { $eye: [g.fw, g.fh] }, g.ox, g.oy]],
-      a8sky: () => ['apple9Sky', [this.g2]], room: () => ['room', [R]], b6sky: () => ['beach6Sky', [B]], b6g0: () => ['beach6Ground', [B, 0]], b6g1: () => ['beach6Ground', [B, 1]], b6tall: () => ['beach6Tall', [B]],
+      a8sky: () => ['apple9Sky', [this.g2]], room: () => ['room', [R]],
       desert: () => ['arcade7', [{ hy: .56, F: n ? .52 : .9, xw: n ? 1.3 : 2.6 }]], founder: cv => ['founder7', [+cv.dataset.v]],
       night: () => ['nightSea', [{ hy: .413, mx: this.g8.mx }]], morning: () => ['morning9', [this.tearSky()]],
     };
@@ -438,7 +453,7 @@ export class HomeEngine {
     this._mq = this._mq || matchMedia('(prefers-reduced-motion: reduce)'); this._rm = this.props.motion === false || this._mq.matches;
     this.mv = {}; this.m3 = 'none'; this.tilt = this.tiltAt(t); this.qstate(t); this.boardShift(t);
     for (let k = 0; k < 8; k++) { const el = this.wEl[k]; if (!el) continue; const on = t >= RANGE[k][0] && t < RANGE[k][1]; if (el._on !== on) { el._on = on; el.style.visibility = on ? 'visible' : 'hidden'; el.style.display = on ? '' : 'none'; } if (on) this['w' + (k + 1)](t); }
-    this.st.apple8.active = t < PB + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); if (this.q5 && !(this.wEl[4] && this.wEl[4]._on)) [this.q5.bgl, this.q5.g18, this.q5.f18].forEach(el => this.S(el, 'visibility', 'hidden')); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
+    this.st.apple8.active = t < TH + .05; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); if (this.q5 && !(this.wEl[4] && this.wEl[4]._on)) [this.q5.bgl, this.q5.g18, this.q5.f18].forEach(el => this.S(el, 'visibility', 'hidden')); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
     this.carry(t); this.copy(t); this.ui(t); this.mounts(t); this.drive();
   }
 
@@ -469,47 +484,33 @@ export class HomeEngine {
     this.S(q.plate, 'transform', `translateY(${Math.round(T.top)}px)`);
     { const sc = q.skycl, off = Math.round(T.top) - H, on = t < PB; if (sc) { this.S(sc, 'visibility', on ? 'visible' : 'hidden'); if (on) { this.S(sc, 'transform', `translateY(${off}px)`); q.skl.forEach((cv, i) => { const L = this.decks.sk && this.decks.sk[i]; if (L) this.S(cv, 'transform', `translate(${this.drift(i).toFixed(1)}px,${((this.pf(L.f) - 1) * off).toFixed(1)}px)`); }); } } }
     const nr = this.q1 && this.q1.near; if (nr) { const o = (T.top - H) * this.pf(1.4), on = o > -H * 1.95; this.S(nr, 'visibility', on ? 'visible' : 'hidden'); if (on) this.S(nr, 'transform', `translate(${this.drift(2).toFixed(1)}px,${o.toFixed(1)}px)`); }
-    const sy = T.top + G.Yh - 2, seaOn = sy < H; this.S(q.sea, 'visibility', seaOn ? 'visible' : 'hidden');
+    const sy = T.top + G.Yh - 2, seaOn = sy < H && sy > -H; this.S(q.sea, 'visibility', seaOn ? 'visible' : 'hidden');
     if (seaOn && q.sx) { this.S(q.sea, 'transform', `translateY(${sy.toFixed(1)}px)`); window.Painter.sea8(q.sx, q.sea.width, q.sea.height, G.sunX * .6, this.now, .6); }
     q.gulls.forEach((el, i) => { const gp = G.gulls[i]; if (!gp) return; const a = this.now * (.04 + i * .011) + i * 2.1, x = W * gp[0] + Math.sin(a) * W * .03, y = dy + H * gp[1] + Math.sin(a * 1.7) * 6, s2 = (this.n ? .3 : .34) + i * .05, fl = .7 + Math.sin(this.now * 3 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
       this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
-    const st = this.st.apple8, pe = sm(PA, PB, t);
-    st.cam = { C: G.C, pitch: Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: G.yaw, ld: G.ld }; st.peb = G.peb;
-    st.dolly = pe; st.bk = [sm(2.62, 2.69, t), sm(2.71, 2.79, t)]; st.bite = Math.max(st.bk[0], st.bk[1]); st.port = pe < .72 ? mx(.1, .14, sm(.3, .72, pe)) : mx(.14, 1.3, sm(.72, .97, pe)); st.sand = sm(.5, .85, pe);
+    const st = this.st.apple8, D = this.dive(t);
+    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld }; st.peb = G.peb; st.dv = t > PA ? D.dv : null;
+    st.bk = [sm(2.62, 2.69, t), sm(2.71, 2.79, t)]; st.bite = Math.max(st.bk[0], st.bk[1]); st.port = -.06; st.sand = 0;
     if (st.bk[0] > .3 && !this._bit1) { this._bit1 = 1; this.crunch(); } if (st.bk[0] < .1) this._bit1 = 0; if (st.bk[1] > .3 && !this._bit2) { this._bit2 = 1; this.crunch(); } if (st.bk[1] < .1) this._bit2 = 0;
-    this.S(q.alay, 'visibility', t < PB - .0005 ? 'visible' : 'hidden');
-    let m3 = 'linear-gradient(transparent,transparent)';
-    if (st.ready && st.pm && st.ac && st.bite > .02) { const far = (x, y) => Math.max(Math.hypot(x, y), Math.hypot(W - x, y), Math.hypot(x, H - y), Math.hypot(W - x, H - y)), [ax, ay, aR] = st.ac, [px, py, pR] = st.pm;
-      m3 = aR * .8 > far(ax, ay) || pR > far(px, py) ? 'none' : `radial-gradient(circle ${(aR * .8).toFixed(1)}px at ${ax.toFixed(1)}px ${ay.toFixed(1)}px, #000 98%, transparent 100%), radial-gradient(circle ${pR.toFixed(1)}px at ${px.toFixed(1)}px ${py.toFixed(1)}px, #000 98%, transparent 100%)`; }
-    this.m3 = m3;
+    this.S(q.alay, 'visibility', t < TH ? 'visible' : 'hidden');
   }
   w3(t) {
-    const W = this.W, H = this.H, q = this.q3, S = this.S6, n = this.n; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
-    const C = this.cam3(t), m3 = this.m3 || 'none';
-    this.S(q.world, 'clipPath', 'none'); this.S(q.world, 'maskImage', m3); this.S(q.world, 'webkitMaskImage', m3);
-    this.S(q.cam, 'transform', `translate(${C.cx.toFixed(1)}px,${C.cy.toFixed(1)}px) scale(${C.cs.toFixed(4)})`);
+    const W = this.W, H = this.H, q = this.q3, S = this.S6; if (!q || !S) return;
+    /* clouds only: the sky itself is ground18's flat sky, the ground is ground18 */
+    const on = t >= TH; this.S(q.cam, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
     const c = this.cam6(t), s = c.f / S.F, vh = c.cy - c.f * Math.tan(c.ph);
     const sx0 = W / 2 - s * W / 2 - s * .04 * W, sy0 = vh - s * S.hy - s * .04 * H;
-    this.S(q.sky, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${sx0.toFixed(2)},${sy0.toFixed(2)})`);
     // the beach clouds ride with the sky and drift a little apart in depth while the beach holds
     const v3 = this._rm ? 0 : cl(-(t - 8.4) * H * .03, -H * .08, H * .08);
     q.b3c.forEach(cv => { const i = +cv.dataset.l, L = this.decks.b3 && this.decks.b3[i]; if (L) this.S(cv, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${(sx0 + s * L.x0 + this.drift(i)).toFixed(2)},${(sy0 + s * L.y0 + v3 * this.pf(L.f)).toFixed(2)})`); });
-    const hm = (el, pose) => { if (!el) return; const z1 = Math.max(c.z, pose.z) + 1.6, pts = [[c.x - 1.5, z1], [c.x + 1.5, z1], [c.x + 1.5, z1 + 6], [c.x - 1.5, z1 + 6]];
-      this.S(el, 'transform', P.homog(pts.map(([X, Z]) => { const p = pr(pose, X, 0, Z); return [p[0] + .1 * W, p[1]]; }), pts.map(([X, Z]) => pr(c, X, 0, Z)))); };
-    hm(q.g0, S.pose0); hm(q.g1, S.poseE); this.S(q.g1, 'opacity', '1');
-    if (q.sx && !this._g18full) { const k = q.surf._k; P.surf6(q.sx, Object.assign({}, c, { f: c.f * k, cx: c.cx * k, cy: c.cy * k }), S, this.now, 0, k, q.surf.width, q.surf.height); }
-    const gOn = false; /* the beach gulls live in the world layer now (wgulls) */
-    q.gulls.forEach((el, i) => { if (!gOn) { this.S(el, 'visibility', 'hidden'); return; } const a = this.now * (.05 + i * .012) + i * 2.1, x = W * (n ? .3 + i * .2 : .26 + i * .13) + Math.sin(a) * W * (n ? .12 : .07), y = Math.max(n ? 132 : 124, H * (.1 + i * .045)) + Math.sin(a * 1.7) * 10 - (vh - S.hy), s2 = (n ? .45 : .6) + i * .12, fl = .7 + Math.sin(this.now * 3.2 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
-      this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
   }
   drawBall(t) {
-    const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = t > 2.6 && t < 17.55;
+    const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = t >= TH && t < 17.55;
     this.S(q.ball, 'visibility', on ? 'visible' : 'hidden'); if (!on || this._ballT === t) return; this._ballT = t;
     const k = q.ball._k, P = window.Painter, pr = P.cam6.proj; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, q.ball.width, q.ball.height);
-    let c, ox = 0, oy = 0; if (t < 14.05) c = this.cam6(t); else c = this.qs ? this.qs.c6 : S.camO;
+    let c; if (t < 14.05) c = this.cam6(t); else c = this.qs ? this.qs.c6 : S.camO;
     this.S(q.ball, 'filter', (this.qs && this.qs.blur > .05 ? `blur(${this.qs.blur.toFixed(2)}px) ` : '') + 'sepia(.28) saturate(1.06) hue-rotate(-9deg) brightness(1.02)');
-    const C3 = this.cam3(t); x.setTransform(k * C3.cs, 0, 0, k * C3.cs, k * (C3.cx + ox), k * (C3.cy + oy));
-    { const mm = t < PB ? (this.m3 || 'none') : 'none'; this.S(q.ball, 'maskImage', mm); this.S(q.ball, 'webkitMaskImage', mm); }
+    x.setTransform(k, 0, 0, k, 0, 0);
     const b = this.ball6At(t), r = S.br, sn = S.sun, cp = pr(c, b.X, r, b.Z); if (cp[2] < .15) return;
     const L = Math.hypot(sn[0], sn[1]), ux = sn[0] / L, uz = sn[1] / L, sx0 = b.X + sn[0] * r, sz0 = b.Z + sn[1] * r;
     x.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, la = Math.cos(a) * r * 1.7, lc = Math.sin(a) * r, p = pr(c, sx0 + ux * la - uz * lc, 0, sz0 + uz * la + ux * lc); i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]); } x.closePath();
@@ -528,30 +529,23 @@ export class HomeEngine {
   stgSpot() { if (this._stgY == null) { const h = this.$('[data-bh]'); if (!h) return null; const r = h.getBoundingClientRect(); if (!(r.height > 0)) return null; this._stgY = r.bottom + 48; } return [this.gutter(), this._stgY]; }
   w5(t) {
     const W = this.W, H = this.H, q = this.q5, S = this.S6; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
-    const e = sm(TB1, 14.05, t), ty = -1.2 * H, C = this.cam3(t), Q = this.qs;
-    { const mm = t < PB ? (this.m3 || 'none') : 'none'; this.S(q.clip, 'maskImage', mm); this.S(q.clip, 'webkitMaskImage', mm); }
-    this.S(q.wcam, 'transform', C.cs !== 1 ? `translate(${C.cx.toFixed(1)}px,${C.cy.toFixed(1)}px) scale(${C.cs.toFixed(4)})` : 'none');
+    const e = sm(TB1, 14.05, t), ty = -1.2 * H, Q = this.qs, bOn = t >= TH;
+    this.S(q.clip, 'visibility', bOn ? 'visible' : 'hidden');
     this.S(q.tall, 'transform', `translate(0px,${ty.toFixed(1)}px)`);
     this.S(q.tall, 'filter', Q && Q.blur > .05 ? `blur(${Q.blur.toFixed(2)}px)` : 'none');
     this.S(q.tall, 'visibility', Q && Q.inside ? 'hidden' : 'visible');
-    /* one continuous ground (ground18) from the crane on: replaces the tall plate's ground, the sea strip and both foam canvases */
-    const G18 = q.g18 && q.g18._G, gon = !!(G18 && G18.ok) && t > TB1 - .2 && !(Q && Q.inside), ga = sm(TB1 - .2, TB1, t);
-    this._g18full = gon && ga > .999; this.S(q.g18, 'visibility', gon ? 'visible' : 'hidden'); this.S(q.f18, 'visibility', gon ? 'visible' : 'hidden');
-    this.S(q.b6, 'visibility', gon ? 'hidden' : 'visible'); this.S(q.s5, 'visibility', gon ? 'hidden' : 'visible'); this.S(q.world, 'background', gon ? 'transparent' : '#E0CCA4');
+    /* the one beach ground (ground18): sea, shoreline, wet and dry sand and the flat sky, one shader, always on while the beach is in view */
+    const G18 = q.g18 && q.g18._G, gon = bOn && !!(G18 && G18.ok) && !(Q && Q.inside);
+    this.S(q.g18, 'visibility', gon ? 'visible' : 'hidden'); this.S(q.f18, 'visibility', gon ? 'visible' : 'hidden');
     { const bl = Q && Q.blur > .05 ? `blur(${Q.blur.toFixed(2)}px)` : 'none'; this.S(q.g18, 'filter', bl); this.S(q.f18, 'filter', bl); }
-    if (q.b6) { let tf = 'none'; if (Q) { const o = [-.06 * W, ty], G = [[-2, -2.5], [2, -2.5], [2, -6], [-2, -6]].map(([x, z]) => [S.Xb + x * S.q, S.Zb - z * S.q]), d = G.map(([X, Z]) => pr(Q.c6, X, 0, Z));
-      if (d.every(v => v[2] > .05)) tf = P.homog(G.map(([X, Z]) => { const s = pr(S.camO, X, 0, Z); return [s[0] - o[0], s[1] - o[1]]; }), d.map(v => [v[0] - o[0], v[1] - o[1]])); }
-      this.S(q.b6, 'transform', tf); }
     if (e < .999) { const c = this.cam6(t); this.S(q.world, 'transform', P.homog(S.board.map(([X, Z]) => pr(S.camO, X, 0, Z)), S.board.map(([X, Z]) => pr(c, X, 0, Z))));
       const R = Math.max(1, sm(.3, .85, e) * 1.35 * Math.hypot(W, H)), m = `${this.w5mask}, radial-gradient(circle ${R.toFixed(0)}px at ${this.w5c[0].toFixed(0)}px ${this.w5c[1].toFixed(0)}px, #000 55%, transparent 100%)`;
       this.S(q.world, 'maskImage', m); this.S(q.world, 'webkitMaskImage', m); }
     else { this.S(q.world, 'transform', 'none'); this.S(q.world, 'maskImage', 'none'); this.S(q.world, 'webkitMaskImage', 'none'); }
     const p = lin(14.25, 16.55, t), sb = this.st.sandboard; sb.p = p; sb.pk = sm(13.1, 13.9, t);
-    if (gon) { const cc = Q ? Q.c6 : this.cam6(t), cm = Object.assign({}, cc, { cx: cc.cx + q.gM }), sky = t >= RANGE[2][1], k = q.f18._k;
-      this.S(q.g18, 'opacity', ga.toFixed(3)); this.S(q.f18, 'opacity', ga.toFixed(3)); this.S(q.g18, 'backgroundColor', sky ? '#D9C3A0' : 'transparent');
-      G18.draw({ cam: cm, S, now: this.now || 0, sky, w: W + 2 * q.gM, h: H, bw: q.gB[0], bh: q.gB[1] });
+    if (gon) { const cc = Q ? Q.c6 : this.cam6(t), cm = Object.assign({}, cc, { cx: cc.cx + q.gM }), k = q.f18._k;
+      G18.draw({ cam: cm, S, now: this.now || 0, sky: true, w: W + 2 * q.gM, h: H, bw: q.gB[0], bh: q.gB[1] });
       if (q.fx) P.surf6(q.fx, Object.assign({}, cm, { f: cm.f * k, cx: cm.cx * k, cy: cm.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.f18.width, q.f18.height); }
-    if (q.sx5 && !gon && !(Q && Q.inside)) { const k = q.s5._k, cc = Q ? Q.c6 : S.camO; P.surf6(q.sx5, Object.assign({}, cc, { f: cc.f * k, cx: cc.cx * k, cy: cc.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.s5.width, q.s5.height); }
     const f = Math.min(1, p / .86) * 5;
     for (let k = 0; k < 5; k++) { let v = 1 - sm(.42, .56, Math.abs(f - k - .5)); if (k === 0 && f < .5) v = t < 14.25 ? sm(13.9, 14.1, t) : 1; if (k === 4 && f >= 4.5) v = 1; if (t < 13.9) v = 0; if (t > QA) v = k === 4 ? 1 - sm(QA, QA + .16, t) : 0; this.mv['stg' + k] = v; }
     { const P0 = this.stgSpot(); if (P0) for (let k = 0; k < 5; k++) this.pos['stg' + k] = P0; }

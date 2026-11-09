@@ -99,32 +99,15 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
         ))}
       </div>
 
-      {/* 3 · the beach */}
-      <div data-world="3" className={s.world} style={{ zIndex: 3, background: "#DAE8EC", overflow: "hidden", filter: WARM }}>
-        <div data-cam className={s.cam}>
-          <canvas data-paint="b6sky" data-sky6 aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
-          {[0, 2].map((l) => (
-            <canvas key={l} data-paint="b3c" data-l={l} data-b3c aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
-          ))}
-          <canvas data-paint="b6g0" data-g0 aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
-          <canvas data-paint="b6g1" data-g1 aria-hidden className={s.abs} style={{ transformOrigin: "0 0", opacity: 0 }} />
-          <canvas data-surf3 aria-hidden className={s.full} />
-        </div>
-        {[0, 1, 2].map((g) => (
-          <canvas key={g} data-paint="b6gull" data-gull aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", visibility: "hidden" }} />
-        ))}
-      </div>
-
-      {/* 5 · the board in the sand, mapped onto the beach */}
+      {/* 5 · the beach and the board in the sand, all on the one live ground */}
       <div data-w5clip className={s.fill} style={{ zIndex: 5, pointerEvents: "none", filter: WARM }}>
         <div data-w5cam className={s.cam}>
-          {/* one continuous ground (sea, foam, wet and dry sand) drawn for the live camera */}
+          {/* one continuous ground (sea, foam, wet and dry sand, flat sky) drawn for the live camera */}
           <canvas data-g18 aria-hidden className={s.abs} style={{ width: "100%", height: "100%", visibility: "hidden", pointerEvents: "none" }} />
-          <div data-world="5" className={s.world} style={{ background: "#E0CCA4", transformOrigin: "0 0" }}>
+          <div data-world="5" className={s.world} style={{ transformOrigin: "0 0" }}>
             <div data-cam className={s.fill}>
               <div data-tall className={s.abs} style={{ width: "100%", height: "220%", transformOrigin: "50% 0" }}>
-                <canvas data-paint="b6tall" aria-hidden style={plate({ left: "-6%", top: 0, width: "112%", height: "100%" })} />                <div data-3d="sandboard" style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
-                <canvas data-surf5 aria-hidden style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
+                <div data-3d="sandboard" style={plate({ left: 0, width: "100%", top: "54.5454%", height: "45.4546%" })} />
               </div>
             </div>
           </div>
@@ -135,6 +118,15 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
             {[0, 1, 2, 3].map((g) => <canvas key={`g${g}`} data-bgg width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
             {[0, 1, 2, 3].map((g) => <canvas key={`w${g}`} data-paint="b6gull" data-wgs aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
           </div>
+        </div>
+      </div>
+
+      {/* 3 · the beach clouds, over the ground */}
+      <div data-world="3" className={s.world} style={{ zIndex: 5, overflow: "hidden", pointerEvents: "none", filter: WARM }}>
+        <div data-cam className={s.cam}>
+          {[0, 2].map((l) => (
+            <canvas key={l} data-paint="b3c" data-l={l} data-b3c aria-hidden className={s.abs} style={{ transformOrigin: "0 0" }} />
+          ))}
         </div>
       </div>
       <canvas data-ball6 aria-hidden className={s.full} style={{ zIndex: 5, pointerEvents: "none", visibility: "hidden" }} />
