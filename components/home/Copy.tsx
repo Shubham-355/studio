@@ -72,7 +72,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
         </p>
       </section>
 
-      <section data-copy data-a="2.58" data-b="3.24" className={`${s.copy} ${s.wide}`} style={{ top: L.tA, bottom: L.b1, display: "flex", flexDirection: "column", gap: 8, maxWidth: L.wA, color: "var(--ink)" }}>
+      <section data-copy data-a="2.58" data-b="3.35" className={`${s.copy} ${s.wide}`} style={{ top: L.tA, bottom: L.b1, display: "flex", flexDirection: "column", gap: 8, maxWidth: L.wA, color: "var(--ink)" }}>
         <h2 className={s.display} style={{ fontSize: "clamp(36px,3.9vw,64px)" }}>
           <W>Your</W> <W>idea</W> <W>has</W> <W>a</W> <W italic className={s.accent}>whole company</W> <W>inside</W> <W>it.</W>
         </h2>
