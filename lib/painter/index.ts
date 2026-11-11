@@ -25,10 +25,10 @@ export function loadPainter(): Promise<void> {
       await import("./worlds9.js");
       await import("./clouds10.js");
       await import("./paint17.js");
-      await import("./sound17.js"); // main thread only: the scroll-driven sound design
+      await import("./sound18.js"); // main thread only: the scroll-driven sound design
       await import("./glove3.js");
       await import("./scene3d.js");
-      await import("./ground18.js"); // main thread only: the live beach ground
+      await import("./ground19.js"); // main thread only: the live beach ground
     })();
   }
   return loading;
