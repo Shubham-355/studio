@@ -111,12 +111,9 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
               </div>
             </div>
           </div>
-          <canvas data-f18 aria-hidden className={s.abs} style={{ width: "100%", height: "100%", visibility: "hidden", pointerEvents: "none" }} />
-          {/* gulls flying in the world: from above over the board, side-on against the sky, with soft shadows on the sand */}
+          {/* gulls flying in the world, seen from above with soft shadows on the sand, all drawn into one canvas */}
           <div data-bgl aria-hidden className={s.fill} style={{ pointerEvents: "none", visibility: "hidden" }}>
-            {[0, 1, 2, 3].map((g) => <canvas key={`s${g}`} data-bgs width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", mixBlendMode: "multiply", opacity: 0 }} />)}
-            {[0, 1, 2, 3].map((g) => <canvas key={`g${g}`} data-bgg width={180} height={80} className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
-            {[0, 1, 2, 3].map((g) => <canvas key={`w${g}`} data-paint="b6gull" data-wgs aria-hidden className={s.abs} style={{ width: 90, height: 40, transformOrigin: "45px 20px", opacity: 0 }} />)}
+            <canvas data-gcv className={s.full} />
           </div>
         </div>
       </div>

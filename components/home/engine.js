@@ -9,13 +9,13 @@ const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lin = (a, b, x) => 
 const EASE = 'cubic-bezier(.2,.7,.2,1)';
 export const TEND = 28.6;
 export const SPACER_VH = 2120;
-const RANGE = [[0, 1.62], [-1, 4.72], [2.6, 14.06], [-2, -1], [2.6, 18.21], [16.6, 22.91], [21.4, 25.11], [24.1, 99]];
+const RANGE = [[0, 1.62], [-1, 12.87], [2.6, 14.06], [-2, -1], [2.6, 18.21], [16.6, 22.91], [21.4, 25.11], [24.1, 99]];
 const NAVT = [0, 1.0, 4.1, 13.0, 13.0, 17.5, 22.5, 24.6];
 const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
-const PA = 3.2, PB = 4.7, TB1 = 12.4, GAP = TB1 - PB;
-/* apple -> beach: tilt to the floor (0-.3), dive into one cream tile (.3-.6, handover at .6), rise onto the beach (.6-1) */
-const DU1 = .3, DU2 = .6, TH = PA + DU2 * (PB - PA), DTILE = [-2, 2];
-const V1 = s => s <= PB ? s : s + GAP, VI1 = t => t <= PB ? t : t <= TB1 ? PB : t - GAP;
+const PA = 3.2, PB = 4.7, TB1 = 12.4, TBE = 14.05;
+/* apple -> board, one camera over 1.5 screens: tilt to the floor (0-.2), dive into one cream tile (.2-.45); the tile becomes e2 (.45-.6: both cameras keep a slow push while the apple layer gives way to the board's own square, colour and texture only); pull straight up to the overhead board (.6-1) */
+const DU1 = .2, UF = .45, UP = .6, TH = PA + UF * (PB - PA), SB = (PB - PA) * (1 - UF), TF = TB1 + (UP - UF) / (1 - UF) * (TBE - TB1), DTILE = [-2, 2];
+const V1 = s => s <= TH ? s : s <= PB ? TB1 + (s - TH) / SB * (TBE - TB1) : s + TBE - PB, VI1 = t => t <= TH ? t : t < TB1 ? TH : t <= TBE ? TH + (t - TB1) / (TBE - TB1) * SB : t - (TBE - PB);
 const QA = 16.6, QB = 18.2, QL = 1.2, QK = (QB - QA) / QL, QD = QB - QA - QL;
 // The sky tilt (0.08 to 1.58) gets 1.2 screens of scroll instead of 1.5.
 const V0 = s => s <= .08 ? s : s <= 1.28 ? .08 + (s - .08) * 1.25 : s + .3, VI0 = t => t <= .08 ? t : t <= 1.58 ? .08 + (t - .08) / 1.25 : t - .3;
@@ -28,11 +28,11 @@ const CZ = [6, 11, 16, 21], DOORZ = 27, DHW = .47, DHH = 1.92, DTS = .07, DZL = 
 const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
 const AK = 1 / .14, ZE = -2 - 1 / QS;
 const CPTS = [[18.2, -2], [19.35, 3.4], [20.05, 8.4], [20.75, 13.4], [21.45, 18.4], [22.9, 26.8]];
-const BEATS = [.05, 2.0, 2.95, 12.45].concat([14.3, 14.74, 15.24, 15.73, 16.23, 16.6, 17.65, 18.6, 19.35, 20.05, 20.75, 21.45, 22.1, 23.6, 25.7, 27.1, 28.4]);
+const BEATS = [.05, 2.0, 2.95].concat([14.3, 14.74, 15.24, 15.73, 16.23, 16.6, 17.65, 18.6, 19.35, 20.05, 20.75, 21.45, 22.1, 23.6, 25.7, 27.1, 28.4]);
 export const NOTES = [
   'Time 0–1.58 (1.2 screens of scroll). The eye looks down first, then one camera pitch from the sky to the horizon: the peach horizon glow rises at the bottom while the tear is still leaving the top. Three cloud layers: far 0.92×, mid 1×, near 1.45×. Horizon at 45% when settled.',
-  'Apple on the checkerboard, one-point perspective, low sun on the left: cast shadows, contact shadows and the glossy reflection are computed on the real floor. One bite 2.62–2.76. 3.2–4.7 (1.5 screens), one camera: tilt down to the cream tile at (−2, 2) 0–30%, dive straight down into it 30–60% while its paint turns to sand from the centre out, handover at 60% to the beach camera looking straight down at the same sand, rise to the beach frame 60–100%.',
-  'Lands on the beach frame with the ball rolling to rest in front of the 8×8 board. One ground (ground18) + one flat sky. Rise 12.4–14.05 into the overhead view.',
+  'Apple on the checkerboard, one-point perspective, low sun on the left: cast shadows, contact shadows and the glossy reflection are computed on the real floor. The apple stays whole. 3.2–4.7 (1.5 screens), one camera: tilt to the floor 0–20%, dive straight down into the cream tile at (−2, 2) 20–45%, then the tile becomes e2 45–60% (slow push, the apple layer gives way to the board square underneath), pull straight up to the overhead board 60–100%.',
+  'Overhead 8×8 board in the sand: reached by the pull-up from e2 (board time 12.4–14.05). The pawn grows out of e2 from the first board frame. Beach ground = ground19: one shader for sea depth, ripples, caustics, two overlapping 7.2 s swash waves with lacy foam, fresh wet marks (~2 s), breaking lines and wet/dry sand. Gulls: one canvas, 2–3 birds, edge to edge on paths that avoid the copy and the pawn file.',
   '',
   'Board reached from the beach rise (ends 14.05, pawn emerges 13.1–13.9); pawn crosses 14.25–16.55, wave makes the queen. Into the queen 16.6–18.2 (1.2 screens of scroll): settle over the crown, push into the front arch (board blurs by depth), sunset light stains the porcelain stroke by stroke, the arch widens into the arcade and the board squares become its floor.',
   'One camera: the arcade is a 3D hall rendered from the queen camera mapped through the crown arch (no copy), so the camera walks on into it from 18.2. Founders at z 6/11/16/21: thoughts resolve as the camera nears (dz 4.9→3.2) and scatter again on the way back. Hover: object turns, panel slides out.',
@@ -185,19 +185,16 @@ export class HomeEngine {
     Object.assign(this.st.apple8, { cam: null, peb });
   }
   diveH() { const G = this.g2; return .47 / (Math.tan(G.fov * Math.PI / 360) * Math.max(1, this.W / this.H)); }
-  beachPatch() { const S = this.S6, G = this.g2; return { X0: S.Xb, Z0: S.Zend + 1.05, yb: this.diveH() * S.F / G.F }; }
-  dive(t) {
-    const G = this.g2, u = lin(PA, PB, t), y0 = G.yaw, n = this.n, E = x => .5 * x + .5 * x * x * (3 - 2 * x), T = DTILE, hE = this.diveH();
+  dive(u) {
+    const G = this.g2, y0 = G.yaw, n = this.n, E = x => .5 * x + .5 * x * x * (3 - 2 * x), T = DTILE, hE = this.diveH();
     const p0 = Math.atan(G.tan1), p1 = (n ? -80 : -78) * Math.PI / 180, d1 = n ? 2.8 : 3.0;
     const fw = (p, y) => [-Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p)], at = (p, d, y) => { const f = fw(p, y); return [T[0] - d * f[0], -d * f[1], T[1] - d * f[2]]; };
     let P, pitch, yaw = y0;
     if (u <= DU1) { const e = E(u / DU1), P1 = at(p1, d1, y0); P = G.C.map((v, i) => mx(v, P1[i], e)); pitch = mx(p0, p1, e); }
-    else { const e = E(Math.min(1, (u - DU1) / (DU2 - DU1))); pitch = mx(p1, -Math.PI / 2, e); yaw = mx(y0, 0, e); P = at(pitch, Math.exp(mx(Math.log(d1), Math.log(hE), e)), yaw); }
-    const S = this.S6, sp = sm(DU1 + .05, DU2 - .02, u), q5 = this.q5;
-    let dv = null; if (S && sp > 0) { const B = this.beachPatch(); dv = { tx: T[0], tz: T[1], X0: B.X0, Z0: B.Z0, sp, yb: B.yb, cy: 1, sy: 0, xs: S.Xs(S.Zb), xb: S.Xb, zb: S.Zb, gd: q5 && q5.gB ? q5.gB[0] / (this.W + 2 * q5.gM) : 1, fm: this.fm3 }; }
-    return { P, pitch, yaw, dv };
+    else { const e = E(Math.min(1, (u - DU1) / (UF - DU1))); pitch = mx(p1, -Math.PI / 2, e); yaw = mx(y0, 0, e); P = at(pitch, Math.exp(mx(Math.log(d1), Math.log(hE), e)) * this.push(u), yaw); }
+    return { P, pitch, yaw };
   }
-  tiltAt(t) { const G = this.g2; if (!G) return null; const e = sm(.08, 1.58, t); let tn = mx(G.tan0, G.tan1, e); if (t > PA) tn = Math.max(-60, Math.tan(this.dive(t).pitch)); return { e, tn, top: this.H / 2 + G.F * tn - G.Yh, topE: this.H - G.L }; }
+  tiltAt(t) { const G = this.g2; if (!G) return null; const e = sm(.08, 1.58, t); let tn = mx(G.tan0, G.tan1, e); if (t > PA) tn = Math.max(-60, Math.tan(this.dive(this.au(t)).pitch)); return { e, tn, top: this.H / 2 + G.F * tn - G.Yh, topE: this.H - G.L }; }
   layout3() {
     const W = this.W, H = this.H, n = this.n, w3 = this.wEl[2], P = window.Painter; if (!w3) return;
     const S = this.S6 = P.beach6cfg(W, H, n), px = (el, w, h) => el && Object.assign(el.style, { width: w + 'px', height: h + 'px' });
@@ -223,23 +220,29 @@ export class HomeEngine {
     this.$$('[data-b3c]', w3).forEach(cv => { const L = this.decks.b3[+cv.dataset.l]; if (L) px(cv, L.w, L.h); });
     this.q3 = { world: w3, cam: this.$('[data-cam]', w3), ball: bc, bx: bc && bc.getContext('2d'), b3c: this.$$('[data-b3c]', w3) };
   }
-  cam6(t) {
-    const S = this.S6, W = this.W, H = this.H;
-    const c = { x: S.Xb, y: 1, z: S.Zend + .2, ph: 0, f: S.F, cx: W / 2, cy: S.hy };
-    /* rise: from straight down at the sand patch (same pixels as the dived-into tile) up to the beach frame */
-    if (t < PB) { const u = lin(TH, PB, t), e = .5 * u * u * (3 - 2 * u) + .5 * (1 - (1 - u) * (1 - u)), B = this.beachPatch();
-      return { x: mx(B.X0, c.x, e), y: mx(B.yb, 1, e), z: mx(B.Z0, c.z, e), ph: mx(Math.PI / 2 - 1e-4, 0, e), f: S.F, cx: W / 2, cy: mx(H / 2, S.hy, e) }; }
-    const e = sm(TB1, 14.05, t); if (e <= 0) return c; const O = S.camO;
-    return { x: mx(c.x, O.x, e), y: mx(1, O.y, e), z: mx(c.z, O.z, e), ph: mx(0, O.ph, e), f: Math.exp(mx(Math.log(c.f), Math.log(O.f), e)), cx: mx(c.cx, O.cx, e), cy: mx(c.cy, O.cy, e) };
+  /* progress through the apple -> board move (0-1) from either side of the handover */
+  au(t) { return t <= TH ? lin(PA, PB, t) : t < TB1 ? UF : UF + lin(TB1, TBE, t) * (1 - UF); }
+  /* the slow push while the tile fills the screen, shared by both cameras: constant speed, so the camera never stops before the pull-up */
+  push(u) { return Math.exp(-.13 * lin(UF, UP, u)); }
+  /* board camera: straight down over e2, filling the screen with the square, then straight up to the overhead framing (S.camO) */
+  pullCam(t) {
+    const S = this.S6, W = this.W, H = this.H, a = W / H, fq = a < 1 ? 44 : 30, th = Math.tan(fq * Math.PI / 360), u = this.au(t);
+    const hh = .42 / (th * Math.max(1, a)) * this.push(Math.min(u, UP)), x = lin(UP, 1, u), e = .3 * (1 - (1 - x) * (1 - x)) + .7 * x * x * (3 - 2 * x), O = a < 1 ? [26, 8.5, .3] : [18.5, 9.4, 0];
+    const eL = sm(.3, 1, x), L = [mx(.5, 0, eL), mx(.04, 0, eL), mx(2.5, O[2], eL)], dO = Math.hypot(O[0], O[1] - O[2]), d = Math.exp(mx(Math.log(hh), Math.log(dO), e)), el = mx(Math.PI / 2 - 1e-4, Math.atan2(O[0], O[1] - O[2]), e);
+    const C = [L[0], L[1] + d * Math.sin(el), L[2] + d * Math.cos(el)];
+    /* the board's sideways offset (bdx) rides in the projection centre during the pull, so the board render always covers the frame; at the end it hands over to the CSS shift at the same pixels */
+    const sh = (this.bdx || 0) * eL;
+    return { C, L, fov: fq, x, e, sh, c6: { x: S.Xb + C[0] * S.q, y: C[1] * S.q, z: S.Zb - C[2] * S.q, ph: el, f: H / 2 / th, cx: W / 2 + sh, cy: H / 2 } };
   }
-  ball6At(t) { const S = this.S6, b = S.rest, a = { X: b.X + .6, Z: b.Z - .05 }, u = sm(PA + .45 * (PB - PA), PB, t), L = Math.hypot(b.X - a.X, b.Z - a.Z) + .1; return { X: mx(a.X, b.X, u), Z: mx(a.Z, b.Z, u), rho: u * L / S.br }; }
+  cam6(t) { return t < TBE ? this.pullCam(t).c6 : this.S6.camO; }
+  ball6At() { const S = this.S6, b = S.rest; return { X: b.X, Z: b.Z, rho: (Math.hypot(.6, .05) + .1) / S.br }; }
   layout4() {
     const w5 = this.wEl[4]; if (!w5) return;
     this.q5 = { bgl: this.$('[data-bgl]'), world: w5, clip: this.$('[data-w5clip]'), wcam: this.$('[data-w5cam]'), tall: this.$('[data-tall]', w5), ql: this.$('[data-qlayer]') };
     this.st.sandboard.qel = this.q5.ql;
     { const W = this.W, H = this.H, g = this.$('[data-g18]'), fo = this.$('[data-f18]'), M = Math.ceil(this.bdx || 0) + 24, cw = W + 2 * M;
       [g, fo].forEach(el => el && Object.assign(el.style, { left: -M + 'px', width: cw + 'px', height: H + 'px' }));
-      if (g && !g._G) g._G = window.Ground18 ? window.Ground18(g) : { ok: false };
+      if (g && !g._G) g._G = window.Ground19 ? window.Ground19(g) : { ok: false };
       const dpr = Math.min(devicePixelRatio || 1, 1.5, Math.sqrt(3.2e6 / (cw * H)));
       if (fo) { fo.width = Math.round(cw * .6); fo.height = Math.round(H * .6); fo._k = .6; }
       Object.assign(this.q5, { g18: g, f18: fo, fx: fo && fo.getContext('2d'), gM: M, gB: [Math.round(cw * dpr), Math.round(H * dpr)] }); }
@@ -441,7 +444,7 @@ export class HomeEngine {
     // Once the page has been still for a while, keep only a slow heartbeat; while it moves, frame times steer the 3D resolution.
     const busy = Math.abs(sT - this.s) > .0005 || this._sY !== scrollY || pn - (this._act || 0) < 1500 || pn - (this._introT0 || 0) < 8000 || this.state.loader || this._at !== false;
     this._sY = scrollY; if (busy) this._busyT = pn;
-    if (!busy && pn - (this._busyT || 0) > 1200 && pn - (this._lastR || 0) < 32) return;
+    if (!busy && pn - (this._busyT || 0) > 1200 && pn - (this._lastR || 0) < (this.t >= TB1 && this.t < QB ? 15 : 32)) return;
     if (busy && this._lastR && window.Scene3D && window.Scene3D.quality) window.Scene3D.quality.report(pn - this._lastR, this.n ? 33.4 : 16.7);
     this._lastR = pn;
     try { this.render(this.t); } catch (e) { if (!this._errd) { this._errd = 1; console.error(e); } }
@@ -453,7 +456,7 @@ export class HomeEngine {
     this._mq = this._mq || matchMedia('(prefers-reduced-motion: reduce)'); this._rm = this.props.motion === false || this._mq.matches;
     this.mv = {}; this.m3 = 'none'; this.tilt = this.tiltAt(t); this.qstate(t); this.boardShift(t);
     for (let k = 0; k < 8; k++) { const el = this.wEl[k]; if (!el) continue; const on = t >= RANGE[k][0] && t < RANGE[k][1]; if (el._on !== on) { el._on = on; el.style.visibility = on ? 'visible' : 'hidden'; el.style.display = on ? '' : 'none'; } if (on) this['w' + (k + 1)](t); }
-    this.st.apple8.active = t < TH + .05; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); if (this.q5 && !(this.wEl[4] && this.wEl[4]._on)) [this.q5.bgl, this.q5.g18, this.q5.f18].forEach(el => this.S(el, 'visibility', 'hidden')); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
+    this.st.apple8.active = t < TF + .02; this.st.sandboard.active = t > 2.55 && t < 18.25; if (t >= PB && this.q1 && this.q1.near) this.S(this.q1.near, 'visibility', 'hidden'); if (t >= PB && this.q2 && this.q2.skycl) this.S(this.q2.skycl, 'visibility', 'hidden'); if (this.q5 && !(this.wEl[4] && this.wEl[4]._on)) [this.q5.bgl, this.q5.g18, this.q5.f18].forEach(el => this.S(el, 'visibility', 'hidden')); this.drawBall(t); this.st.roomqueen.active = t > 21.3 && t < 25.2; this.st.arcade8.active = t > 16.55 && t < 22.95;
     this.carry(t); this.copy(t); this.ui(t); this.mounts(t); this.drive();
   }
 
@@ -477,7 +480,7 @@ export class HomeEngine {
     this.drawLid(bc);
     this._pk = mx(this._pk ?? 1, this._hov && t < .4 ? .8 : 1, .07); this.S(q.pupil, 'transform', `scale(${this._pk.toFixed(3)})`);
   }
-  /* one camera: pitch from the sky down to the horizon, then a push along the ray into the bite */
+  /* one camera: pitch from the sky down to the horizon, then the tilt and dive into one cream tile */
   w2(t) {
     const W = this.W, H = this.H, q = this.q2, G = this.g2, T = this.tilt; if (!q || !G || !T) return;
     const dy = T.top - T.topE;
@@ -488,16 +491,14 @@ export class HomeEngine {
     if (seaOn && q.sx) { this.S(q.sea, 'transform', `translateY(${sy.toFixed(1)}px)`); window.Painter.sea8(q.sx, q.sea.width, q.sea.height, G.sunX * .6, this.now, .6); }
     q.gulls.forEach((el, i) => { const gp = G.gulls[i]; if (!gp) return; const a = this.now * (.04 + i * .011) + i * 2.1, x = W * gp[0] + Math.sin(a) * W * .03, y = dy + H * gp[1] + Math.sin(a * 1.7) * 6, s2 = (this.n ? .3 : .34) + i * .05, fl = .7 + Math.sin(this.now * 3 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
       this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
-    const st = this.st.apple8, D = this.dive(t);
-    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld }; st.peb = G.peb; st.dv = t > PA ? D.dv : null;
-    st.bk = [sm(2.62, 2.69, t), sm(2.71, 2.79, t)]; st.bite = Math.max(st.bk[0], st.bk[1]); st.port = -.06; st.sand = 0;
-    if (st.bk[0] > .3 && !this._bit1) { this._bit1 = 1; this.crunch(); } if (st.bk[0] < .1) this._bit1 = 0; if (st.bk[1] > .3 && !this._bit2) { this._bit2 = 1; this.crunch(); } if (st.bk[1] < .1) this._bit2 = 0;
-    this.S(q.alay, 'visibility', t < TH ? 'visible' : 'hidden');
+    const st = this.st.apple8, u = this.au(t), D = this.dive(u);
+    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld }; st.peb = G.peb;
+    this.S(q.alay, 'visibility', t < TF ? 'visible' : 'hidden'); this.S(q.alay, 'opacity', (1 - sm(UF, UP, u)).toFixed(3));
   }
   w3(t) {
     const W = this.W, H = this.H, q = this.q3, S = this.S6; if (!q || !S) return;
     /* clouds only: the sky itself is ground18's flat sky, the ground is ground18 */
-    const on = t >= TH; this.S(q.cam, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
+    const on = t >= TB1; this.S(q.cam, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
     const c = this.cam6(t), s = c.f / S.F, vh = c.cy - c.f * Math.tan(c.ph);
     const sx0 = W / 2 - s * W / 2 - s * .04 * W, sy0 = vh - s * S.hy - s * .04 * H;
     // the beach clouds ride with the sky and drift a little apart in depth while the beach holds
@@ -505,7 +506,7 @@ export class HomeEngine {
     q.b3c.forEach(cv => { const i = +cv.dataset.l, L = this.decks.b3 && this.decks.b3[i]; if (L) this.S(cv, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${(sx0 + s * L.x0 + this.drift(i)).toFixed(2)},${(sy0 + s * L.y0 + v3 * this.pf(L.f)).toFixed(2)})`); });
   }
   drawBall(t) {
-    const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = t >= TH && t < 17.55;
+    const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = t >= TB1 && t < 17.55;
     this.S(q.ball, 'visibility', on ? 'visible' : 'hidden'); if (!on || this._ballT === t) return; this._ballT = t;
     const k = q.ball._k, P = window.Painter, pr = P.cam6.proj; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, q.ball.width, q.ball.height);
     let c; if (t < 14.05) c = this.cam6(t); else c = this.qs ? this.qs.c6 : S.camO;
@@ -521,80 +522,103 @@ export class HomeEngine {
   w4() { /* the underwater hall is not part of this cut */ }
   /* the strip of sky and sand the board leaves behind on the left when it slides right; the slide eases in with the overhead view */
   boardShift(t) {
-    const f = this.bdx > 0 ? this.bdx * sm(TB1, 14.05, t) * (t >= QB ? 0 : 1 - (this.qs ? sm(0, .3, this.qs.p) : 0)) : 0, v = f > .05 ? f.toFixed(1) + 'px 0px' : 'none'; this._bf = f > .05 ? f : 0;
+    const f = this.bdx > 0 ? this.bdx * (t >= TBE ? 1 : 0) * (t >= QB ? 0 : 1 - (this.qs ? sm(0, .3, this.qs.p) : 0)) : 0, v = f > .05 ? f.toFixed(1) + 'px 0px' : 'none'; this._bf = f > .05 ? f : 0;
     [this.q5 && this.q5.clip, this.$('[data-ball6]'), this.q5 && this.q5.ql, this.wEl && this.wEl[5]].forEach(el => this.S(el, 'translate', v));
   }
   /* the side gutter every block lines up on; the stage cards sit under the beach headline */
   gutter() { return this.n ? 16 : cl(this.W * .0444, 28, 64); }
   stgSpot() { if (this._stgY == null) { const h = this.$('[data-bh]'); if (!h) return null; const r = h.getBoundingClientRect(); if (!(r.height > 0)) return null; this._stgY = r.bottom + 48; } return [this.gutter(), this._stgY]; }
   w5(t) {
-    const W = this.W, H = this.H, q = this.q5, S = this.S6; if (!q || !S) return; const P = window.Painter, pr = P.cam6.proj;
-    const e = sm(TB1, 14.05, t), ty = -1.2 * H, Q = this.qs, bOn = t >= TH;
-    this.S(q.clip, 'visibility', bOn ? 'visible' : 'hidden');
+    const W = this.W, H = this.H, q = this.q5, S = this.S6; if (!q || !S) return;
+    const ty = -1.2 * H, Q = this.qs, bOn = t >= TB1, sb = this.st.sandboard, pc = bOn && t < TBE ? this.pullCam(t) : null;
+    this.S(q.clip, 'visibility', bOn ? 'visible' : 'hidden'); this.S(q.world, 'visibility', bOn ? 'visible' : 'hidden');
+    sb.pc = pc ? { C: pc.C, L: pc.L, fov: pc.fov, ox: pc.sh / W } : null;
     this.S(q.tall, 'transform', `translate(0px,${ty.toFixed(1)}px)`);
     this.S(q.tall, 'filter', Q && Q.blur > .05 ? `blur(${Q.blur.toFixed(2)}px)` : 'none');
-    this.S(q.tall, 'visibility', Q && Q.inside ? 'hidden' : 'visible');
-    /* the one beach ground (ground18): sea, shoreline, wet and dry sand and the flat sky, one shader, always on while the beach is in view */
+    this.S(q.tall, 'visibility', bOn && !(Q && Q.inside) ? 'visible' : 'hidden');
+    /* the one beach ground (ground19): sea, shoreline, wet and dry sand and the flat sky, one shader, always on while the beach is in view */
     const G18 = q.g18 && q.g18._G, gon = bOn && !!(G18 && G18.ok) && !(Q && Q.inside);
     this.S(q.g18, 'visibility', gon ? 'visible' : 'hidden'); this.S(q.f18, 'visibility', gon ? 'visible' : 'hidden');
     { const bl = Q && Q.blur > .05 ? `blur(${Q.blur.toFixed(2)}px)` : 'none'; this.S(q.g18, 'filter', bl); this.S(q.f18, 'filter', bl); }
-    if (e < .999) { const c = this.cam6(t); this.S(q.world, 'transform', P.homog(S.board.map(([X, Z]) => pr(S.camO, X, 0, Z)), S.board.map(([X, Z]) => pr(c, X, 0, Z))));
-      const R = Math.max(1, sm(.3, .85, e) * 1.35 * Math.hypot(W, H)), m = `${this.w5mask}, radial-gradient(circle ${R.toFixed(0)}px at ${this.w5c[0].toFixed(0)}px ${this.w5c[1].toFixed(0)}px, #000 55%, transparent 100%)`;
-      this.S(q.world, 'maskImage', m); this.S(q.world, 'webkitMaskImage', m); }
-    else { this.S(q.world, 'transform', 'none'); this.S(q.world, 'maskImage', 'none'); this.S(q.world, 'webkitMaskImage', 'none'); }
-    const p = lin(14.25, 16.55, t), sb = this.st.sandboard; sb.p = p; sb.pk = sm(13.1, 13.9, t);
-    if (gon) { const cc = Q ? Q.c6 : this.cam6(t), cm = Object.assign({}, cc, { cx: cc.cx + q.gM }), k = q.f18._k;
-      G18.draw({ cam: cm, S, now: this.now || 0, sky: true, w: W + 2 * q.gM, h: H, bw: q.gB[0], bh: q.gB[1] });
-      if (q.fx) P.surf6(q.fx, Object.assign({}, cm, { f: cm.f * k, cx: cm.cx * k, cy: cm.cy * k }), S, this.now, Math.sin(lin(.84, .99, p) * Math.PI), k, q.f18.width, q.f18.height); }
+    this.S(q.world, 'transform', 'none'); this.S(q.world, 'maskImage', 'none'); this.S(q.world, 'webkitMaskImage', 'none');
+    const p = lin(14.25, 16.55, t); sb.p = p; /* the pawn's top is there from the first board frame; it grows with the camera's height so it never crowds the lens */
+    sb.pk = pc ? cl((pc.C[1] - .95) / 3.3, .03, 1) : 1;
+    /* sample the board's own e2 pixels once while it fills the screen, through the beach filter, so the colour the tile turns to is the board's */
+    if (pc && pc.x <= 0 && !sb.e2px) sb.probe = true;
+    if (sb.e2px && !this._e2 && this.fm3) { const m = this.fm3, c = sb.e2px.map(v => v / 255), o = [0, 1, 2].map(r => cl(m[r * 3] * c[0] + m[r * 3 + 1] * c[1] + m[r * 3 + 2] * c[2])); this._e2 = window.__e2 = { raw: sb.e2px.map(Math.round), shown: '#' + o.map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase() }; }
+    if (gon) { const cc = Q ? Q.c6 : this.cam6(t), cm = Object.assign({}, cc, { cx: cc.cx + q.gM });
+      G18.draw({ cam: cm, S, now: this.now || 0, sky: true, w: W + 2 * q.gM, h: H, bw: q.gB[0], bh: q.gB[1] }); }
     const f = Math.min(1, p / .86) * 5;
-    for (let k = 0; k < 5; k++) { let v = 1 - sm(.42, .56, Math.abs(f - k - .5)); if (k === 0 && f < .5) v = t < 14.25 ? sm(13.9, 14.1, t) : 1; if (k === 4 && f >= 4.5) v = 1; if (t < 13.9) v = 0; if (t > QA) v = k === 4 ? 1 - sm(QA, QA + .16, t) : 0; this.mv['stg' + k] = v; }
+    for (let k = 0; k < 5; k++) { let v = 1 - sm(.42, .56, Math.abs(f - k - .5)); if (k === 0 && f < .5) v = t < 14.25 ? sm(13.6, 13.76, t) : 1; if (k === 4 && f >= 4.5) v = 1; if (t < 13.6) v = 0; if (t > QA) v = k === 4 ? 1 - sm(QA, QA + .16, t) : 0; this.mv['stg' + k] = v; }
     { const P0 = this.stgSpot(); if (P0) for (let k = 0; k < 5; k++) this.pos['stg' + k] = P0; }
     this.wgulls(t);
   }
-  /* overhead board: the beach gulls seen from above, gliding low over the sand with soft shadows offset away from the sun; they keep clear of the pawn, queen and copy */
-  gullTop(cv, sh) { const P = window.Painter, x = cv.getContext('2d'); x.setTransform(2, 0, 0, 2, 0, 0); x.clearRect(0, 0, 90, 40);
-    const c = sh ? [[40, 30, 26], [40, 30, 26], [40, 30, 26]] : [[236, 238, 240], [206, 212, 220], [62, 64, 76]], el = (cx, cy, rx, ry, f) => { x.fillStyle = f; x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, 7); x.fill(); };
-    [1, -1].forEach(s => { P.stroke(x, 45, 19, s > 0 ? .1 : Math.PI - .1, 19, 4.2, c[0], .95, s > 0 ? -.12 : .12); P.stroke(x, 45 + s * 18, 20.6, s > 0 ? .2 : Math.PI - .2, 15, 3, c[1], .95, s > 0 ? .1 : -.1); P.stroke(x, 45 + s * 31.5, 23.4, s > 0 ? .3 : Math.PI - .3, 6, 2.2, c[2], .9, 0); });
-    const b = sh ? '#281E1A' : '#F2F2F0'; el(45, 20.5, 3.3, 8.2, b); el(45, 11.6, 2.7, 2.7, b); el(45, 29.4, 2.6, 2.1, b);
-    if (!sh) { el(45, 21.5, 2.2, 4.6, 'rgba(176,184,196,.75)'); el(45, 8.9, .8, 1, '#D8B24A'); } }
-  /* gulls are world objects at real heights (camera tops out ~2.35 above the sand): seen side-on against the sky from the beach, from above over the board; they enter and leave only off-frame */
+  /* one gull seen from above, drawn as paths (anti-aliased at device resolution): white body and wing roots, pale grey upper wing, black tips, yellow beak.
+     sp = wingspan px, fl = flap (-1 up .. 1 down, 0 = glide with a slight bend), bk = bank (-1..1), sh = draw as a soft shadow silhouette */
+  gullPath(x, X, Y, rot, sp, fl, bk, sh) {
+    const s = sp / 2; x.save(); x.translate(X, Y); x.rotate(rot + Math.PI / 2);
+    const fs = 1 - .26 * Math.abs(fl), sw = .05 * fl;
+    const wing = sd => { const L = s * fs * (1 + bk * sd * .14); x.beginPath(); x.moveTo(0, -.09 * s);
+      x.quadraticCurveTo(sd * L * .42, -.2 * s - sw * s, sd * L * .62, -.13 * s - sw * s); x.quadraticCurveTo(sd * L * .86, -.07 * s, sd * L, .06 * s + sw * s * .5);
+      x.quadraticCurveTo(sd * L * .8, .1 * s, sd * L * .6, .06 * s); x.quadraticCurveTo(sd * L * .3, .16 * s, 0, .12 * s); x.closePath(); return L; };
+    if (sh) { [-1, 1].forEach(wing); x.fill(); x.beginPath(); x.ellipse(0, .02 * s, .065 * s, .33 * s, 0, 0, 7); x.fill(); x.restore(); return; }
+    [-1, 1].forEach(sd => { const L = wing(sd), gr = x.createLinearGradient(0, 0, sd * L, 0); gr.addColorStop(0, '#F6F6F3'); gr.addColorStop(.22, '#E4E7EA'); gr.addColorStop(.5, '#C9CFD7'); gr.addColorStop(.76, '#BCC3CC'); gr.addColorStop(.8, '#2E2F35'); gr.addColorStop(1, '#1C1C21'); x.fillStyle = gr; x.fill();
+      x.strokeStyle = 'rgba(255,255,255,.75)'; x.lineWidth = Math.max(.6, s * .018); x.beginPath(); x.moveTo(sd * L * .6, .06 * s); x.quadraticCurveTo(sd * L * .3, .16 * s, 0, .12 * s); x.stroke();
+      x.fillStyle = 'rgba(255,255,255,.9)'; x.beginPath(); x.arc(sd * L * .93, .04 * s, s * .016, 0, 7); x.fill(); });
+    x.fillStyle = '#FAFAF7'; x.beginPath(); x.ellipse(0, .03 * s, .07 * s, .3 * s, 0, 0, 7); x.fill();
+    x.beginPath(); x.moveTo(-.07 * s, .24 * s); x.quadraticCurveTo(0, .4 * s, .07 * s, .24 * s); x.fill();
+    x.beginPath(); x.arc(0, -.3 * s, .058 * s, 0, 7); x.fill();
+    x.fillStyle = 'rgba(150,158,170,.35)'; x.beginPath(); x.ellipse(bk * .02 * s, .06 * s, .035 * s, .18 * s, 0, 0, 7); x.fill();
+    x.fillStyle = '#E2B53E'; x.beginPath(); x.moveTo(-.018 * s, -.35 * s); x.lineTo(0, -.43 * s); x.lineTo(.018 * s, -.35 * s); x.closePath(); x.fill();
+    x.restore();
+  }
+  /* overhead gulls: world objects at real heights, all drawn into one canvas each frame (shadows first). 2-3 in view, entering and leaving at the frame edges,
+     on paths checked against the copy, the stage labels and the pawn's file so they never cross them. Mostly gliding, now and then two or three slow flaps, banking into turns. */
   wgulls(t) {
-    const q = this.q5, Lr = q && q.bgl, S = this.S6; if (!Lr || !S) return; const W = this.W, H = this.H, Q = this.qs, P = window.Painter, pr = P.cam6.proj, n = this.n;
-    const on = t > 2.6 && !(Q && Q.inside); this.S(Lr, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
-    if (!Lr._k) { const ss = [...Lr.querySelectorAll('[data-bgs]')], gg = [...Lr.querySelectorAll('[data-bgg]')], sv = [...Lr.querySelectorAll('[data-wgs]')]; ss.forEach(cv => this.gullTop(cv, 1)); gg.forEach(cv => this.gullTop(cv, 0)); Lr._k = { ss, gg, sv, B: [], a: [], f: 0, box: [], tn: 0 }; }
-    const K = Lr._k, c = Q ? Q.c6 : this.cam6(t), now = this.now || 0, rm = this._rm, dt = cl(now - (K.tn || now), 0, .1), bf = this._bf || 0; K.tn = now;
-    if (!(K.f++ % 10)) { K.box = (this.blocks || []).filter(b => b.el.style.visibility !== 'hidden').map(b => b.el.getBoundingClientRect()).filter(r => r.width > 0); const sb = this.st.sandboard; if (sb && sb.sx != null) K.box.push({ left: sb.sx * W - 90, right: sb.sx * W + 90, top: sb.sy * H - 170, bottom: sb.sy * H + 40 }); }
-    const HT = [1.28, 1.52, 1.74, 1.4], SP = [.11, .085, .062, .095], N = rm ? 2 : 4, mg = 80, cs = Math.cos(c.ph), sn = Math.sin(c.ph);
+    const q = this.q5, Lr = q && q.bgl, S = this.S6; if (!Lr || !S) return; const W = this.W, H = this.H, Q = this.qs, P = window.Painter, pr = P.cam6.proj;
+    const gA = t >= TBE ? 1 : t >= TB1 ? sm(.62, .8, this.pullCam(t).x) : 0, on = gA > 0 && !(Q && Q.inside);
+    this.S(Lr, 'visibility', on ? 'visible' : 'hidden'); let K = Lr._k; if (!K) K = Lr._k = { cv: Lr.querySelector('[data-gcv]'), B: [], a: [], f: 0, box: [], tn: 0 };
+    if (!on || !K.cv) { K.B = []; return; }
+    const d = Math.min(2, devicePixelRatio || 1), cv = K.cv; if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
+    const x = cv.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height); x.setTransform(d, 0, 0, d, 0, 0);
+    const c = Q ? Q.c6 : this.cam6(t), now = this.now || 0, rm = this._rm, dt = cl(now - (K.tn || now), 0, .1), bf = this._bf || 0; K.tn = now;
+    if (!(K.f++ % 10)) { K.box = (this.blocks || []).filter(b => b.el.style.visibility !== 'hidden').map(b => b.el.getBoundingClientRect()).filter(r => r.width > 0).map(r => [r.left, r.top, r.right, r.bottom]);
+      /* the pawn's whole file, rank 2 to the queen's square */
+      const a2 = pr(c, S.Xb + .5 * S.q, .3, S.Zb - 2.5 * S.q), a8 = pr(c, S.Xb + .5 * S.q, .3, S.Zb + 3.5 * S.q);
+      if (a2[2] > .1 && a8[2] > .1) { const fw = Math.abs(c.f * S.q / a2[2]) * .75; K.box.push([Math.min(a2[0], a8[0]) + bf - fw, Math.min(a2[1], a8[1]) - fw * 1.6, Math.max(a2[0], a8[0]) + bf + fw, Math.max(a2[1], a8[1]) + fw * .6]); } }
+    const HT = [1.28, 1.42, 1.58, 1.74], TP = [70, 63, 56, 48], VF = [1, .9, .8, .7], N = rm ? 2 : 3, mg = 60, cs = Math.cos(c.ph), sn = Math.sin(c.ph), O = S.camO, uk = H / 1080;
     const inV = p => p[2] > .05 && p[0] + bf > -mg && p[0] + bf < W + mg && p[1] > -mg && p[1] < H + mg;
-    const spawn = (i, mid) => { const Y = HT[i];
-      for (let k = 0; k < 16; k++) { const u = (n ? mx(.12, .88, Math.random()) : mx(.52, .94, Math.random())) * W - bf, v = mx(n ? .42 : .12, .88, Math.random()) * H;
+    /* pixels per world unit at a point: sizes are set so a bird is TP px wide at the overhead framing (1080p), then follow true perspective */
+    const ppu = (cc, X, Y, Z) => { const a = pr(cc, X - .05, Y, Z), b = pr(cc, X + .05, Y, Z); return Math.hypot(b[0] - a[0], b[1] - a[1]) * 10; };
+    if (!K.ref || K.refH !== H) { K.refH = H; K.ref = HT.map(Y => ppu(O, S.Xb, Y, S.Zb)); }
+    const clearOf = (pts, m) => pts.every(p => !K.box.some(r => p[0] + bf > r[0] - m && p[0] + bf < r[2] + m && p[1] > r[1] - m && p[1] < r[3] + m));
+    const spawn = i => { const Y = HT[i], m = TP[i] * uk * .6;
+      for (let k = 0; k < 30; k++) { const u = mx(.05, .95, Math.random()) * W - bf, v = mx(.08, .92, Math.random()) * H;
         const a = (u - c.cx) / c.f, b = -(v - c.cy) / c.f, dy = b * cs - sn, dz = b * sn + cs, tt = (Y - c.y) / dy; if (!(tt > .2 && tt < 30)) continue;
-        const T = [c.x + tt * a, c.z + tt * dz], th = rm ? (Math.random() < .5 ? .15 : Math.PI - .15) : Math.random() * Math.PI * 2, d = [Math.cos(th), Math.sin(th)];
-        const reach = sg => { let s = 0; while (s < 60 && inV(pr(c, T[0] + sg * d[0] * s, Y, T[1] + sg * d[1] * s))) s += .02 + s * .04; return s; };
-        const s0 = reach(-1), s1 = reach(1), L = s0 + s1; if (L < .1) continue; const fr = mid ? mx(.15, .6, Math.random()) : 0;
-        return { X: T[0] + d[0] * (L * fr - s0), Y, Z: T[1] + d[1] * (L * fr - s0), th, v: cl(L / mx(14, 22, Math.random()), .02, .5), age: 0, seen: false, ph: Math.random() * 6.28 }; }
+        const T = [c.x + tt * a, c.z + tt * dz], th = rm ? (Math.random() < .5 ? .15 : Math.PI - .15) + (Math.random() - .5) * .3 : Math.random() * Math.PI * 2, dd = [Math.cos(th), Math.sin(th)];
+        const reach = sg => { let s = 0; while (s < 60 && inV(pr(c, T[0] + sg * dd[0] * s, Y, T[1] + sg * dd[1] * s))) s += .01 + s * .03; return s; };
+        const s0 = reach(-1), s1 = reach(1), L = s0 + s1; if (L < .6) continue;
+        const pts = []; for (let j = 0; j <= 24; j++) pts.push(pr(c, T[0] + dd[0] * (L * j / 24 - s0), Y, T[1] + dd[1] * (L * j / 24 - s0))); if (!clearOf(pts, m)) continue;
+        return { X: T[0] - dd[0] * (s0 + .02), Y, Z: T[1] - dd[1] * (s0 + .02), th, v: cl(L / mx(16, 24, Math.random()), .02, .4) * VF[i], age: 0, seen: false, ph: Math.random() * 6.28, fc: 7 + Math.random() * 5, ft: Math.random() * 8 }; }
       return null; };
-    for (let i = 0; i < 4; i++) { const gs = K.gg[i], sd = K.ss[i], sv = K.sv[i]; if (!gs || !sd || !sv) continue;
-      let b = i < N ? K.B[i] || (K.B[i] = spawn(i, true)) : null; const hide = () => { this.S(gs, 'opacity', '0'); this.S(sd, 'opacity', '0'); this.S(sv, 'opacity', '0'); };
-      if (!b) { hide(); continue; }
-      const thv = b.th + (rm ? 0 : .22 * Math.sin(now * .06 + b.ph)); b.X += Math.cos(thv) * b.v * dt; b.Z += Math.sin(thv) * b.v * dt; b.age += dt;
-      let p = pr(c, b.X, b.Y, b.Z); const vis = inV(p); if (vis) b.seen = true;
-      if (!vis && (b.seen || b.age > 40)) { K.B[i] = spawn(i, false); hide(); continue; }
-      if (p[2] < .08) { hide(); continue; }
-      const k = cl(c.f * SP[i] / p[2] / 80, .04, 3.2), el = Math.atan2(c.y - b.Y, Math.hypot(b.X - c.x, b.Z - c.z)), wt = sm(.12, .55, el);
+    const draw = [];
+    for (let i = 0; i < N; i++) {
+      let b = K.B[i]; if (!b) { if ((K.f + i * 7) % 12) continue; b = K.B[i] = spawn(i); if (!b) continue; }
+      const wob = rm ? 0 : .1 * Math.sin(now * .09 + b.ph), thv = b.th + wob, turn = rm ? 0 : .1 * .09 * Math.cos(now * .09 + b.ph);
+      b.X += Math.cos(thv) * b.v * dt; b.Z += Math.sin(thv) * b.v * dt; b.age += dt;
+      const p = pr(c, b.X, b.Y, b.Z), vis = inV(p); if (vis) b.seen = true;
+      if ((!vis && b.seen) || b.age > 60) { K.B[i] = null; continue; }
+      if (p[2] < .08) continue;
+      const pu = ppu(c, b.X, b.Y, b.Z), sp = TP[i] * uk * pu / K.ref[i], el = Math.atan2(c.y - b.Y, Math.hypot(b.X - c.x, b.Z - c.z)), wt = sm(.12, .55, el);
       const p2 = pr(c, b.X + Math.cos(thv) * .03, b.Y, b.Z + Math.sin(thv) * .03), rot = Math.atan2(p2[1] - p[1], p2[0] - p[0]);
-      const X = p[0] + bf, Y = p[1], hit = K.box.some(r => X > r.left - 50 * k && X < r.right + 50 * k && Y > r.top - 30 * k && Y < r.bottom + 30 * k);
-      K.a[i] = mx(K.a[i] == null ? 1 : K.a[i], hit ? 0 : 1, .08); const al = K.a[i];
-      const flap = rm ? 0 : Math.pow(Math.max(0, Math.sin(now * .37 + b.ph)), 8) * (.5 + .5 * Math.sin(now * 7 + i)), fx = 1 - .35 * flap;
-      this.S(gs, 'transform', `translate(${(p[0] - 45).toFixed(1)}px,${(p[1] - 20).toFixed(1)}px) rotate(${(rot + Math.PI / 2).toFixed(3)}rad) scale(${(k * fx).toFixed(3)},${k.toFixed(3)})`); this.S(gs, 'opacity', (al * wt).toFixed(3));
-      const fl = rm ? 1 : .7 + Math.sin(now * 3.2 + i * 1.3) * .3, dir = Math.cos(rot) >= 0 ? 1 : -1;
-      this.S(sv, 'transform', `translate(${(p[0] - 45).toFixed(1)}px,${(p[1] - 20).toFixed(1)}px) scale(${(k * dir).toFixed(3)},${(k * fl).toFixed(3)})`); this.S(sv, 'opacity', (al * (1 - wt)).toFixed(3));
-      /* blob shadow straight down along the sun (offset shortened so it stays near its bird in the overhead frame); higher = smaller, softer, fainter */
-      const gx = b.X + S.sun[0] * b.Y * .4, gz = b.Z + S.sun[1] * b.Y * .4, ps = pr(c, gx, 0, gz);
-      if (ps[2] > .05) { const ks = c.f * SP[i] * (1.05 - .2 * b.Y) / ps[2] / 80, eg = sm(.35, .9, Math.atan2(c.y, Math.hypot(gx - c.x, gz - c.z))), ps2 = pr(c, gx + Math.cos(thv) * .03, 0, gz + Math.sin(thv) * .03), rs = Math.atan2(ps2[1] - ps[1], ps2[0] - ps[0]);
-        this.S(sd, 'transform', `translate(${(ps[0] - 45).toFixed(1)}px,${(ps[1] - 20).toFixed(1)}px) rotate(${(rs + Math.PI / 2).toFixed(3)}rad) scale(${(ks * fx).toFixed(3)},${ks.toFixed(3)})`);
-        this.S(sd, 'filter', `blur(${(1.2 + (b.Y - 1.2) * 4).toFixed(1)}px)`); this.S(sd, 'opacity', (al * eg * cl(.44 - .16 * b.Y, .12, .3)).toFixed(3)); }
-      else this.S(sd, 'opacity', '0'); }
+      const hit = K.box.some(r => p[0] + bf > r[0] - sp * .4 && p[0] + bf < r[2] + sp * .4 && p[1] > r[1] - sp * .3 && p[1] < r[3] + sp * .3);
+      K.a[i] = mx(K.a[i] == null ? 1 : K.a[i], hit ? 0 : 1, .08);
+      const tf = rm ? 99 : (now + b.ft) % b.fc, fl = tf < 2.1 ? Math.sin(tf / 2.1 * Math.PI * 2 * 2.5) * Math.sin(Math.PI * tf / 2.1) : 0, bk = cl(turn * 28, -.5, .5);
+      const gx = b.X + S.sun[0] * b.Y * .4, gz = b.Z + S.sun[1] * b.Y * .4, ps = pr(c, gx, 0, gz), ps2 = pr(c, gx + Math.cos(thv) * .03, 0, gz + Math.sin(thv) * .03);
+      draw.push({ p, rot, sp, fl, bk, al: K.a[i] * wt * gA, ps, rs: Math.atan2(ps2[1] - ps[1], ps2[0] - ps[0]), ks: ps[2] > .05 ? sp * ppu(c, gx, 0, gz) / pu * (1.04 - .14 * (b.Y - 1.28) / .46) : 0, Y: b.Y });
+    }
+    draw.forEach(g => { if (!(g.ks > 0) || g.al < .01) return; const hy = (g.Y - 1.28) / .46; x.save(); x.globalAlpha = g.al * mx(.3, .16, hy); x.fillStyle = '#3A2C24'; x.filter = `blur(${((1.2 + 2.6 * hy) * uk * 1.4).toFixed(2)}px)`; this.gullPath(x, g.ps[0], g.ps[1], g.rs, g.ks, g.fl, g.bk, true); x.restore(); });
+    draw.forEach(g => { if (g.al < .01) return; x.save(); x.globalAlpha = g.al; this.gullPath(x, g.p[0], g.p[1], g.rot, g.sp, g.fl, g.bk, false); x.restore(); });
   }
   /* into the queen: one camera from the overhead board view, down to the crown, through its front arch into the arcade */
   qstate(t) {
@@ -856,7 +880,7 @@ export class HomeEngine {
     if (!window.Scene3D || this._nogl) return;
     // At the very top the apple is still hidden behind the eye: build it once the page has settled, or as soon as the reader scrolls.
     if (!this._glReady) { if (t < .02 && !this._moving) { if (!this._glIdle) this._glIdle = (window.requestIdleCallback || setTimeout)(() => { this._glReady = true; }, { timeout: 2500 }); return; } this._glReady = true; }
-    const M = [['apple8', -1, PB + .05], ['sandboard', 2.55, 18.3], ['arcade8', 15.9, 23.0], ['roomqueen', 20.4, 25.2]];
+    const M = [['apple8', -1, TF + .05], ['sandboard', 2.55, 18.3], ['arcade8', 15.9, 23.0], ['roomqueen', 20.4, 25.2]];
     M.forEach(([k, a, b]) => { const el = this.m3d[k]; if (!el) return; const on = el._sc ? t > a - .8 && t < b + .8 : t > a - .5 && t < b + .3;
       if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn('3d ' + k + ': ' + (e && (e.message || e.type) || e)); return null; });
       else if (!on && el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } });
@@ -948,7 +972,7 @@ export class HomeEngine {
         const m = /^f(\d)$/.exec(o || ''); if (m) setTimeout(() => this.founderHover(+m[1], true), 600);
   }
 
-  /* ---------- sound (engine: lib/painter/sound17.js) ---------- */
+  /* ---------- sound (engine: lib/painter/sound18.js) ---------- */
   snd() { if (!this._snd && window.HPSound) this._snd = new window.HPSound({ getT: () => this.t || 0, reduced: () => this.red(), bars: () => this.$$('[data-bar]'), sides: () => (this.px6 || [-1, 1, -1, 1]).map(x => (x < 0 ? -1 : 1) * (this.n ? .3 : .55)) }); return this._snd; }
   // the desktop sound button: a muted speaker crossfades into five bars that move as a slow wave while sound is on
   wave() {
@@ -968,7 +992,6 @@ export class HomeEngine {
   }
   toggleSound() { const S = this.snd(); if (!S) return; const on = !this.state.sound; if (S.setOn(on)) this.setState({ sound: on }); }
   paper(vol = 1) { this._snd && this._snd.paper(vol); }
-  crunch() { /* the bite is an event inside sound17 */ }
 
   go(to, e) { e && e.preventDefault && e.preventDefault(); if (this.state.menu) this.setState({ menu: false }); scrollTo({ top: VI(JUMP[to] ?? 0) * (this.H || innerHeight), behavior: this.red() ? 'auto' : 'smooth' }); }
 }

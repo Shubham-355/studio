@@ -79,7 +79,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
         <p data-w className={s.body} style={{ maxWidth: "32ch", fontSize: 16, padding: "16px 26px", marginLeft: -26, background: "radial-gradient(closest-side,rgba(250,232,212,.94),rgba(250,232,212,.7) 60%,rgba(250,232,212,0))" }}>We find the brand, the product and the business model in it. Then we build each one.</p>
       </section>
 
-      <section id="how-we-build" data-copy data-a="13.85" data-b="16.76" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--ink)" }}>
+      <section id="how-we-build" data-copy data-a="13.6" data-b="16.76" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--ink)" }}>
         <h2 data-bh className={s.display} style={{ maxWidth: L.wB, fontSize: "clamp(36px,3.9vw,64px)", textShadow: "0 0 30px rgba(239,224,194,.9)" }}>
           <Words text="A pawn that crosses the board becomes *a queen.*" />
         </h2>
