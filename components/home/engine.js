@@ -3,13 +3,13 @@
    each world paints itself onto canvases once, then every frame only moves cameras. */
 import { loadPainter } from "@/lib/painter";
 import { canPaintRemotely, paintRemote } from "@/lib/painter/remote";
-import { COMPANIES } from "./content";
+import { COMPANIES, KEEP } from "./content";
 
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lin = (a, b, x) => cl((x - a) / (b - a)), sm = (a, b, x) => { const t = lin(a, b, x); return t * t * (3 - 2 * t); }, mx = (a, b, t) => a + (b - a) * t;
 const EASE = 'cubic-bezier(.2,.7,.2,1)';
 export const TEND = 28.6;
 export const SPACER_VH = 2120;
-const RANGE = [[0, 1.62], [-1, 12.87], [2.6, 14.06], [-2, -1], [2.6, 18.21], [16.6, 22.91], [21.4, 25.11], [24.1, 99]];
+const RANGE = [[0, 1.62], [-1, 12.87], [2.6, 14.06], [-2, -1], [2.6, 18.21], [16.6, 22.91], [21.4, 25.11], [22.9, 99]];
 const NAVT = [0, 1.0, 4.1, 13.0, 13.0, 17.5, 22.5, 24.6];
 const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
 const PA = 3.2, PB = 4.7, TB1 = 12.4, TBE = 14.05;
@@ -22,7 +22,7 @@ const V0 = s => s <= .08 ? s : s <= 1.28 ? .08 + (s - .08) * 1.25 : s + .3, VI0 
 const V = s => { const u = V1(V0(s)); return u <= QA ? u : u <= QA + QL ? QA + (u - QA) * QK : u + QD; }, VI = t => VI0(VI1(t <= QA ? t : t <= QB ? QA + (t - QA) / QK : t - QD));
 const QS = .95, QY = .04, QZ = -3.5, QX = .5, YC = 1.335, QR = y => y <= 1.24 ? .22 : y >= 1.52 ? .34 : y < 1.36 ? mx(.22, .28, (y - 1.24) / .12) : mx(.28, .34, (y - 1.36) / .16);
 export const NAMES = ['The sky with an eye', 'The apple on the board', 'The beach', 'The underwater hall', 'The board in the sand', 'The desert arcade', 'The quiet room', 'The night sea'];
-const INK = [0, 1, 1, 0, 1, 1, 1, 0], SOFT = [0, 0, 1, 0, 1, 0, 1, 0];
+const INK = [0, 1, 1, 0, 1, 1, 1, 0], SOFT = [0, 0, 1, 0, 1, 0, 0, 0];
 // door in the back wall: half width, height and threshold top; the leaf hinges at DZL, the doorway's far face is DZF; it swings to DSW
 const CZ = [6, 11, 16, 21], DOORZ = 27, DHW = .47, DHH = 1.92, DTS = .07, DZL = DOORZ + .27, DZF = DOORZ + .25, DSW = 170 * Math.PI / 180, DSTOP = [DHW + 2 * DHW * Math.cos(10 * Math.PI / 180) + .05, 0, DZF + .03];
 const ACT = ['keydown', 'touchstart', 'wheel', 'focusin'];
@@ -257,9 +257,11 @@ export class HomeEngine {
   }
   layout7() {
     const W = this.W, H = this.H, n = this.n, w7 = this.wEl[6]; if (!w7) return;
-    this.room = n ? { b: [.1, .14, .9, .66], win: [.52, .2, .84, .5] } : { b: [.2, .1, .8, .7], win: [.62, .26, .76, .66] };
+    this.room = n ? { b: [.1, .14, .9, .66], win: [.42, .2, .74, .5] } : { b: [.2, .1, .8, .7], win: [.555, .26, .695, .66] };
+    this.winDx = (this.room.win[0] - (n ? .52 : .62)) * W; /* the night layer follows the window's move so the view inside it is unchanged */
     const [x0, y0, x1, y1] = this.room.win.map((v, i) => v * (i % 2 ? H : W)); this.win0 = [x0, y0, x1, y1];
     const fr = this.$('[data-winframe]'); if (fr) Object.assign(fr.style, { left: (x0 - 14) + 'px', top: (y0 - 14) + 'px', width: (x1 - x0 + 28) + 'px', height: (y1 - y0 + 28) + 'px' });
+    ['[data-winsill]', '[data-winglass]', '[data-winsky]'].forEach(sl => { const e = this.$(sl); if (e) e.style.display = n ? 'none' : ''; });
     const qb = this.$('[data-3d="roomqueen"]'); if (qb) Object.assign(qb.style, n ? { left: '-4%', top: '18%', width: '64%', height: '66%' } : { left: '32%', top: '4%', width: '30%', height: '92%' });
     const tb = this.$('[data-table]'); if (tb) Object.assign(tb.style, n ? { left: '80%', top: '64%', display: '' } : { display: 'none' });
     const pw = (x1 - x0) * .5, ph = (y1 - y0) * .56; this.pane = { x: x0 + (x1 - x0) * .25, y: y0 + (y1 - y0) * .72, z: 1.2 * Math.max(W / pw, H / ph) };
@@ -670,7 +672,6 @@ export class HomeEngine {
     this.S(q.cam, 'transform', 'none'); this.S(q.world, 'clipPath', Q ? Q.clip : 'none'); this.S(q.world, 'webkitMaskImage', 'none'); this.S(q.world, 'maskImage', 'none');
     this.S(q.plate, 'visibility', a8.ready ? 'hidden' : 'visible');
     const dt = Math.min(.1, Math.max(0, this.now - (this._n6 || this.now))); this._n6 = this.now;
-    const pd = pj(0, 0, DOORZ), dzD = pd[2];
     this.fEls.forEach((el, i) => {
       const co = this.companies[i], fs = this.fst[i]; if (!fs) return;
       const pr = pj(-this.px6[i], 0, CZ[i]), dz = pr[2];
@@ -696,14 +697,15 @@ export class HomeEngine {
     });
     /* the door ends the hall from the first frame: closed, edge-lit (brighter per founder passed); after the last founder it swings inward with scroll.
        Frame, jambs, step and the door's light are 3D (scene3d); the painted wood leaf is perspective-mapped onto its hinge here. */
-    { const rc = this.q7 && this.q7.rcv; if (rc && this.room) a8.room = { cv: rc, v: rc._pv || 0, rk: [this.F6 / W, this.F6 / H, this.hy6 / H, CPTS[CPTS.length - 1][1]], b: this.room.b }; }
+    { const rc = this.q7 && this.q7.rcv; if (rc && this.room) a8.room = { cv: rc, v: rc._pv || 0, rk: [this.F6 / W, this.F6 / H, this.hy6 / H, pathc(99)], b: this.room.b }; }
     const op = sm(21.5, 22.3, t), sw = sm(21.5, 22.3, t), th = sw * DSW; a8.door = [th, op, sw];
     if (!this._dcv && q.leaf) { const cv = q.leaf.querySelector('[data-leafcv]'); if (cv) { this.paintDoor(cv); this._dcv = cv; } } a8.leafCv = this._dcv || null; a8.leafOn = t < 22.9;
     this.d6 = { cz: cm.C[2] }; this.gap = null; this.gapPoly = null;
     const P = (x, y, z) => { const p = pj(x, y, z); return p[2] > .02 ? p : null; };
     /* the room fills the opening from the frame's front edge, so its walls, ceiling and floor meet the jambs, lintel and threshold edge to edge */
     const ZR = DZF, fo = [P(-DHW, DHH, ZR), P(DHW, DHH, ZR), P(DHW, DTS, ZR), P(-DHW, DTS, ZR)], lq = this.leafQuad(P, th);
-    if (dzD > .05 && fo.every(Boolean)) {
+    /* measured at the back of the frame (DZF), so the clip stays valid while the camera passes the door plane on its way to the hand-off */
+    if (fo.every(Boolean)) {
       const fx = fo.map(p => p[0]), fy = fo.map(p => p[1]); this.gap = [Math.min(...fx), Math.min(...fy), Math.max(...fx), Math.max(...fy)];
       this.S(q.door, 'visibility', 'hidden'); this.S(q.leafw, 'visibility', 'hidden');
       /* the room (world 7) shows through the back of the doorway minus whatever the leaf still covers */
@@ -729,7 +731,7 @@ export class HomeEngine {
     const K = el._k, sh = (1 - sm(0, .35, sw)).toFixed(3); this.S(K.lsh, 'opacity', sh); this.S(K.lsh2, 'opacity', sh); this.S(K.ldk, 'opacity', (.06 + .3 * sm(0, .6, sw)).toFixed(3)); }
   room7(q, on) { if (q._r7 === on) return; q._r7 = on; if (q.rcv) q.rcv.style.visibility = on ? 'hidden' : ''; q.world.style.background = on ? 'transparent' : '#E6DCCB';
     if (!on && q.lay) q.lay.forEach(([el]) => { this.S(el, 'translate', 'none'); this.S(el, 'scale', 'none'); }); }
-  leafB(t) { const q = this.q7; if (!q || !q.leafB) return; const on = t >= 22.9; this.S(q.leafBw, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
+  leafB() { const q = this.q7; if (!q || !q.leafB) return; const on = false; this.S(q.leafBw, 'visibility', on ? 'visible' : 'hidden'); if (!on) return;
     if (!this._lqB) { const z = pathc(99), pj = this.proj6({ C: [0, 1, z], L: [0, 1, z + 1], fov: this.fovW, oy: .06 }); this._lqB = this.leafQuad((x, y, zz) => { const p = pj(x, y, zz); return p[2] > .02 ? p : null; }, DSW); }
     this.S(q.leafBw, 'transform', this.cam7 || 'none'); this.leafPose(q.leafB, this._lqB, 1);
     if (!this._spB) { const z = pathc(99), pj = this.proj6({ C: [0, 1, z], L: [0, 1, z + 1], fov: this.fovW, oy: .06 }); this._spB = (x, y, zz) => { const p = pj(x, y, zz); return p[2] > .02 ? p : null; }; } this.stopPose(q.leafBw, this._spB); }
@@ -762,8 +764,14 @@ export class HomeEngine {
     g = x.createRadialGradient(hx - 5, hy - 6, 1, hx, hy, 17); g.addColorStop(0, '#FFF3C8'); g.addColorStop(.25, '#E6C66C'); g.addColorStop(.7, '#9A7430'); g.addColorStop(1, '#4E3814'); x.fillStyle = g; x.beginPath(); x.arc(hx, hy, 16, 0, 7); x.fill();
     x.fillStyle = 'rgba(255,250,232,.95)'; x.beginPath(); x.arc(hx - 6, hy - 7, 2.6, 0, 7); x.fill();
     x.fillStyle = '#1A1006'; x.beginPath(); x.arc(hx, hy + 30, 3.4, 0, 7); x.fill(); x.fillRect(hx - 1.5, hy + 30, 3, 10); }
+  /* card 05 sits under the window: if its top would come within 24px of the frame and sill, lower it just enough (only that card, only when needed) */
+  fitK5(q) { const i = KEEP.findIndex(k => k.n === '05'), el = q.world.querySelectorAll('[data-keep]')[i], w = this.win0; if (!el || !w) return;
+    if (el.dataset.y0 == null) el.dataset.y0 = el.style.top; el.style.top = el.dataset.y0;
+    const y = el.offsetTop, h = el.offsetHeight, x = el.offsetLeft, hw = el.offsetWidth / 2; if (!h) return false;
+    const need = w[3] + 14 + 12 + 24 + 12, top = y - h; if (x + hw > w[0] - 52 && x - hw < w[2] + 52 && top < need) el.style.top = (y + need - top) + 'px'; q.lay = null; return true; }
   w7(t) {
     const W = this.W, H = this.H, q = this.q7; if (!q) return;
+    { const key = W + 'x' + H + (document.fonts ? document.fonts.status : ''); if (q._k5 !== key && this.fitK5(q) !== false) q._k5 = key; }
     const g = this.gap, d6 = this.d6;
     this.room7(q, t < 22.9 && !!this.st.arcade8.roomOK);
     if (t < 22.9) {
@@ -772,7 +780,7 @@ export class HomeEngine {
       /* each room layer sits at its own depth behind the doorway (from where it meets the floor), so it grows with true perspective as the camera walks in */
       if (!q.lay) { const ks = q.world.querySelectorAll('[data-keep]'); if (ks.length) { q.lay = []; const add = (el, yb) => { if (!el || el.style.display === 'none') return; el.style.transformOrigin = '0 0'; q.lay.push([el, el.offsetLeft, el.offsetTop, yb(el)]); };
         add(q.world.querySelector('[data-3d="roomqueen"]'), e => e.offsetTop + e.offsetHeight * (this.n ? .78 : .895)); if (this.n) add(q.world.querySelector('[data-table]'), e => e.offsetTop + e.offsetHeight); ks.forEach(e => add(e, e => e.offsetTop)); } }
-      const F = this.F6, cy = this.hy6, cx = W / 2, dl = Math.max(0, CPTS[CPTS.length - 1][1] - d6.cz), deB = .93 * F / Math.max(1, this.room.b[3] * H - cy);
+      const F = this.F6, cy = this.hy6, cx = W / 2, dl = Math.max(0, pathc(99) - d6.cz), deB = .93 * F / Math.max(1, this.room.b[3] * H - cy);
       const kd = yb => { const De = Math.min(deB, .93 * F / Math.max(1, yb - cy)); return De / (De + dl); }, kb = kd(this.room.b[3] * H), A = [cx * (1 - kb), cy * (1 - kb)];
       this.cam7 = `translate(${A[0].toFixed(1)}px,${A[1].toFixed(1)}px) scale(${kb.toFixed(4)})`; this.S(q.cam, 'transform', this.cam7);
       (q.lay || []).forEach(([el, ox, oy, yb]) => { const r = kd(yb) / kb; this.S(el, 'translate', `${((1 - r) * (cx - ox)).toFixed(1)}px ${((1 - r) * (cy - oy)).toFixed(1)}px`); this.S(el, 'scale', r.toFixed(4)); });
@@ -789,9 +797,9 @@ export class HomeEngine {
   }
   w8(t) {
     const W = this.W, H = this.H, q = this.q8, g = this.g8, P = window.Painter; if (!q) return;
-    let w = this.win; if (w && t < 22.9) { const g = this.gap; const ins = g && w[0] >= g[0] - .5 && w[1] >= g[1] - .5 && w[2] <= g[2] + .5 && w[3] <= g[3] + .5; if (!ins) w = [0, 0, 0, 0]; } q.world.style.clipPath = t < 25.1 && w ? `polygon(${w[0].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[3].toFixed(1)}px,${w[0].toFixed(1)}px ${w[3].toFixed(1)}px)` : 'none';
-    const e7 = sm(24.1, 25.1, t), z = mx(1.22, 1, e7), foot = sm(27.7, 28.5, t), ty = -H * .36 * foot - H * .06 * (1 - e7);
-    this.S(q.cam, 'transform', `translate(${(W / 2 * (1 - z)).toFixed(1)}px,${(H / 2 * (1 - z) + ty).toFixed(1)}px) scale(${z.toFixed(4)})`);
+    let w = this.win; if (t < 22.9) { const g = this.gap; w = t >= 22.3 && g && w ? [Math.max(w[0], g[0]), Math.max(w[1], g[1]), Math.min(w[2], g[2]), Math.min(w[3], g[3])] : null; if (!w || w[2] - w[0] < 1 || w[3] - w[1] < 1) w = [0, 0, 0, 0]; } else if (t < 24.1 && !w) w = [0, 0, 0, 0]; if (t < 24.1 && this.n) w = [0, 0, 0, 0]; this.S(q.world, 'opacity', t < 24.1 ? sm(22.9, 23.25, t).toFixed(3) : '1'); q.world.style.clipPath = t < 25.1 && w ? `polygon(${w[0].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[1].toFixed(1)}px,${w[2].toFixed(1)}px ${w[3].toFixed(1)}px,${w[0].toFixed(1)}px ${w[3].toFixed(1)}px)` : 'none';
+    const e7 = sm(24.1, 25.1, t), z = mx(1.22, 1, e7), foot = sm(27.7, 28.5, t), ty = -H * .36 * foot - H * .06 * (1 - e7), tx = (this.winDx || 0) * (1 - e7);
+    this.S(q.cam, 'transform', `translate(${(W / 2 * (1 - z) + tx).toFixed(1)}px,${(H / 2 * (1 - z) + ty).toFixed(1)}px) scale(${z.toFixed(4)})`);
     const fm = this._rm ? 0 : 1; this.S(q.moon, 'transform', `translate(${(this.moon0[0] + (this.mx || 0) * 12 * fm).toFixed(1)}px,${(this.moon0[1] + (this.my || 0) * 8 * fm).toFixed(1)}px)`);
     const v8 = this._rm ? 0 : cl(-(t - 26.6) * H * .03, -H * .08, H * .08);
     q.n8c.forEach((cv, i) => { const L = this.decks.n8 && this.decks.n8[i]; if (L) this.S(cv, 'transform', `translate(${this.drift(i).toFixed(1)}px,${(v8 * this.pf(L.f)).toFixed(1)}px)`); });
@@ -831,8 +839,8 @@ export class HomeEngine {
     this.dvEls.forEach((el, k) => { const p = this.dovePos(k, t); if (!p) { this.S(el, 'visibility', 'hidden'); [...el.children].forEach(c => this.S(c, 'visibility', 'hidden')); return; } const up = ((this.now * 7 + k * .37) | 0) % 2;
       this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) scale(${(p[2] * p[3]).toFixed(3)},${p[2].toFixed(3)})`); this.S(el, 'filter', p[2] > 2.2 ? `blur(${((p[2] - 2.2) * 1.5).toFixed(1)}px)` : 'none');
       const cs = el.children; if (cs[0]) this.S(cs[0], 'visibility', up ? 'visible' : 'hidden'); if (cs[1]) this.S(cs[1], 'visibility', up ? 'hidden' : 'visible'); });
-    const wc = this.q7 && this.q7.wincam; if (wc) { const v = t >= 21.4 && t < 25.1 && this.cam7; let wo = 1; if (v && t < 22.9) { const g = this.gap, w = this.win; if (g && w) { const ia = Math.max(0, Math.min(w[2], g[2]) - Math.max(w[0], g[0])) * Math.max(0, Math.min(w[3], g[3]) - Math.max(w[1], g[1])), wa = Math.max(1, (w[2] - w[0]) * (w[3] - w[1])); wo = ia / wa > .995 ? 1 : 0; } else wo = 0; }
-      this.S(wc, 'opacity', wo.toFixed(3)); this.S(wc, 'visibility', v && wo > 0 ? 'visible' : 'hidden'); if (v) { this.S(wc, 'transform', this.cam7); wc.parentElement.style.clipPath = this.wEl[6].style.clipPath; } }
+    const wc = this.q7 && this.q7.wincam; if (wc) { const v = t >= 21.4 && t < 25.1 && this.cam7; let wo = 1; if (v && t < 22.9) { const g = this.gap, w = this.win; if (g && w) { const ia = Math.max(0, Math.min(w[2], g[2]) - Math.max(w[0], g[0])) * Math.max(0, Math.min(w[3], g[3]) - Math.max(w[1], g[1])), wa = Math.max(1, (w[2] - w[0]) * (w[3] - w[1])); wo = ia / wa > .995 || (!this.n && t >= 22.3 && ia > 0) ? 1 : 0; } else wo = 0; }
+      this.S(wc, 'opacity', wo.toFixed(3)); { const sk = this.q7.winsky || (this.q7.winsky = this.$('[data-winsky]')), u = Math.max(0, Math.min(1, (t - 24.1) / .35)); if (sk) this.S(sk, 'opacity', (1 - u * u * (3 - 2 * u)).toFixed(3)); } this.S(wc, 'visibility', v && wo > 0 ? 'visible' : 'hidden'); if (v) { this.S(wc, 'transform', this.cam7); wc.parentElement.style.clipPath = this.wEl[6].style.clipPath; } }
   }
   introK() { if (!this._introT0) return 0; return lin(0, 1.6, (performance.now() - this._introT0) / 1000); }
   copy(t) {
@@ -854,8 +862,8 @@ export class HomeEngine {
   ui(t) {
     const wi = this.worldAt(t);
     if (wi !== this._wi) {
-      this._wi = wi; const c = INK[wi] ? '#1B1D24' : '#F3EEE4';
-      const nav = this.ch.nav; if (nav) { nav.style.color = c; nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
+      const pw = this._wi; this._wi = wi; const c = INK[wi] ? '#1B1D24' : '#F3EEE4';
+      const nav = this.ch.nav; if (nav) { if (nav._tr0 == null) nav._tr0 = nav.style.transition; nav.style.transition = wi === 6 || pw === 6 ? 'color 300ms ease,text-shadow 300ms ease' : nav._tr0; nav.style.color = c; nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
       if (this.props.notes || this.q('notes') === '1') this.setState({ world: wi });
     }
     const pr = this.ch.prog; if (pr) this.S(pr, 'transform', `scaleX(${(t / TEND).toFixed(4)})`);
@@ -997,7 +1005,9 @@ export class HomeEngine {
 }
 
 /* walk path through the founders: monotone cubic, so the camera never stops between points (eases only at the two ends) */
-function pathc(t) { const P = CPTS, n = P.length; if (t <= P[0][0]) return P[0][1]; if (t >= P[n - 1][0]) return P[n - 1][1];
+/* the last stretch carries the camera a quarter metre further, clear of the frame, before the room takes over (earlier path unchanged) */
+function pathc(t) { return pathc0(t) + .25 * sm(22.45, 22.9, t); }
+function pathc0(t) { const P = CPTS, n = P.length; if (t <= P[0][0]) return P[0][1]; if (t >= P[n - 1][0]) return P[n - 1][1];
   const d = [], m = [0]; for (let i = 0; i < n - 1; i++) d.push((P[i + 1][1] - P[i][1]) / (P[i + 1][0] - P[i][0]));
   for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : 2 / (1 / d[i - 1] + 1 / d[i]); m[n - 1] = 0;
   let i = 0; while (t > P[i + 1][0]) i++; const hh = P[i + 1][0] - P[i][0], s = (t - P[i][0]) / hh, s2 = s * s, s3 = s2 * s;
