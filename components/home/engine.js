@@ -98,7 +98,7 @@ export class HomeEngine {
     if (!window.Painter || !window.Painter.desert) return;
     if (!document.getElementById('brushy')) document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="brushy" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="6" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="ripple" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.004 0.09" numOctaves="2" seed="8" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="14" xChannelSelector="R" yChannelSelector="G"/></filter></svg>');
     // Read the serif family once now, while styles are clean; reading it mid-animation forces a full style recalc.
-    window.Painter._serif = getComputedStyle(document.documentElement).getPropertyValue('--font-cormorant').trim() || 'Cormorant';
+    window.Painter._serif = getComputedStyle(document.documentElement).getPropertyValue('--font-display').trim() || 'Instrument Serif';
     this.grain(); this.relayout(false); this.queuePaint();
     const qt = parseFloat(this.q('t')); if (!isNaN(qt) && qt >= 0 && qt <= TEND + 1) { scrollTo(0, VI(qt) * innerHeight); this.t = qt; this._introT0 = performance.now() - 5000; }
     if (this.state.loader) this.runLoader(); else if (!this._introT0) this._introT0 = performance.now() + 100;
@@ -843,8 +843,14 @@ export class HomeEngine {
       this.S(wc, 'opacity', wo.toFixed(3)); { const sk = this.q7.winsky || (this.q7.winsky = this.$('[data-winsky]')), u = Math.max(0, Math.min(1, (t - 24.1) / .35)); if (sk) this.S(sk, 'opacity', (1 - u * u * (3 - 2 * u)).toFixed(3)); } this.S(wc, 'visibility', v && wo > 0 ? 'visible' : 'hidden'); if (v) { this.S(wc, 'transform', this.cam7); wc.parentElement.style.clipPath = this.wEl[6].style.clipPath; } }
   }
   introK() { if (!this._introT0) return 0; return lin(0, 1.6, (performance.now() - this._introT0) / 1000); }
+  /* text reveal: headline lines rise 12px and fade in over 600ms, 80ms apart; body and labels fade 150ms after the last line; out plays the same in reverse */
+  seqOf(b) { const RM = this._rm, hw = [], bw = []; b.w.forEach(w => (w.closest('[data-hl]') ? hw : bw).push(w)); const it = [];
+    let li = -1, top = null, par = null; hw.forEach(w => { const h = w.closest('[data-hl]'), y = w.offsetTop; if (h !== par || top === null || Math.abs(y - top) > 4) { li++; top = y; par = h; } it.push({ w, s: RM ? 0 : li * 80, d: RM ? 300 : 600, y: !RM }); });
+    const nl = li + 1, he = nl ? (nl - 1) * 80 + 600 : 0, bs = RM ? 0 : (nl ? he + 150 : 0); bw.forEach(w => it.push({ w, s: bs, d: RM ? 300 : 600, y: false }));
+    b.seq = it; b.T = Math.max(1, ...it.map(e => e.s + e.d)); if (b.k == null) b.k = 0; b.k = Math.min(b.k, b.T); }
   copy(t) {
-    const ik = this.introK();
+    const ik = this.introK(), now = performance.now(), dt = Math.min(100, Math.max(0, now - (this._cpN || now))); this._cpN = now;
+    if (this._rm == null) { this._rm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => (this.blocks || []).forEach(b => { if (!b.k) b.seq = null; })); }
     for (const b of this.blocks || []) {
       let v = b.m ? (this.mv[b.id] || 0) : sm(b.a, b.a + .16, t) * (1 - sm(b.b - .16, b.b, t));
       if (b.m && !this.n && b.id !== 'ccard' && !this.pos[b.id]) v = 0;
@@ -852,18 +858,23 @@ export class HomeEngine {
       if (b.id === 'ccard') { if (this.cardT) this.S(b.el, 'transform', this.cardT); }
       else if (b.m && (!this.n || /^stg/.test(b.id))) { const p = this.pos[b.id]; if (p) { const bh = b.h || (b.h = b.el.offsetHeight || 0), bw = b.ow || (b.ow = b.el.offsetWidth || 0), py = p[1] === 'mid' ? this.H * .525 - bh / 2 : p[1], y = /^stg/.test(b.id) ? py : cl(py, 104, Math.max(104, this.H - bh - 20)), x = /^stg/.test(b.id) ? p[0] : cl(p[0], 16, Math.max(16, this.W - bw - 16));
         if (/^card/.test(b.id) && this.fBox) { const ci = +b.id.slice(4); let ov = 0; this.fBox.forEach((B, j) => { if (!B || j === ci) return; const ix = Math.min(x + bw, B[2]) - Math.max(x, B[0]), iy = Math.min(y + bh, B[3]) - Math.max(y, B[1]); if (ix > 0 && iy > 0) ov = Math.max(ov, Math.min(ix, iy)); }); v *= 1 - sm(0, 24, ov); } this.S(b.el, 'transform', `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`); } }
-      if (Math.abs(v - b.v) < .003 && !(v === 0 && b.v !== 0) && !(v === 1 && b.v !== 1)) continue; b.v = v;
-      b.el.style.visibility = v > 0 ? 'visible' : 'hidden'; b.el.style.pointerEvents = v > .6 ? 'auto' : 'none'; if (b.m) b.el.style.opacity = sm(0, .45, v).toFixed(3);
-      const N = b.w.length || 1;
-      b.w.forEach((w, i) => { const x = cl((v - i / N * .5) / .5); w.style.opacity = x.toFixed(3); w.style.transform = x >= 1 ? 'none' : `translateY(${((1 - x) * 14).toFixed(1)}px)`; w.style.filter = x >= 1 ? 'none' : `blur(${((1 - x) * 8).toFixed(1)}px)`; });
+      const on = v > .5;
+      if (!b.seq || (b.k === 0 && on && !b.on)) { if (on || !b.seq) this.seqOf(b); }
+      b.on = on; const k0 = b.k; b.k = cl(b.k + (on ? dt : -dt), 0, b.T);
+      if (b.m && Math.abs(v - b.v) >= .003) b.el.style.opacity = sm(0, .45, v).toFixed(3); b.v = v;
+      const vis = b.k > 0 || (b.m && v > 0 && on);
+      if (b._vis !== vis) { b._vis = vis; b.el.style.visibility = vis ? 'visible' : 'hidden'; }
+      b.el.style.pointerEvents = on && b.k > b.T * .5 ? 'auto' : 'none';
+      if (b.k === k0 && b._done) continue; b._done = b.k === 0 || b.k === b.T;
+      for (const e of b.seq) { const x = cl((b.k - e.s) / e.d), q = 1 - (1 - x) * (1 - x) * (1 - x); e.w.style.opacity = q.toFixed(3); e.w.style.transform = e.y && q < 1 ? `translateY(${((1 - q) * 12).toFixed(1)}px)` : 'none'; e.w.style.filter = 'none'; }
     }
     this.pos = {};
   }
   ui(t) {
     const wi = this.worldAt(t);
     if (wi !== this._wi) {
-      const pw = this._wi; this._wi = wi; const c = INK[wi] ? '#1B1D24' : '#F3EEE4';
-      const nav = this.ch.nav; if (nav) { if (nav._tr0 == null) nav._tr0 = nav.style.transition; nav.style.transition = wi === 6 || pw === 6 ? 'color 300ms ease,text-shadow 300ms ease' : nav._tr0; nav.style.color = c; nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
+      const pw = this._wi; this._wi = wi; const c = INK[wi] ? '#1E1B18' : '#F2EEE6';
+      const nav = this.ch.nav; if (nav) { if (nav._tr0 == null) nav._tr0 = nav.style.transition; nav.style.transition = wi === 6 || pw === 6 ? 'color 300ms ease,text-shadow 300ms ease' : nav._tr0; nav.style.color = c; { const lk = this.ch.links; if (lk) lk.style.textShadow = wi === 5 ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : ''; } nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
       if (this.props.notes || this.q('notes') === '1') this.setState({ world: wi });
     }
     const pr = this.ch.prog; if (pr) this.S(pr, 'transform', `scaleX(${(t / TEND).toFixed(4)})`);
