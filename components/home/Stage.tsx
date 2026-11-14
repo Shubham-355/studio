@@ -212,11 +212,11 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
                   <KeepObject kind={k.kind} />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", transform: `rotate(${i % 2 ? 2 : -2.5}deg)` }}>
-                  <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 3, maxWidth: tagW, padding: "9px 12px 10px 20px", background: "#F6F0E2", boxShadow: "0 6px 14px rgba(40,24,16,.28)", clipPath: "polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%)", color: "#1B1D24" }}>
+                  <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 3, maxWidth: tagW, padding: "9px 12px 10px 20px", background: "#F6F0E2", boxShadow: "0 6px 14px rgba(40,24,16,.28)", clipPath: "polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%)", color: "#1E1B18" }}>
                     <div style={{ position: "absolute", left: 8, top: "50%", width: 6, height: 6, marginTop: -3, borderRadius: "50%", background: "#C9B797", boxShadow: "inset 0 1px 1px rgba(0,0,0,.35)" }} />
-                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".2em" }}>No. {k.n}</span>
-                    <span style={{ fontFamily: "var(--serif)", fontWeight: 500, fontSize: tagT, lineHeight: 1.05, textWrap: "balance" }}>{k.t}</span>
-                    {!narrow && <span style={{ fontSize: 11.5, lineHeight: 1.35, textWrap: "pretty" }}>{k.d}</span>}
+                    <span style={{ fontFamily: "var(--mono)", fontWeight: 400, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", opacity: 0.7, marginBottom: 5 }}>No. {k.n}</span>
+                    <span style={{ fontFamily: "var(--serif)", fontWeight: 400, fontSize: tagT, lineHeight: 1.1, textWrap: "balance" }}>{k.t}</span>
+                    {!narrow && <span style={{ fontSize: 14, lineHeight: 1.4, textWrap: "pretty", color: "rgba(30,27,24,.88)" }}>{k.d}</span>}
                   </div>
                   <div style={{ width: 1, height: 14, background: "rgba(60,40,30,.55)" }} />
                 </div>
@@ -244,7 +244,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
           <div data-crim className={s.fill} style={{ background: "linear-gradient(140deg,#FDFBF6,#E3D8C4)", clipPath: "circle(0px)" }} />
           <canvas data-paint="moon" data-moon aria-hidden className={s.abs} />
           <canvas data-crimcv aria-hidden className={s.full} style={{ visibility: "hidden", pointerEvents: "none", filter: "drop-shadow(0 5px 8px rgba(6,10,24,.55)) drop-shadow(0 14px 26px rgba(6,10,24,.3))" }} />
-          <div data-reflect aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", top: "124%", textAlign: "center", fontFamily: "var(--serif)", fontStyle: "italic", fontWeight: 500, fontSize: reflSize, lineHeight: 0.8, letterSpacing: "-.03em", whiteSpace: "nowrap", color: "rgba(241,230,200,.5)", filter: "url(#ripple)", willChange: "transform" }}>
+          <div data-reflect aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", top: "124%", textAlign: "center", fontFamily: "var(--serif)", fontStyle: "italic", fontWeight: 400, fontSize: reflSize, lineHeight: 0.8, letterSpacing: "-.03em", whiteSpace: "nowrap", color: "rgba(241,230,200,.5)", filter: "url(#ripple)", willChange: "transform" }}>
             {studioName}
           </div>
         </div>

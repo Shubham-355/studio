@@ -3,12 +3,14 @@
 :root {
   --ink: #1B1D24;
   --paper: #F3EEE4;
+  --text: #1E1B18;
+  --cream: #F2EEE6;
   --night: #0E1014;
   --red: #A8242A;
   --red-hover: #BD3037;
   --red-active: #861A1F;
-  --serif: var(--font-cormorant), "Cormorant", serif;
-  --sans: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  --serif: var(--font-display), "Instrument Serif", serif;
+  --sans: var(--font-text), "Instrument Sans", sans-serif;
   --mono: var(--font-plex-mono), "IBM Plex Mono", monospace;
 }
 
@@ -17,7 +19,7 @@ body {
   margin: 0;
   padding: 0;
   background: var(--night);
-  color: var(--ink);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -46,7 +48,12 @@ html.dc-cursor * {
 
 ::selection {
   background: var(--red);
-  color: var(--paper);
+  color: var(--cream);
+}
+
+* {
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 @property --peel {

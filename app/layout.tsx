@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Instrument_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant({
-  variable: "--font-cormorant",
+const display = Instrument_Serif({
+  variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400",
   style: ["normal", "italic"],
 });
 
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
+const text = Instrument_Sans({
+  variable: "--font-text",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -32,7 +32,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${hanken.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${display.variable} ${text.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );
