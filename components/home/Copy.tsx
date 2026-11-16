@@ -151,7 +151,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
           <Ph><W>Bring</W> <W>the</W> <W>idea.</W></Ph> <Ph><W italic>We’ll build the company</W></Ph> <Ph><W italic>around it.</W></Ph>
         </h2>
         <div data-w className={s.ctaRow} style={{ flex: "initial" }}>
-          <a href={`mailto:${email}`} data-magnet className={`${s.pill} ${s.pillLg}`}>Start a company</a>
+          <a href={`mailto:${email}`} data-magnet className={`${s.pill} ${s.pillLg}`}>Tell us your idea</a>
           <button onClick={onCopy} className={s.takeCard}>{copied ? "Copied to your clipboard" : "Or take the card"}</button>
         </div>
       </section>
