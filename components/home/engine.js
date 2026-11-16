@@ -10,7 +10,7 @@ const EASE = 'cubic-bezier(.2,.7,.2,1)';
 export const TEND = 28.6;
 export const SPACER_VH = 2120;
 const RANGE = [[0, 1.62], [-1, 12.87], [2.6, 14.06], [-2, -1], [2.6, 18.21], [16.6, 22.91], [21.4, 25.11], [22.9, 99]];
-const NAVT = [0, 1.0, 4.1, 13.0, 13.0, 17.5, 22.5, 24.6];
+const NAVT = [0, 1.0, 4.1, 13.0, 13.0, 17.5, 22.5, 24.42];
 const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
 const PA = 3.2, PB = 4.7, TB1 = 12.4, TBE = 14.05;
 /* apple -> board, one camera over 1.5 screens: tilt to the floor (0-.2), dive into one cream tile (.2-.45); the tile becomes e2 (.45-.6: both cameras keep a slow push while the apple layer gives way to the board's own square, colour and texture only); pull straight up to the overhead board (.6-1) */
@@ -765,10 +765,11 @@ export class HomeEngine {
     x.fillStyle = 'rgba(255,250,232,.95)'; x.beginPath(); x.arc(hx - 6, hy - 7, 2.6, 0, 7); x.fill();
     x.fillStyle = '#1A1006'; x.beginPath(); x.arc(hx, hy + 30, 3.4, 0, 7); x.fill(); x.fillRect(hx - 1.5, hy + 30, 3, 10); }
   /* card 05 sits under the window: if its top would come within 24px of the frame and sill, lower it just enough (only that card, only when needed) */
-  fitK5(q) { const i = KEEP.findIndex(k => k.n === '05'), el = q.world.querySelectorAll('[data-keep]')[i], w = this.win0; if (!el || !w) return;
-    if (el.dataset.y0 == null) el.dataset.y0 = el.style.top; el.style.top = el.dataset.y0;
-    const y = el.offsetTop, h = el.offsetHeight, x = el.offsetLeft, hw = el.offsetWidth / 2; if (!h) return false;
-    const need = w[3] + 14 + 12 + 24 + 12, top = y - h; if (x + hw > w[0] - 52 && x - hw < w[2] + 52 && top < need) el.style.top = (y + need - top) + 'px'; q.lay = null; return true; }
+  fitK5(q) { const w = this.win0, els = q.world.querySelectorAll('[data-keep]'); if (!els.length || !w) return; let ok = true;
+    KEEP.forEach((kk, i) => { const el = els[i]; if (!el || (this.n && kk.n !== '05')) return; if (el.dataset.y0 == null) el.dataset.y0 = el.style.top; el.style.top = el.dataset.y0;
+      const y = el.offsetTop, h = el.offsetHeight, x = el.offsetLeft, hw = el.offsetWidth / 2; if (!h) { ok = false; return; }
+      const need = w[3] + 14 + 12 + 24 + 12, top = y - h; if (x + hw > w[0] - 52 && x - hw < w[2] + 52 && top < need) el.style.top = (y + need - top) + 'px'; });
+    q.lay = null; return ok; }
   w7(t) {
     const W = this.W, H = this.H, q = this.q7; if (!q) return;
     { const key = W + 'x' + H + (document.fonts ? document.fonts.status : ''); if (q._k5 !== key && this.fitK5(q) !== false) q._k5 = key; }
@@ -846,7 +847,7 @@ export class HomeEngine {
   /* text reveal: headline lines rise 12px and fade in over 600ms, 80ms apart; body and labels fade 150ms after the last line; out plays the same in reverse */
   seqOf(b) { const RM = this._rm, hw = [], bw = []; b.w.forEach(w => (w.closest('[data-hl]') ? hw : bw).push(w)); const it = [];
     let li = -1, top = null, par = null; hw.forEach(w => { const h = w.closest('[data-hl]'), y = w.offsetTop; if (h !== par || top === null || Math.abs(y - top) > 4) { li++; top = y; par = h; } it.push({ w, s: RM ? 0 : li * 80, d: RM ? 300 : 600, y: !RM }); });
-    const nl = li + 1, he = nl ? (nl - 1) * 80 + 600 : 0, bs = RM ? 0 : (nl ? he + 150 : 0); bw.forEach(w => it.push({ w, s: bs, d: RM ? 300 : 600, y: false }));
+    const nl = li + 1, he = nl ? (nl - 1) * 80 + 600 : 0, inCard = b.m && /^(card|stg)/.test(b.id || ''), bs = RM ? 0 : (nl ? (inCard ? 150 : he + 150) : 0); bw.forEach(w => it.push({ w, s: bs, d: RM ? 300 : (inCard ? 450 : 600), y: false })); /* inside a card or stage panel the label and body follow the title at once, so the panel is never an empty box */
     b.seq = it; b.T = Math.max(1, ...it.map(e => e.s + e.d)); if (b.k == null) b.k = 0; b.k = Math.min(b.k, b.T); }
   copy(t) {
     const ik = this.introK(), now = performance.now(), dt = Math.min(100, Math.max(0, now - (this._cpN || now))); this._cpN = now;
@@ -860,9 +861,9 @@ export class HomeEngine {
         if (/^card/.test(b.id) && this.fBox) { const ci = +b.id.slice(4); let ov = 0; this.fBox.forEach((B, j) => { if (!B || j === ci) return; const ix = Math.min(x + bw, B[2]) - Math.max(x, B[0]), iy = Math.min(y + bh, B[3]) - Math.max(y, B[1]); if (ix > 0 && iy > 0) ov = Math.max(ov, Math.min(ix, iy)); }); v *= 1 - sm(0, 24, ov); } this.S(b.el, 'transform', `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`); } }
       const on = v > .5;
       if (!b.seq || (b.k === 0 && on && !b.on)) { if (on || !b.seq) this.seqOf(b); }
-      b.on = on; const k0 = b.k; b.k = cl(b.k + (on ? dt : -dt), 0, b.T);
-      if (b.m && Math.abs(v - b.v) >= .003) b.el.style.opacity = sm(0, .45, v).toFixed(3); b.v = v;
-      const vis = b.k > 0 || (b.m && v > 0 && on);
+      b.on = on; const k0 = b.k; b.k = cl(b.k + (on ? dt : -dt * 2.5), 0, b.T);
+      if (Math.abs(v - b.v) >= .003 || (v === 0) !== (b.v === 0) || (v === 1) !== (b.v === 1)) b.el.style.opacity = sm(0, .45, v).toFixed(3); b.v = v;
+      const vis = v > 0 && (b.k > 0 || on);
       if (b._vis !== vis) { b._vis = vis; b.el.style.visibility = vis ? 'visible' : 'hidden'; }
       b.el.style.pointerEvents = on && b.k > b.T * .5 ? 'auto' : 'none';
       if (b.k === k0 && b._done) continue; b._done = b.k === 0 || b.k === b.T;
@@ -874,7 +875,7 @@ export class HomeEngine {
     const wi = this.worldAt(t);
     if (wi !== this._wi) {
       const pw = this._wi; this._wi = wi; const c = INK[wi] ? '#1E1B18' : '#F2EEE6';
-      const nav = this.ch.nav; if (nav) { if (nav._tr0 == null) nav._tr0 = nav.style.transition; nav.style.transition = wi === 6 || pw === 6 ? 'color 300ms ease,text-shadow 300ms ease' : nav._tr0; nav.style.color = c; { const lk = this.ch.links; if (lk) lk.style.textShadow = wi === 5 ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : ''; } nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
+      const nav = this.ch.nav; if (nav) { if (nav._tr0 == null) nav._tr0 = nav.style.transition; nav.style.transition = wi === 6 || pw === 6 ? 'color 300ms ease,text-shadow 300ms ease' : nav._tr0; nav.style.color = c; { const lk = this.ch.links; if (lk) lk.style.textShadow = wi === 5 ? '0 0 6px rgba(246,214,172,.55)' : ''; } nav.style.textShadow = SOFT[wi] ? '0 0 2px rgba(251,246,234,.9),0 1px 14px rgba(251,246,234,.95)' : wi === 0 ? '0 1px 2px rgba(18,34,68,.7),0 0 16px rgba(18,34,68,.6)' : 'none'; }
       if (this.props.notes || this.q('notes') === '1') this.setState({ world: wi });
     }
     const pr = this.ch.prog; if (pr) this.S(pr, 'transform', `scaleX(${(t / TEND).toFixed(4)})`);
