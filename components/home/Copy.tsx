@@ -89,7 +89,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
         <h2 data-hl className={s.display}>
           <Ph><W>Your</W> <W>idea</W> <W>has</W></Ph> <Ph><W>a</W> <W italic className={s.accent}>whole company</W></Ph> <Ph><W>inside</W> <W>it.</W></Ph>
         </h2>
-        <p data-w className={s.body} style={{ maxWidth: "calc(25.3em + 52px)", fontSize: "clamp(16px,1.1vw,19px)", letterSpacing: 0, padding: "16px 26px", marginLeft: -26, color: "rgba(30,27,24,.88)", background: "radial-gradient(ellipse 64% 96% at 50% 50%,rgba(250,232,212,.95),rgba(250,232,212,.9) 62%,rgba(250,232,212,0))" }}>We find the brand, the product and the business model in it. Then we build each one.</p>
+        <p data-w className={s.body} style={{ maxWidth: "calc(25.3em + 112px)", fontSize: "clamp(16px,1.1vw,19px)", letterSpacing: 0, padding: "30px 56px", margin: "-14px 0 0 -56px", color: "rgba(30,27,24,.9)", background: "radial-gradient(ellipse 50% 50% at 50% 50%,rgba(250,232,212,.94),rgba(250,232,212,.86) 45%,rgba(250,232,212,.45) 72%,rgba(250,232,212,0) 100%)" }}>We find the brand, the product and the business model in it. Then we build each one.</p>
       </section>
 
       <section id="how-we-build" data-copy data-a="13.6" data-b="16.76" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--text)" }}>
@@ -180,7 +180,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
         <svg width="1" height="1" className={s.armSvg}><g data-armflap /></svg>
       </div>
 
-      <footer data-copy data-a="27.75" data-b="99" className={`${s.copy} ${s.wide} ${s.footer}`} style={{ top: L.tFoot }}>
+      <footer data-copy data-a="28.0" data-b="99" className={`${s.copy} ${s.wide} ${s.footer}`} style={{ top: L.tFoot }}>
         <div data-w className={s.footCol} style={{ gap: 10 }}>
           <span className={s.footBrand}>{studioName}</span>
           <span style={{ opacity: 0.88 }}>We build companies for founders.</span>

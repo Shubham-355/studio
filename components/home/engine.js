@@ -15,7 +15,8 @@ const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
 const PA = 3.2, PB = 4.7, TB1 = 12.4, TBE = 14.05;
 /* apple -> board, one camera over 1.5 screens: tilt to the floor (0-.2), dive into one cream tile (.2-.45); the tile becomes e2 (.45-.6: both cameras keep a slow push while the apple layer gives way to the board's own square, colour and texture only); pull straight up to the overhead board (.6-1) */
 const DU1 = .2, UF = .45, UP = .6, TH = PA + UF * (PB - PA), SB = (PB - PA) * (1 - UF), TF = TB1 + (UP - UF) / (1 - UF) * (TBE - TB1), DTILE = [-2, 2];
-const V1 = s => s <= TH ? s : s <= PB ? TB1 + (s - TH) / SB * (TBE - TB1) : s + TBE - PB, VI1 = t => t <= TH ? t : t < TB1 ? TH : t <= TBE ? TH + (t - TB1) / (TBE - TB1) * SB : t - (TBE - PB);
+/* the pull-up out of the tile starts fast and settles slowly (ease-out), so the bare sand passes quickly and the board is in view sooner */
+const PUK = 2.1, V1 = s => s <= TH ? s : s <= PB ? TB1 + (1 - Math.pow(1 - (s - TH) / SB, PUK)) * (TBE - TB1) : s + TBE - PB, VI1 = t => t <= TH ? t : t < TB1 ? TH : t <= TBE ? TH + (1 - Math.pow(1 - (t - TB1) / (TBE - TB1), 1 / PUK)) * SB : t - (TBE - PB);
 const QA = 16.6, QB = 18.2, QL = 1.2, QK = (QB - QA) / QL, QD = QB - QA - QL;
 // The sky tilt (0.08 to 1.58) gets 1.2 screens of scroll instead of 1.5.
 const V0 = s => s <= .08 ? s : s <= 1.28 ? .08 + (s - .08) * 1.25 : s + .3, VI0 = t => t <= .08 ? t : t <= 1.58 ? .08 + (t - .08) / 1.25 : t - .3;
@@ -494,7 +495,7 @@ export class HomeEngine {
     q.gulls.forEach((el, i) => { const gp = G.gulls[i]; if (!gp) return; const a = this.now * (.04 + i * .011) + i * 2.1, x = W * gp[0] + Math.sin(a) * W * .03, y = dy + H * gp[1] + Math.sin(a * 1.7) * 6, s2 = (this.n ? .3 : .34) + i * .05, fl = .7 + Math.sin(this.now * 3 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
       this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
     const st = this.st.apple8, u = this.au(t), D = this.dive(u);
-    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld }; st.peb = G.peb;
+    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld }; st.peb = G.peb; st.lit = sm(2.62, 3.15, t);
     this.S(q.alay, 'visibility', t < TF ? 'visible' : 'hidden'); this.S(q.alay, 'opacity', (1 - sm(UF, UP, u)).toFixed(3));
   }
   w3(t) {
@@ -627,7 +628,7 @@ export class HomeEngine {
     const st = this.st.sandboard, W = this.W, H = this.H, S = this.S6, ql = this.q5 && this.q5.ql; if (!S) return;
     const m = sm(.9, .97, lin(14.25, 16.55, t)), p = lin(QA, QB, t);
     st.qrot = (1 - m) * 2.4 + Math.sin(this.now * .25) * .25 * (1 - sm(0, .3, p));
-    if (!(t > QA && t < QB)) { st.q = null; this.qs = null; this.S(ql, 'visibility', 'hidden'); return; }
+    if (!(t >= QA && t < QB)) { st.q = null; this.qs = null; this.S(ql, 'visibility', 'hidden'); return; }
     const a = W / H, fq = a < 1 ? 44 : 30, th0 = Math.tan(fq * Math.PI / 360), fv = sm(.5, 1, p), fov = mx(fq, this.fovW || fq, fv), th = Math.tan(fov * Math.PI / 360), oy = .06 * fv, cy0 = H / 2 + oy * H;
     const O = a < 1 ? [26, 8.5, .3] : [18.5, 9.4, 0], S1 = a < 1 ? [4.4, .8] : [3.5, -.35];
     const A = [QX, QY + QS * YC, QZ + QS * QR(YC)], dE = Math.min(.07 / th0, .12 / (th0 * a));
