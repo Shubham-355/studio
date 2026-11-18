@@ -14,7 +14,7 @@ const NAVT = [0, 1.0, 4.1, 13.0, 13.0, 17.5, 22.5, 24.42];
 const JUMP = { home: 0, how: 14.2, companies: 18.6, contact: 26.9 };
 const PA = 3.2, PB = 4.7, TB1 = 12.4, TBE = 14.05;
 /* apple -> board, one camera over 1.5 screens: tilt to the floor (0-.2), dive into one cream tile (.2-.45); the tile becomes e2 (.45-.6: both cameras keep a slow push while the apple layer gives way to the board's own square, colour and texture only); pull straight up to the overhead board (.6-1) */
-const DU1 = .2, UF = .45, UP = .6, TH = PA + UF * (PB - PA), SB = (PB - PA) * (1 - UF), TF = TB1 + (UP - UF) / (1 - UF) * (TBE - TB1), DTILE = [-2, 2];
+const DU1 = .2, UF = .45, UP = .6, TH = PA + UF * (PB - PA), SB = (PB - PA) * (1 - UF), TF = TB1 + (UP - UF) / (1 - UF) * (TBE - TB1);
 /* the pull-up out of the tile starts fast and settles slowly (ease-out), so the bare sand passes quickly and the board is in view sooner */
 const PUK = 2.1, V1 = s => s <= TH ? s : s <= PB ? TB1 + (1 - Math.pow(1 - (s - TH) / SB, PUK)) * (TBE - TB1) : s + TBE - PB, VI1 = t => t <= TH ? t : t < TB1 ? TH : t <= TBE ? TH + (1 - Math.pow(1 - (t - TB1) / (TBE - TB1), 1 / PUK)) * SB : t - (TBE - PB);
 const QA = 16.6, QB = 18.2, QL = 1.2, QK = (QB - QA) / QL, QD = QB - QA - QL;
@@ -187,13 +187,14 @@ export class HomeEngine {
   }
   diveH() { const G = this.g2; return .47 / (Math.tan(G.fov * Math.PI / 360) * Math.max(1, this.W / this.H)); }
   dive(u) {
-    const G = this.g2, y0 = G.yaw, n = this.n, E = x => .5 * x + .5 * x * x * (3 - 2 * x), T = DTILE, hE = this.diveH();
+    /* v19f: the dive goes into the bottle and down onto one cream square of the ship's chessboard deck */
+    const G = this.g2, y0 = G.yaw, n = this.n, E = x => .5 * x + .5 * x * x * (3 - 2 * x), dk = this.st.apple8.deck || { P: [-.751, .473, -.555], yaw: -.67, size: .0624 }, T = [dk.P[0], dk.P[2]], Ty = dk.P[1], hE = this.diveH() * dk.size;
     const p0 = Math.atan(G.tan1), p1 = (n ? -80 : -78) * Math.PI / 180, d1 = n ? 2.8 : 3.0;
-    const fw = (p, y) => [-Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p)], at = (p, d, y) => { const f = fw(p, y); return [T[0] - d * f[0], -d * f[1], T[1] - d * f[2]]; };
-    let P, pitch, yaw = y0;
-    if (u <= DU1) { const e = E(u / DU1), P1 = at(p1, d1, y0); P = G.C.map((v, i) => mx(v, P1[i], e)); pitch = mx(p0, p1, e); }
-    else { const e = E(Math.min(1, (u - DU1) / (UF - DU1))); pitch = mx(p1, -Math.PI / 2, e); yaw = mx(y0, 0, e); P = at(pitch, Math.exp(mx(Math.log(d1), Math.log(hE), e)) * this.push(u), yaw); }
-    return { P, pitch, yaw };
+    const fw = (p, y) => [-Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p)], at = (p, d, y) => { const f = fw(p, y); return [T[0] - d * f[0], Ty - d * f[1], T[1] - d * f[2]]; };
+    let P, pitch, yaw = y0, dd = d1;
+    if (u <= DU1) { const e = E(u / DU1), P1 = at(p1, d1, y0), d0 = Math.hypot(G.C[0] - T[0], G.C[1] - Ty, G.C[2] - T[1]), w = 1 - Math.pow(1 - e, 3); pitch = mx(p0, p1, e); const Po = at(pitch, mx(d0, d1, e), y0); P = G.C.map((v, i) => mx(mx(v, P1[i], e), Po[i], w * (1 - e) + e)); }
+    else { const e = E(Math.min(1, (u - DU1) / (UF - DU1))); pitch = mx(p1, -Math.PI / 2, e); yaw = mx(y0, dk.yaw, e); dd = Math.exp(mx(Math.log(d1), Math.log(hE), e)) * this.push(u); P = at(pitch, dd, yaw); }
+    return { P, pitch, yaw, d: dd };
   }
   tiltAt(t) { const G = this.g2; if (!G) return null; const e = sm(.08, 1.58, t); let tn = mx(G.tan0, G.tan1, e); if (t > PA) tn = Math.max(-60, Math.tan(this.dive(this.au(t)).pitch)); return { e, tn, top: this.H / 2 + G.F * tn - G.Yh, topE: this.H - G.L }; }
   layout3() {
@@ -495,7 +496,7 @@ export class HomeEngine {
     q.gulls.forEach((el, i) => { const gp = G.gulls[i]; if (!gp) return; const a = this.now * (.04 + i * .011) + i * 2.1, x = W * gp[0] + Math.sin(a) * W * .03, y = dy + H * gp[1] + Math.sin(a * 1.7) * 6, s2 = (this.n ? .3 : .34) + i * .05, fl = .7 + Math.sin(this.now * 3 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
       this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
     const st = this.st.apple8, u = this.au(t), D = this.dive(u);
-    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld }; st.peb = G.peb; st.lit = sm(2.62, 3.15, t);
+    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld, near: t > PA ? cl(D.d * .25, .004, .04) : 0 }; st.peb = G.peb; st.lit = sm(2.62, 3.15, t); st.gfade = t > PA ? cl((D.d - .8) / 1.3, 0, 1) : 1; st.calm = sm(0, .12, u);
     this.S(q.alay, 'visibility', t < TF ? 'visible' : 'hidden'); this.S(q.alay, 'opacity', (1 - sm(UF, UP, u)).toFixed(3));
   }
   w3(t) {
