@@ -188,7 +188,7 @@ export class HomeEngine {
   diveH() { const G = this.g2; return .47 / (Math.tan(G.fov * Math.PI / 360) * Math.max(1, this.W / this.H)); }
   dive(u) {
     /* v19f: the dive goes into the bottle and down onto one cream square of the ship's chessboard deck */
-    const G = this.g2, y0 = G.yaw, n = this.n, E = x => .5 * x + .5 * x * x * (3 - 2 * x), dk = this.st.apple8.deck || { P: [-.751, .473, -.555], yaw: -.67, size: .0624 }, T = [dk.P[0], dk.P[2]], Ty = dk.P[1], hE = this.diveH() * dk.size;
+    const G = this.g2, y0 = G.yaw, n = this.n, E = x => .5 * x + .5 * x * x * (3 - 2 * x), dk = this.st.apple8.deck || { P: [-.735, .473, -.585], yaw: -.67, size: .0312 }, T = [dk.P[0], dk.P[2]], Ty = dk.P[1], hE = this.diveH() * dk.size;
     const p0 = Math.atan(G.tan1), p1 = (n ? -80 : -78) * Math.PI / 180, d1 = n ? 2.8 : 3.0;
     const fw = (p, y) => [-Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p)], at = (p, d, y) => { const f = fw(p, y); return [T[0] - d * f[0], Ty - d * f[1], T[1] - d * f[2]]; };
     let P, pitch, yaw = y0, dd = d1;
@@ -496,7 +496,7 @@ export class HomeEngine {
     q.gulls.forEach((el, i) => { const gp = G.gulls[i]; if (!gp) return; const a = this.now * (.04 + i * .011) + i * 2.1, x = W * gp[0] + Math.sin(a) * W * .03, y = dy + H * gp[1] + Math.sin(a * 1.7) * 6, s2 = (this.n ? .3 : .34) + i * .05, fl = .7 + Math.sin(this.now * 3 + i * 1.3) * .3, dir = Math.cos(a) >= 0 ? 1 : -1;
       this.S(el, 'transform', `translate(${(x - 45).toFixed(1)}px,${(y - 20).toFixed(1)}px) scale(${(s2 * dir).toFixed(3)},${(s2 * fl).toFixed(3)})`); });
     const st = this.st.apple8, u = this.au(t), D = this.dive(u);
-    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld, near: t > PA ? cl(D.d * .25, .004, .04) : 0 }; st.peb = G.peb; st.lit = sm(2.62, 3.15, t); st.gfade = t > PA ? cl((D.d - .8) / 1.3, 0, 1) : 1; st.calm = sm(0, .12, u);
+    st.cam = { C: G.C, P: t > PA ? D.P : null, pitch: t > PA ? D.pitch : Math.atan(T.tn), fov: G.fov, shift: G.shift, yaw: t > PA ? D.yaw : G.yaw, ld: G.ld, near: t > PA ? cl(D.d * .25, .004, .04) : 0 }; st.peb = G.peb; st.lit = sm(2.62, 3.15, t); st.gfade = t > PA ? cl((D.d - .8) / 1.3, 0, 1) : 1; st.calm = sm(0, .12, u); st.pk = t > PA ? cl((D.d / ((st.deck && st.deck.size) || .0312) - .95) / 3.3, .03, 1) : 1;
     this.S(q.alay, 'visibility', t < TF ? 'visible' : 'hidden'); this.S(q.alay, 'opacity', (1 - sm(UF, UP, u)).toFixed(3));
   }
   w3(t) {
@@ -510,7 +510,7 @@ export class HomeEngine {
     q.b3c.forEach(cv => { const i = +cv.dataset.l, L = this.decks.b3 && this.decks.b3[i]; if (L) this.S(cv, 'transform', `matrix(${s.toFixed(5)},0,0,${s.toFixed(5)},${(sx0 + s * L.x0 + this.drift(i)).toFixed(2)},${(sy0 + s * L.y0 + v3 * this.pf(L.f)).toFixed(2)})`); });
   }
   drawBall(t) {
-    const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = t >= TB1 && t < 17.55;
+    const q = this.q3, x = q && q.bx, S = this.S6; if (!x || !S) return; const on = false; /* v19g: the board is on the ship's deck, no beach ball */
     this.S(q.ball, 'visibility', on ? 'visible' : 'hidden'); if (!on || this._ballT === t) return; this._ballT = t;
     const k = q.ball._k, P = window.Painter, pr = P.cam6.proj; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, q.ball.width, q.ball.height);
     let c; if (t < 14.05) c = this.cam6(t); else c = this.qs ? this.qs.c6 : S.camO;
