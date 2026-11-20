@@ -903,7 +903,8 @@ export class HomeEngine {
     // At the very top the apple is still hidden behind the eye: build it once the page has settled, or as soon as the reader scrolls.
     if (!this._glReady) { if (t < .02 && !this._moving) { if (!this._glIdle) this._glIdle = (window.requestIdleCallback || setTimeout)(() => { this._glReady = true; }, { timeout: 2500 }); return; } this._glReady = true; }
     const M = [['apple8', -1, TF + .05], ['sandboard', 2.55, 18.3], ['arcade8', 15.9, 23.0], ['roomqueen', 20.4, 25.2]];
-    M.forEach(([k, a, b]) => { const el = this.m3d[k]; if (!el) return; const on = el._sc ? t > a - .8 && t < b + .8 : t > a - .5 && t < b + .3;
+    // A scene also builds early while the page is still (a reader pausing on a headline), so its WebGL setup does not land mid-scroll.
+    M.forEach(([k, a, b]) => { const el = this.m3d[k]; if (!el) return; const on = el._sc ? t > a - 2.2 && t < b + .8 : (t > a - .5 || (!this._moving && t > a - 2)) && t < b + .3;
       if (on && !el._sc) el._sc = window.Scene3D.mount(el, k, () => this.st[k]).catch(e => { console.warn('3d ' + k + ': ' + (e && (e.message || e.type) || e)); return null; });
       else if (!on && el._sc) { const p = el._sc; el._sc = null; p.then(s => s && s.dispose()); } });
   }
