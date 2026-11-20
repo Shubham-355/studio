@@ -16,7 +16,7 @@ const PA = 3.2, PB = 4.7, TB1 = 12.4, TBE = 14.05;
 /* apple -> board, one camera over 1.5 screens: tilt to the floor (0-.2), dive into one cream tile (.2-.45); the tile becomes e2 (.45-.6: both cameras keep a slow push while the apple layer gives way to the board's own square, colour and texture only); pull straight up to the overhead board (.6-1) */
 const DU1 = .2, UF = .45, UP = .6, TH = PA + UF * (PB - PA), SB = (PB - PA) * (1 - UF), TF = TB1 + (UP - UF) / (1 - UF) * (TBE - TB1);
 /* the pull-up out of the tile starts fast and settles slowly (ease-out), so the bare sand passes quickly and the board is in view sooner */
-const PUK = 2.1, V1 = s => s <= TH ? s : s <= PB ? TB1 + (1 - Math.pow(1 - (s - TH) / SB, PUK)) * (TBE - TB1) : s + TBE - PB, VI1 = t => t <= TH ? t : t < TB1 ? TH : t <= TBE ? TH + (1 - Math.pow(1 - (t - TB1) / (TBE - TB1), 1 / PUK)) * SB : t - (TBE - PB);
+const PUK = 2.1, V1 = s => s <= TH ? s : s <= PB ? TB1 + (1 - Math.pow(Math.max(0, 1 - (s - TH) / SB), PUK)) * (TBE - TB1) : s + TBE - PB, VI1 = t => t <= TH ? t : t < TB1 ? TH : t <= TBE ? TH + (1 - Math.pow(Math.max(0, 1 - (t - TB1) / (TBE - TB1)), 1 / PUK)) * SB : t - (TBE - PB);
 const QA = 16.6, QB = 18.2, QL = 1.2, QK = (QB - QA) / QL, QD = QB - QA - QL;
 // The sky tilt (0.08 to 1.58) gets 1.2 screens of scroll instead of 1.5.
 const V0 = s => s <= .08 ? s : s <= 1.28 ? .08 + (s - .08) * 1.25 : s + .3, VI0 = t => t <= .08 ? t : t <= 1.58 ? .08 + (t - .08) / 1.25 : t - .3;
