@@ -899,7 +899,8 @@ export class HomeEngine {
   // three.js scenes live around the stretch where their world is on screen: mounted early so shaders compile
   // before they are needed, and kept a little longer so scrolling across a boundary does not rebuild them.
   mounts(t) {
-    if (!window.Scene3D || this._nogl) return;
+    // no 3D setup while the loader is up: its shader compiles compete with the eye plates for the GPU
+    if (!window.Scene3D || this._nogl || this.state.loader) return;
     // At the very top the apple is still hidden behind the eye: build it once the page has settled, or as soon as the reader scrolls.
     if (!this._glReady) { if (t < .02 && !this._moving) { if (!this._glIdle) this._glIdle = (window.requestIdleCallback || setTimeout)(() => { this._glReady = true; }, { timeout: 2500 }); return; } this._glReady = true; }
     const M = [['apple8', -1, TF + .05], ['sandboard', 2.55, 18.3], ['arcade8', 15.9, 23.0], ['roomqueen', 20.4, 25.2]];
@@ -925,7 +926,8 @@ export class HomeEngine {
     const t0 = performance.now();
     if (!red) this.$$('[data-lword]').forEach(w => { w.style.webkitMaskImage = w.style.maskImage = 'linear-gradient(90deg,#000 42%,rgba(0,0,0,.35) 50%,transparent 58%)'; w.style.webkitMaskSize = w.style.maskSize = '260% 100%'; w.animate([{ maskPosition: '100% 0', webkitMaskPosition: '100% 0' }, { maskPosition: '0% 0', webkitMaskPosition: '0% 0' }], { duration: 900, easing: 'cubic-bezier(.5,.1,.3,1)', fill: 'both' }); });
     // the page only tears open once the first scene (sky, face, eye, skin) is painted, capped so a slow device is never stuck here
-    this.heroReady(6000).then(() => {
+    // the cap is only a safety net for a stuck paint: opening early showed the page before the eye had painted
+    this.heroReady(15000).then(() => {
       if (!this._alive) return;
       if (red) { const d = Math.max(100, 500 - (performance.now() - t0)); this.$('[data-loader]').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, delay: d, fill: 'forwards' }); setTimeout(() => this.setState({ loader: false }), d + 750); this._introT0 = performance.now() + d + 400; return; }
       const d = Math.max(60, 980 - (performance.now() - t0)), o = { duration: 760, delay: d, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' };
