@@ -24,16 +24,29 @@
   pointer-events: none;
 }
 
+/* A sheet of warm paper: soft light behind the name, a gentle falloff to the edges, and a fine paper tooth (noise, not a lattice).
+   Both halves carry the same full-size sheet, so the tear opens through one continuous surface. */
 .loaderHalf {
   position: absolute;
   inset: 0;
-  background: #EFE6D3;
+  background-color: var(--cream);
   background-image:
-    repeating-linear-gradient(0deg, rgba(27, 29, 36, 0.05) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(27, 29, 36, 0.04) 0 1px, transparent 1px 3px);
+    radial-gradient(ellipse 60% 48% at 50% 44%, rgba(255, 252, 244, 0.7), rgba(255, 252, 244, 0) 70%),
+    radial-gradient(ellipse 130% 110% at 50% 44%, rgba(120, 92, 62, 0) 52%, rgba(120, 92, 62, 0.13) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .34 0 0 0 0 .27 0 0 0 0 .19 .34 0 0 0 -.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: auto, auto, 240px 240px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* sits a little above the true middle, where the eye reads the centre of a page */
+.loaderMark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 1.6vw, 24px);
+  transform: translateY(-3vh);
 }
 
 .loaderWord {
@@ -45,12 +58,49 @@
   letter-spacing: -0.01em;
   color: var(--text);
   white-space: nowrap;
+  /* room inside the box for the descenders and the italic overhang: the wipe-in mask only covers the element's own box */
+  padding: 0.06em 0.16em 0.24em;
+  /* rises softly into place on first paint. Opacity and transform run on the compositor, so this keeps moving while the
+     page's code is still loading (a mask wipe runs on the main thread and sat frozen, hidden, for several seconds) */
+  animation: loaderRise 1100ms cubic-bezier(0.2, 0.7, 0.2, 1) 80ms both;
+}
+
+.loaderBar {
+  animation: loaderRise 1100ms cubic-bezier(0.2, 0.7, 0.2, 1) 380ms both;
+}
+
+@keyframes loaderRise {
+  from { opacity: 0; transform: translateY(0.35rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loaderWord, .loaderBar { animation: none; }
+}
+
+.loaderBar {
+  position: relative;
+  width: clamp(112px, 12vw, 200px);
+  height: 1px;
+  margin-top: -0.6em;
+  background: rgba(30, 27, 24, 0.14);
+  overflow: hidden;
+}
+
+.loaderFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--lp, 0) * 100%);
+  background: rgba(30, 27, 24, 0.7);
+  transition: width 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .loaderRim {
   position: absolute;
   inset: 0;
   background: #FBF8F1;
+  /* the torn paper edge appears only when the sheet starts to part, so no crack runs through the name while it loads */
+  opacity: 0;
 }
 
 /* ---------- nav ---------- */

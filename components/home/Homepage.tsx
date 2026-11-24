@@ -94,7 +94,11 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
         <div data-loader className={s.loader}>
           {(["l", "r"] as const).map((h) => (
             <div key={h} data-lhalf={h} className={s.loaderHalf}>
-              <div data-lword className={s.loaderWord}>{studioName}</div>
+              <div className={s.loaderMark}>
+                <div data-lword className={s.loaderWord}>{studioName}</div>
+                {/* fills as the first scene's plates actually finish painting */}
+                <div aria-hidden className={s.loaderBar}><span className={s.loaderFill} /></div>
+              </div>
               <div data-lrim className={s.loaderRim} />
             </div>
           ))}

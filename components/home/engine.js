@@ -2,7 +2,7 @@
 /* Scroll-driven painted homepage. The scroll position maps to a timeline t (0 -> TEND);
    each world paints itself onto canvases once, then every frame only moves cameras. */
 import { loadPainter } from "@/lib/painter";
-import { canPaintRemotely, paintRemote } from "@/lib/painter/remote";
+import { canPaintRemotely, paintRemote, remoteLanes } from "@/lib/painter/remote";
 import { COMPANIES, KEEP } from "./content";
 
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lin = (a, b, x) => cl((x - a) / (b - a)), sm = (a, b, x) => { const t = lin(a, b, x); return t * t * (3 - 2 * t); }, mx = (a, b, t) => a + (b - a) * t;
@@ -70,7 +70,9 @@ export class HomeEngine {
     this._onAct = () => { this._act = performance.now(); };
     document.addEventListener('visibilitychange', this._onVis); ACT.forEach(e => addEventListener(e, this._onAct, { passive: true }));
     this._alive = true; this.t = 0; this.mv = {}; this.pos = {};
-    loadPainter().then(() => this.waitLibs()).then(() => { if (this._alive) this.boot(); }).catch(e => console.error(e));
+    // boot is several seconds of setup on a cold load: let the browser paint the loader first, so the visitor never sees a blank page
+    const painted = new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+    Promise.all([loadPainter(), painted]).then(() => this.waitLibs()).then(() => { if (this._alive) this.boot(); }).catch(e => console.error(e));
   }
   narrowChanged() { if (!this.W) return; requestAnimationFrame(() => { this.disposeAll(); this.relayout(true); }); }
   destroy() {
@@ -431,7 +433,8 @@ export class HomeEngine {
       const [nb, nd] = nearest(false);
       if (nb >= 0) idle(step, nd <= 1.5); else done();
     };
-    idle(step, true); remoteStep();
+    // one worker lane per paint worker, so plates paint side by side; each lane takes the nearest plate still waiting
+    idle(step, true); for (let i = Math.max(1, remote ? remoteLanes() : 1); i > 0; i--) remoteStep();
   }
 
   /* ---------- frame loop ---------- */
@@ -920,17 +923,21 @@ export class HomeEngine {
     const P = window.Painter, red = this.red();
     const line = P.tornLine(77), pts = line.map(([x, y]) => `calc(50% + ${x.toFixed(1)}px) ${y}%`), rimW = line.map((_, i) => 4 + ((i * 37) % 7));
     const L = this.$('[data-lhalf="l"]'), R = this.$('[data-lhalf="r"]'); if (!L || !R) { this._introT0 = performance.now(); return; }
-    L.style.clipPath = `polygon(0 0,${pts.join(',')},0 100%)`; R.style.clipPath = `polygon(${pts.join(',')},100% 100%,100% 0)`;
+    // the left half reaches 1px past the tear so the two halves overlap and no hairline seam shows between them
+    const ptsL = line.map(([x, y]) => `calc(50% + ${(x + 1).toFixed(1)}px) ${y}%`);
+    L.style.clipPath = `polygon(0 0,${ptsL.join(',')},0 100%)`; R.style.clipPath = `polygon(${pts.join(',')},100% 100%,100% 0)`;
     this.$('[data-lrim]', L).style.clipPath = `polygon(${pts.join(',')},${line.map(([x, y], i) => `calc(50% + ${(x - rimW[i]).toFixed(1)}px) ${y}%`).reverse().join(',')})`;
     this.$('[data-lrim]', R).style.clipPath = `polygon(${pts.join(',')},${line.map(([x, y], i) => `calc(50% + ${(x + rimW[i]).toFixed(1)}px) ${y}%`).reverse().join(',')})`;
     const t0 = performance.now();
-    if (!red) this.$$('[data-lword]').forEach(w => { w.style.webkitMaskImage = w.style.maskImage = 'linear-gradient(90deg,#000 42%,rgba(0,0,0,.35) 50%,transparent 58%)'; w.style.webkitMaskSize = w.style.maskSize = '260% 100%'; w.animate([{ maskPosition: '100% 0', webkitMaskPosition: '100% 0' }, { maskPosition: '0% 0', webkitMaskPosition: '0% 0' }], { duration: 900, easing: 'cubic-bezier(.5,.1,.3,1)', fill: 'both' }); });
+    // the name wipes in from CSS on first paint, so it shows before any of this code has loaded
     // the page only tears open once the first scene (sky, face, eye, skin) is painted, capped so a slow device is never stuck here
     // the cap is only a safety net for a stuck paint: opening early showed the page before the eye had painted
     this.heroReady(15000).then(() => {
       if (!this._alive) return;
       if (red) { const d = Math.max(100, 500 - (performance.now() - t0)); this.$('[data-loader]').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, delay: d, fill: 'forwards' }); setTimeout(() => this.setState({ loader: false }), d + 750); this._introT0 = performance.now() + d + 400; return; }
       const d = Math.max(60, 980 - (performance.now() - t0)), o = { duration: 760, delay: d, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' };
+      // the torn edge only shows once the sheet starts to part
+      this.$$('[data-lrim]').forEach(r => r.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, delay: d, fill: 'forwards' }));
       L.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(-62%) rotate(-3deg)', opacity: .2 }], o);
       R.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(62%) rotate(3deg)', opacity: .2 }], o);
       this._introT0 = performance.now() + d + 170; setTimeout(() => this.setState({ loader: false }), d + 800);
@@ -938,7 +945,9 @@ export class HomeEngine {
   }
   heroReady(cap) {
     const cvs = this._hero || [], t0 = performance.now();
-    return new Promise(res => { const tick = () => { if (!this._alive || performance.now() - t0 > cap || cvs.every(cv => cv._pv || cv._pf)) res(); else setTimeout(tick, 50); }; tick(); });
+    // the loader's hairline shows the real share of the first scene that has finished painting
+    const L = this.$('[data-loader]'), prog = () => { if (L) L.style.setProperty('--lp', (.08 + .92 * cvs.filter(cv => cv._pv || cv._pf).length / Math.max(1, cvs.length)).toFixed(3)); };
+    return new Promise(res => { const tick = () => { prog(); if (!this._alive || performance.now() - t0 > cap || cvs.every(cv => cv._pv || cv._pf)) { if (L) L.style.setProperty('--lp', '1'); res(); } else setTimeout(tick, 50); }; tick(); });
   }
   // every 3 to 8 seconds while the eye is on screen, one in five a double blink
   blink() {
