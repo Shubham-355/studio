@@ -535,7 +535,8 @@ export class HomeEngine {
   }
   /* the side gutter every block lines up on; the stage cards sit under the beach headline */
   gutter() { return this.n ? 16 : cl(this.W * .0444, 28, 64); }
-  stgSpot() { if (this._stgY == null) { const h = this.$('[data-bh]'); if (!h) return null; const r = h.getBoundingClientRect(); if (!(r.height > 0)) return null; this._stgY = r.bottom + 48; } return [this.gutter(), this._stgY]; }
+  // on a phone the board fills the middle of the screen, so the stage text sits below it on the open planks
+  stgSpot() { if (this.n) return [this.gutter(), 'bottom']; if (this._stgY == null) { const h = this.$('[data-bh]'); if (!h) return null; const r = h.getBoundingClientRect(); if (!(r.height > 0)) return null; this._stgY = r.bottom + 48; } return [this.gutter(), this._stgY]; }
   w5(t) {
     const W = this.W, H = this.H, q = this.q5, S = this.S6; if (!q || !S) return;
     const ty = -1.2 * H, Q = this.qs, bOn = t >= TB1, sb = this.st.sandboard, pc = bOn && t < TBE ? this.pullCam(t) : null;
@@ -863,7 +864,7 @@ export class HomeEngine {
       if (b.m && !this.n && b.id !== 'ccard' && !this.pos[b.id]) v = 0;
       if (b.hero) v *= ik;
       if (b.id === 'ccard') { if (this.cardT) this.S(b.el, 'transform', this.cardT); }
-      else if (b.m && (!this.n || /^stg/.test(b.id))) { const p = this.pos[b.id]; if (p) { const bh = b.h || (b.h = b.el.offsetHeight || 0), bw = b.ow || (b.ow = b.el.offsetWidth || 0), py = p[1] === 'mid' ? this.H * .525 - bh / 2 : p[1], y = /^stg/.test(b.id) ? py : cl(py, 104, Math.max(104, this.H - bh - 20)), x = /^stg/.test(b.id) ? p[0] : cl(p[0], 16, Math.max(16, this.W - bw - 16));
+      else if (b.m && (!this.n || /^stg/.test(b.id))) { const p = this.pos[b.id]; if (p) { const bh = b.h || (b.h = b.el.offsetHeight || 0), bw = b.ow || (b.ow = b.el.offsetWidth || 0), py = p[1] === 'mid' ? this.H * .525 - bh / 2 : p[1] === 'bottom' ? this.H - bh - 28 : p[1], y = /^stg/.test(b.id) ? py : cl(py, 104, Math.max(104, this.H - bh - 20)), x = /^stg/.test(b.id) ? p[0] : cl(p[0], 16, Math.max(16, this.W - bw - 16));
         if (/^card/.test(b.id) && this.fBox) { const ci = +b.id.slice(4); let ov = 0; this.fBox.forEach((B, j) => { if (!B || j === ci) return; const ix = Math.min(x + bw, B[2]) - Math.max(x, B[0]), iy = Math.min(y + bh, B[3]) - Math.max(y, B[1]); if (ix > 0 && iy > 0) ov = Math.max(ov, Math.min(ix, iy)); }); v *= 1 - sm(0, 24, ov); } this.S(b.el, 'transform', `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`); } }
       const on = v > .5;
       if (!b.seq || (b.k === 0 && on && !b.on)) { if (on || !b.seq) this.seqOf(b); }
