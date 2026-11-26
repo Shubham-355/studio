@@ -935,7 +935,8 @@ export class HomeEngine {
     this.heroReady(15000).then(() => {
       if (!this._alive) return;
       if (red) { const d = Math.max(100, 500 - (performance.now() - t0)); this.$('[data-loader]').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, delay: d, fill: 'forwards' }); setTimeout(() => this.setState({ loader: false }), d + 750); this._introT0 = performance.now() + d + 400; return; }
-      const d = Math.max(60, 980 - (performance.now() - t0)), o = { duration: 760, delay: d, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' };
+      // a short hold so the name is seen; a returning visitor's plates come from the browser at once, so this is most of their wait
+      const d = Math.max(60, 450 - (performance.now() - t0)), o = { duration: 760, delay: d, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' };
       // the torn edge only shows once the sheet starts to part
       this.$$('[data-lrim]').forEach(r => r.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, delay: d, fill: 'forwards' }));
       L.animate([{ transform: 'translateX(0) rotate(0deg)', opacity: 1 }, { transform: 'translateX(-62%) rotate(-3deg)', opacity: .2 }], o);
