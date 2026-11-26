@@ -207,7 +207,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
           {KEEP.map((k, i) => {
             const p = narrow ? k.pn : k.p;
             return (
-              <div key={k.n} data-keep style={{ position: "absolute", left: `${p[0] * 100}%`, top: `${p[1] * 100}%`, transform: "translate(-50%,-100%)", display: "flex", flexDirection: "column-reverse", alignItems: "center", gap: 8 }}>
+              <div key={k.n} data-keep style={{ position: "absolute", left: `${p[0] * 100}%`, top: `${p[1] * 100}%`, transform: narrow ? "translate(-41%,-82%) scale(.82)" : "translate(-50%,-100%)", display: "flex", flexDirection: "column-reverse", alignItems: "center", gap: 8 }}>
                 <div data-kscale style={{ display: "flex", flexDirection: "column", alignItems: "center", filter: "url(#brushy)" }}>
                   <KeepObject kind={k.kind} />
                 </div>
