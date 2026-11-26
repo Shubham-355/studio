@@ -162,7 +162,8 @@ export class HomeEngine {
     const W = this.W, H = this.H, n = this.n, w2 = this.wEl[1]; if (!w2) return;
     const fov = n ? 42 : 30, F = H / 2 / Math.tan(fov * Math.PI / 360), L = H * 1.35, tan1 = -.1 * H / F, tan0 = (.45 * H + L - H / 2) / F, Yh = L - .55 * H, Hp = Yh + .34 * H;
     /* standing eye height, a touch down and across the floor; apple on the right third, sun low on the horizon between the headline and the apple */
-    const C = n ? [0, 1.6, 9.6] : [-.78, 1.92, 11.15], shift = 0, yaw = n ? 0 : .12, aX = W / 2 + F * Math.tan(Math.atan2(-C[0], C[2]) + yaw), aHalf = F * 1.45 / Math.hypot(C[0], C[2]), hlR = Math.min(64, W * .0444) + Math.min(W * .36, 560);
+    // on a tall phone frame the camera stands further back so the whole bottle, cork to base, fits across the screen
+    const C = n ? [0, 1.6, 14] : [-.78, 1.92, 11.15], shift = 0, yaw = n ? 0 : .12, aX = W / 2 + F * Math.tan(Math.atan2(-C[0], C[2]) + yaw), aHalf = F * 1.45 / Math.hypot(C[0], C[2]), hlR = Math.min(64, W * .0444) + Math.min(W * .36, 560);
     const sunX = n ? W * .28 : Math.max(hlR + 24, (hlR + aX - aHalf) / 2), sa = Math.atan((sunX - W / 2) / F) - yaw, sel = .175, ld = [Math.sin(sa) * Math.cos(sel), Math.sin(sel), -Math.cos(sa) * Math.cos(sel)];
     const peb = n ? [{ x: -.55, z: 6.1, r: .1 }, { x: .12, z: 6.5, r: .07 }, { kind: 'scallop', flip: 1, x: .5, z: 5.6, r: .19, rot: .5 }, { kind: 'spiral', x: -.2, z: 5.2, r: .2, rot: 1.1 }] : [{ x: -2.5, z: 4.4, r: .15 }, { x: -1.75, z: 3.3, r: .09 }, { kind: 'spiral', x: -.9, z: 4.9, r: .26, rot: .9 }, { kind: 'scallop', flip: 1, x: .55, z: 4.6, r: .24, rot: .5 }];
     this.g2 = { W, H, n, fov, F, L, tan0, tan1, Yh, Hp, sunX, C, shift, yaw, ld, peb, gulls: n ? [[.15, .2], [.75, .16], [.86, .22]] : [[.9, .2], [.95, .14], [.46, .13]] };
