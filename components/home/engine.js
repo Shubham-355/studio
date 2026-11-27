@@ -916,7 +916,7 @@ export class HomeEngine {
     // no 3D setup while the loader is up: its shader compiles compete with the eye plates for the GPU
     if (!window.Scene3D || this._nogl || this.state.loader) return;
     // At the very top the apple is still hidden behind the eye: build it once the page has settled, or as soon as the reader scrolls.
-    if (!this._glReady) { if (t < .02 && !this._moving) { if (!this._glIdle) this._glIdle = (window.requestIdleCallback || setTimeout)(() => { this._glReady = true; }, { timeout: 2500 }); return; } this._glReady = true; }
+    if (!this._glReady) { if (t < .02 && !this._moving) { if (!this._glIdle) { const go = () => { this._glReady = true; }; this._glIdle = window.requestIdleCallback ? requestIdleCallback(go, { timeout: 2500 }) : setTimeout(go, 1000); } return; } this._glReady = true; }
     const M = [['apple8', -1, TF + .05], ['sandboard', 2.55, 18.3], ['arcade8', 15.9, 23.0], ['roomqueen', 20.4, 25.2]];
     // A scene also builds early, or stays, while the page is still (a reader pausing on a headline) within 2 of either end,
     // so its WebGL setup never lands mid-scroll in either direction (scrolling back up into a released scene flashed its bare background).
