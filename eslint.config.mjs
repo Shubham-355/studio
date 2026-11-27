@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored canvas painters, kept as plain browser scripts.
     "lib/painter/*.js",
+    // Local snapshots of the design canvas, kept out of git.
+    "design*/**",
   ]),
 ]);
 
