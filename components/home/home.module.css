@@ -544,9 +544,12 @@
   max-width: 320px;
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  margin: -20px;
-  background: radial-gradient(closest-side, rgba(239, 224, 194, 0.85), rgba(239, 224, 194, 0));
+  padding: 16px 20px 18px;
+  margin: -16px -20px;
+  /* a slip of paper laid on the deck, like the room's tags: the planks never run under the text */
+  background: linear-gradient(170deg, #f7efe1, #efe3cf);
+  border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(255, 250, 240, 0.7) inset, 0 6px 16px rgba(60, 38, 22, 0.22), 0 1px 3px rgba(60, 38, 22, 0.18);
   color: var(--text);
 }
 
@@ -556,7 +559,7 @@
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0.82;
   margin-bottom: 8px;
 }
 
@@ -587,7 +590,7 @@
   line-height: 1.5;
   text-wrap: pretty;
   max-width: 25.3em;
-  color: rgba(30, 27, 24, 0.88);
+  color: #1e1b18;
 }
 
 .companyCard {

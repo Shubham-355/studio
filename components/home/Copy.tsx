@@ -93,7 +93,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
       </section>
 
       <section id="how-we-build" data-copy data-a="13.6" data-b="16.76" className={`${s.copy} ${s.wide}`} style={{ top: L.tBeach, color: "var(--text)" }}>
-        <h2 data-hl data-bh className={s.display} style={{ maxWidth: L.wB, textShadow: "0 0 30px rgba(239,224,194,.9)" }}>
+        <h2 data-hl data-bh className={s.display} style={{ maxWidth: L.wB, textShadow: "0 0 14px rgba(242,228,202,.95),0 0 32px rgba(242,228,202,.9),0 0 60px rgba(242,228,202,.7)" }}>
           <Words text="A pawn that / crosses the board / becomes *a queen.*" />
         </h2>
       </section>
