@@ -69,7 +69,7 @@ export class HomeEngine {
     this._onVis = () => { if (document.visibilityState !== 'hidden' && this._alive && this._loopF) { this._lastF = 0; this._lastR = 0; this._loopF(); } };
     this._onAct = () => { this._act = performance.now(); };
     document.addEventListener('visibilitychange', this._onVis); ACT.forEach(e => addEventListener(e, this._onAct, { passive: true }));
-    this._alive = true; this.t = 0; this.mv = {}; this.pos = {}; window.__eng = this; /* DEBUG */
+    this._alive = true; this.t = 0; this.mv = {}; this.pos = {};
     // boot is several seconds of setup on a cold load: let the browser paint the loader first, so the visitor never sees a blank page
     const painted = new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
     Promise.all([loadPainter(), painted]).then(() => this.waitLibs()).then(() => { if (this._alive) this.boot(); }).catch(e => console.error(e));
