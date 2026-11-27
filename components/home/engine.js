@@ -626,7 +626,14 @@ export class HomeEngine {
       const gx = b.X + S.sun[0] * b.Y * .4, gz = b.Z + S.sun[1] * b.Y * .4, ps = pr(c, gx, 0, gz), ps2 = pr(c, gx + Math.cos(thv) * .03, 0, gz + Math.sin(thv) * .03);
       draw.push({ p, rot, sp, fl, bk, al: K.a[i] * wt * gA, ps, rs: Math.atan2(ps2[1] - ps[1], ps2[0] - ps[0]), ks: ps[2] > .05 ? sp * ppu(c, gx, 0, gz) / pu * (1.04 - .14 * (b.Y - 1.28) / .46) : 0, Y: b.Y });
     }
-    draw.forEach(g => { if (!(g.ks > 0) || g.al < .01) return; const hy = (g.Y - 1.28) / .46; x.save(); x.globalAlpha = g.al * mx(.3, .16, hy); x.fillStyle = '#3A2C24'; x.filter = `blur(${((1.2 + 2.6 * hy) * uk * 1.4).toFixed(2)}px)`; this.gullPath(x, g.ps[0], g.ps[1], g.rs, g.ks, g.fl, g.bk, true); x.restore(); });
+    // each shadow is blurred on a small canvas of its own and stamped in: a blur filter on the full-screen canvas processed the
+    // whole screen for every gull on every frame and halved the frame rate on the board
+    draw.forEach(g => { if (!(g.ks > 0) || g.al < .01) return; const hy = (g.Y - 1.28) / .46, bl = (1.2 + 2.6 * hy) * uk * 1.4, R = Math.ceil(g.ks * .56 + bl * 3 + 2), n = Math.ceil(2 * R * d);
+      const sc = K.sc || (K.sc = document.createElement('canvas')); if (sc.width < n || sc.height < n) { sc.width = Math.max(sc.width, n); sc.height = Math.max(sc.height, n); }
+      const y = sc.getContext('2d'); y.setTransform(1, 0, 0, 1, 0, 0); y.clearRect(0, 0, n, n); y.setTransform(d, 0, 0, d, 0, 0); y.fillStyle = '#3A2C24'; y.filter = `blur(${bl.toFixed(2)}px)`; /* placed on whole device pixels at 1:1, with the sub-pixel offset drawn inside, so the shadow is not resampled */
+      const ox = g.ps[0] - R, oy = g.ps[1] - R, fx = Math.floor(ox * d) / d, fy = Math.floor(oy * d) / d;
+      this.gullPath(y, R + ox - fx, R + oy - fy, g.rs, g.ks, g.fl, g.bk, true); y.filter = 'none';
+      x.save(); x.globalAlpha = g.al * mx(.3, .16, hy); x.drawImage(sc, 0, 0, n, n, fx, fy, n / d, n / d); x.restore(); });
     draw.forEach(g => { if (g.al < .01) return; x.save(); x.globalAlpha = g.al; this.gullPath(x, g.p[0], g.p[1], g.rot, g.sp, g.fl, g.bk, false); x.restore(); });
   }
   /* into the queen: one camera from the overhead board view, down to the crown, through its front arch into the arcade */
