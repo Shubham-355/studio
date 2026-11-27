@@ -302,7 +302,7 @@ export class HomeEngine {
   /* letter handover: the tear rips open from a crack; gloved fingertips push the letter out through its lower-left edge */
   layoutTips() {
     const g = this.g8, W = this.W, H = this.H, n = this.n, Tp = window.Tips, out = this.ct8, cc = this.cardEl; this.tip = null; if (!g || !Tp || !out || !cc) return;
-    const c = [g.cx, g.cy], Wc = cc.offsetWidth || 300, Hc = cc.offsetHeight || 170, sc = n ? cl(Math.min(H / 820, W / 400), .7, 1) : cl(H / 780, .84, 1), r = -6 * Math.PI / 180, co = Math.cos(r), sn = Math.sin(r);
+    const c = [g.cx, g.cy], Wc = cc.offsetWidth || 300, Hc = cc.offsetHeight || 170, sc = n ? cl(Math.min(H / 820, W / 400, (g.cx - g.rx - 16) / (Wc * .8)), .55, 1) : cl(H / 780, .84, 1), /* on a phone the letter must fit between the screen edge and the tear it hangs from */ r = -6 * Math.PI / 180, co = Math.cos(r), sn = Math.sin(r);
     const wp = (p, P) => [P[0] + (p[0] * co - p[1] * sn) * sc, P[1] + (p[0] * sn + p[1] * co) * sc];
     const inside = (p, poly) => { let q = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) q = !q; } return q; };
     const sec = this.$('#start'), boxes = [[0, 0, W, 100]];
