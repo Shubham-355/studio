@@ -244,7 +244,7 @@ export default function Stage({ studioName, narrow, reflSize, tagW, tagT, onFoun
           <div data-crim className={s.fill} style={{ background: "linear-gradient(140deg,#FDFBF6,#E3D8C4)", clipPath: "circle(0px)" }} />
           <canvas data-paint="moon" data-moon aria-hidden className={s.abs} />
           <canvas data-crimcv aria-hidden className={s.full} style={{ visibility: "hidden", pointerEvents: "none", filter: "drop-shadow(0 5px 8px rgba(6,10,24,.55)) drop-shadow(0 14px 26px rgba(6,10,24,.3))" }} />
-          <div data-reflect aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", top: "124%", textAlign: "center", fontFamily: "var(--serif)", fontStyle: "italic", fontWeight: 400, fontSize: reflSize, lineHeight: 0.8, letterSpacing: "-.03em", whiteSpace: "nowrap", color: "rgba(241,230,200,.5)", filter: "url(#ripple)", willChange: "transform" }}>
+          <div data-reflect aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", top: "106%", textAlign: "center", fontFamily: "var(--serif)", fontStyle: "italic", fontWeight: 400, fontSize: reflSize, lineHeight: 0.8, letterSpacing: "-.03em", whiteSpace: "nowrap", color: "rgba(241,230,200,.5)", filter: "url(#ripple)", willChange: "transform" }}>
             {studioName}
           </div>
         </div>

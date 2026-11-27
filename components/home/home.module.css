@@ -780,6 +780,10 @@
   letter-spacing: 0;
   line-height: 1.9;
   color: var(--cream);
+  /* a band of deep night behind the links, so the moon's glitter never runs under the text */
+  padding: 28px var(--gx, 64px) 32px;
+  margin: -28px calc(-1 * var(--gx, 64px)) 0;
+  background: linear-gradient(180deg, rgba(14, 19, 38, 0), rgba(14, 19, 38, 0.72) 28%, rgba(14, 19, 38, 0.72) 72%, rgba(14, 19, 38, 0));
 }
 
 .footCol {
