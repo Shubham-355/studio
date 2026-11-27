@@ -69,7 +69,7 @@ export class HomeEngine {
     this._onVis = () => { if (document.visibilityState !== 'hidden' && this._alive && this._loopF) { this._lastF = 0; this._lastR = 0; this._loopF(); } };
     this._onAct = () => { this._act = performance.now(); };
     document.addEventListener('visibilitychange', this._onVis); ACT.forEach(e => addEventListener(e, this._onAct, { passive: true }));
-    this._alive = true; this.t = 0; this.mv = {}; this.pos = {};
+    this._alive = true; this.t = 0; this.mv = {}; this.pos = {}; window.__eng = this; /* DEBUG */
     // boot is several seconds of setup on a cold load: let the browser paint the loader first, so the visitor never sees a blank page
     const painted = new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
     Promise.all([loadPainter(), painted]).then(() => this.waitLibs()).then(() => { if (this._alive) this.boot(); }).catch(e => console.error(e));
@@ -267,6 +267,7 @@ export class HomeEngine {
     const [x0, y0, x1, y1] = this.room.win.map((v, i) => v * (i % 2 ? H : W)); this.win0 = [x0, y0, x1, y1];
     const fr = this.$('[data-winframe]'); if (fr) Object.assign(fr.style, { left: (x0 - 14) + 'px', top: (y0 - 14) + 'px', width: (x1 - x0 + 28) + 'px', height: (y1 - y0 + 28) + 'px' });
     ['[data-winsill]', '[data-winglass]', '[data-winsky]'].forEach(sl => { const e = this.$(sl); if (e) e.style.display = n ? 'none' : ''; });
+    { const sk = this.$('[data-winsky]'); if (sk && !n && fr) this.winSky(sk, fr.clientWidth, fr.clientHeight); }
     const qb = this.$('[data-3d="roomqueen"]'); if (qb) Object.assign(qb.style, n ? { left: '-4%', top: '18%', width: '64%', height: '66%' } : { left: '32%', top: '4%', width: '30%', height: '92%' });
     const tb = this.$('[data-table]'); if (tb) Object.assign(tb.style, n ? { left: '80%', top: '64%', display: '' } : { display: 'none' });
     const pw = (x1 - x0) * .5, ph = (y1 - y0) * .56; this.pane = { x: x0 + (x1 - x0) * .25, y: y0 + (y1 - y0) * .72, z: 1.2 * Math.max(W / pw, H / ph) };
@@ -751,6 +752,15 @@ export class HomeEngine {
     if (!this._lqB) { const z = pathc(99), pj = this.proj6({ C: [0, 1, z], L: [0, 1, z + 1], fov: this.fovW, oy: .06 }); this._lqB = this.leafQuad((x, y, zz) => { const p = pj(x, y, zz); return p[2] > .02 ? p : null; }, DSW); }
     this.S(q.leafBw, 'transform', this.cam7 || 'none'); this.leafPose(q.leafB, this._lqB, 1);
     if (!this._spB) { const z = pathc(99), pj = this.proj6({ C: [0, 1, z], L: [0, 1, z + 1], fov: this.fovW, oy: .06 }); this._spB = (x, y, zz) => { const p = pj(x, y, zz); return p[2] > .02 ? p : null; }; } this.stopPose(q.leafBw, this._spB); }
+  /* the night sky seen through the window: a few stars, a cool glow in the upper corner, moonlit streaks low on the sea; painted once into a bitmap
+     (as 13 stacked CSS gradients it was re-rasterised on its first appearance and on every zoom, stalling the walk into the room) */
+  winSky(cv, w, h) { if (!(w > 0 && h > 0)) return; const d = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(w * d); cv.height = Math.round(h * d); const x = cv.getContext('2d'); x.setTransform(d, 0, 0, d, 0, 0); x.clearRect(0, 0, w, h);
+    const rgb = (c, a) => `rgba(${c},${a})`;
+    const lg = x.createLinearGradient(0, 0, 0, h); [[.64, '150,170,214', 0], [.74, '150,170,214', .14], [.77, '178,196,232', .26], [.79, '110,130,180', .12], [.86, '110,130,180', 0]].forEach(([o, c, a]) => lg.addColorStop(o, rgb(c, a))); x.fillStyle = lg; x.fillRect(0, 0, w, h);
+    const ell = (cx, cy, rx, ry, c, a) => { x.save(); x.translate(cx, cy); x.scale(rx, ry); const g = x.createRadialGradient(0, 0, 0, 0, 0, 1); g.addColorStop(0, rgb(c, a)); g.addColorStop(1, rgb(c, 0)); x.fillStyle = g; x.fillRect(-1, -1, 2, 2); x.restore(); };
+    ell(.73 * w, .92 * h, .24 * w, .02 * h, '206,218,244', .14); ell(.61 * w, .86 * h, .18 * w, .018 * h, '206,218,244', .18); ell(.68 * w, .81 * h, .3 * w, .026 * h, '206,218,244', .22); ell(0, 0, .6 * w, .4 * h, '196,210,242', .16);
+    [[14, 6, .95, 1.6, .34, 2.9, 4.4], [31, 17, .83, 1.4, .3, 2.7, 3.7], [8, 29, .77, 1.3, .29, 2.6, 3.4], [62, 8, .89, 1.5, .32, 2.8, 4.1], [83, 21, .79, 1.3, .29, 2.6, 3.5], [72, 34, .75, 1.2, .28, 2.5, 3.3], [42, 30, .73, 1.2, .27, 2.5, 3.2], [92, 7, .75, 1.2, .28, 2.5, 3.3]].reverse().forEach(([px, py, a, r1, b, r2, r3]) => {
+      const cx = px / 100 * w, cy = py / 100 * h, g = x.createRadialGradient(cx, cy, 0, cx, cy, r3); g.addColorStop(0, rgb('252,248,236', a)); g.addColorStop(r1 / r3, rgb('252,248,236', a)); g.addColorStop(r2 / r3, rgb('214,222,246', b)); g.addColorStop(1, rgb('214,222,246', 0)); x.fillStyle = g; x.fillRect(cx - r3, cy - r3, 2 * r3, 2 * r3); }); }
   /* small brass doorstop on the inside wall where the open leaf lands */
   stopPose(wrap, P) { const el = wrap && (wrap._st || (wrap._st = wrap.querySelector('[data-dstop]'))); if (!el) return; const p = P(DSTOP[0], DSTOP[1], DSTOP[2]); if (!p) { this.S(el, 'visibility', 'hidden'); return; }
     this.S(el, 'visibility', 'visible'); this.S(el, 'transform', `translate(${(p[0] - 10).toFixed(1)}px,${(p[1] - 12).toFixed(1)}px) scale(${(p[3] * .07 / 20).toFixed(4)})`); }
