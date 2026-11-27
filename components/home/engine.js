@@ -453,6 +453,8 @@ export class HomeEngine {
     const busy = Math.abs(sT - this.s) > .0005 || this._sY !== scrollY || pn - (this._act || 0) < 1500 || pn - (this._introT0 || 0) < 8000 || this.state.loader || this._at !== false;
     this._sY = scrollY; if (busy) this._busyT = pn;
     if (!busy && pn - (this._busyT || 0) > 1200 && pn - (this._lastR || 0) < (this.t >= TB1 && this.t < QB ? 15 : 32)) return;
+    // the 3D views wait for a still page before raising their resolution: each change reallocates their buffers and stalls a frame
+    this._busy = busy; if (window.Scene3D && window.Scene3D.quality) window.Scene3D.quality.hold = busy;
     if (busy && this._lastR && window.Scene3D && window.Scene3D.quality) window.Scene3D.quality.report(pn - this._lastR, this.n ? 33.4 : 16.7);
     this._lastR = pn;
     try { this.render(this.t); } catch (e) { if (!this._errd) { this._errd = 1; console.error(e); } }
