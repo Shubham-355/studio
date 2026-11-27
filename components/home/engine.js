@@ -1052,6 +1052,8 @@ export class HomeEngine {
   paper(vol = 1) { this._snd && this._snd.paper(vol); }
 
   go(to, e) { e && e.preventDefault && e.preventDefault(); if (this.state.menu) this.setState({ menu: false }); scrollTo({ top: VI(JUMP[to] ?? 0) * (this.H || innerHeight), behavior: this.red() ? 'auto' : 'smooth' }); }
+  // keyboard focus moving to text that is off stage: bring the page straight to the moment it shows
+  jumpTo(t) { scrollTo({ top: VI(t) * (this.H || innerHeight), behavior: 'auto' }); }
 }
 
 /* walk path through the founders: monotone cubic, so the camera never stops between points (eases only at the two ends) */

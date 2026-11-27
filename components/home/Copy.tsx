@@ -16,6 +16,9 @@ type Props = {
   onCopy: () => void;
 };
 
+// The moment each company card is fully on stage (measured), where keyboard focus brings the page.
+const CARD_AT = ["19.4", "20.07", "20.77", "21.5"];
+
 // Each data-w child fades and lifts in sequence as its block comes into view.
 const W = ({ children, italic, className }: { children: ReactNode; italic?: boolean; className?: string }) => (
   <span data-w className={[s.word, italic && s.it, className].filter(Boolean).join(" ")}>
@@ -115,6 +118,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
           key={c.name}
           data-copy="m"
           data-id={`card${i}`}
+          data-at={CARD_AT[i]}
           tabIndex={0}
           onFocus={() => onFounder(i, true)}
           onBlur={() => onFounder(i, false)}
@@ -160,6 +164,7 @@ export default function Copy({ studioName, heroRow, L, email, copied, go, onFoun
       <a
         data-copy="m"
         data-id="ccard"
+        data-at="27.1"
         href={`mailto:${email}`}
         onMouseEnter={() => onCard(true)}
         onMouseLeave={() => onCard(false)}

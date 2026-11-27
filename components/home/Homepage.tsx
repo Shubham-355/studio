@@ -83,11 +83,76 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
   const toggleSound = () => engineRef.current?.toggleSound();
   const toggleMenu = () => host.setState({ menu: !stateRef.current.menu });
 
+  // Copy that is off stage is visibility:hidden, so the browser's Tab skips it. Tab is walked here instead:
+  // the next stop's moment (data-at, or the middle of its block's data-a..data-b) is brought on stage, then it takes focus.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    let pending = 0;
+    const stops = () =>
+      [...root.querySelectorAll<HTMLElement>("a[href],button,[tabindex]")].filter(
+        (el) => el.tabIndex >= 0 && !el.closest('[aria-hidden="true"]') && !el.closest("[data-menu]"),
+      );
+    const momentOf = (el: HTMLElement) => {
+      const at = el.closest<HTMLElement>("[data-at]");
+      if (at) return parseFloat(at.dataset.at!);
+      const blk = el.closest<HTMLElement>("[data-a]");
+      if (!blk) return null;
+      const a = Math.max(0, parseFloat(blk.dataset.a!)), b = Math.min(parseFloat(blk.dataset.b!), a + 1);
+      return (a + b) / 2;
+    };
+    const shown = (el: HTMLElement) => {
+      const blk = el.closest<HTMLElement>("[data-copy]") ?? el;
+      return getComputedStyle(el).visibility === "visible" && parseFloat(getComputedStyle(blk).opacity) > 0.9;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || e.altKey || e.ctrlKey || e.metaKey || stateRef.current.menu) return;
+      const list = stops(), i = list.indexOf(document.activeElement as HTMLElement);
+      const next = list[i < 0 ? (e.shiftKey ? list.length - 1 : 0) : i + (e.shiftKey ? -1 : 1)];
+      if (!next) return; // past either end: leave the page as usual
+      e.preventDefault();
+      cancelAnimationFrame(pending);
+      const t = momentOf(next);
+      if (t == null || shown(next)) { next.focus({ preventScroll: true }); return; }
+      engineRef.current?.jumpTo(t);
+      const t0 = performance.now();
+      const wait = () => {
+        if (shown(next) || performance.now() - t0 > 2500) next.focus({ preventScroll: true });
+        else pending = requestAnimationFrame(wait);
+      };
+      pending = requestAnimationFrame(wait);
+    };
+    addEventListener("keydown", onKey, true);
+    return () => { removeEventListener("keydown", onKey, true); cancelAnimationFrame(pending); };
+  }, []);
+
+  // The phone menu: Escape closes it, focus moves into it and stays there, the page behind holds still, and focus returns to the button.
+  const menuRef = useRef<HTMLDivElement>(null);
+  const burgerRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!state.menu) return;
+    const box = menuRef.current;
+    box?.querySelector<HTMLElement>("a,button")?.focus();
+    const html = document.documentElement, prev = html.style.overflow;
+    html.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { host.setState({ menu: false }); return; }
+      if (e.key !== "Tab" || !box) return;
+      const els = [...box.querySelectorAll<HTMLElement>("a,button")], k = els.indexOf(document.activeElement as HTMLElement);
+      const to = els[(k + (e.shiftKey ? -1 : 1) + els.length) % els.length];
+      e.preventDefault(); to?.focus();
+    };
+    addEventListener("keydown", onKey);
+    const burger = burgerRef.current;
+    return () => { removeEventListener("keydown", onKey); html.style.overflow = prev; burger?.focus({ preventScroll: true }); };
+  }, [state.menu, host]);
+
   const { loader, sound, menu, world } = state;
   const L = narrow ? NARROW : WIDE;
 
   return (
-    <div data-root className={s.root}>
+    <div ref={rootRef} data-root className={s.root}>
       <div data-grain className={s.grain} />
 
       {loader && (
@@ -111,7 +176,7 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
             <a href="#top" onClick={(e) => go("home", e)} className={s.brandNarrow}>{studioName}</a>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
               <button onClick={toggleSound} aria-label="Ambient sound" aria-pressed={sound} className={s.roundBtn}><Bars /></button>
-              <button onClick={toggleMenu} aria-label="Menu" className={s.roundBtn}>
+              <button ref={burgerRef} onClick={toggleMenu} aria-label="Menu" aria-expanded={menu} aria-controls="site-menu" className={s.roundBtn}>
                 <span className={s.burgerLine} />
                 <span className={s.burgerLine} />
               </button>
@@ -149,8 +214,8 @@ export default function Homepage({ studioName, motion = true, notes = false }: {
       </nav>
 
       {menu && narrow && (
-        <div className={s.menu}>
-          <button onClick={toggleMenu} aria-label="Close" className={s.menuClose}>×</button>
+        <div ref={menuRef} id="site-menu" data-menu role="dialog" aria-modal="true" aria-label="Menu" className={s.menu}>
+          <button onClick={toggleMenu} aria-label="Close menu" className={s.menuClose}>×</button>
           <a href="#companies" onClick={(e) => go("companies", e)} className={s.menuLink}>Companies</a>
           <a href="#how-we-build" onClick={(e) => go("how", e)} className={s.menuLink}>How we build</a>
           <a href="#studio" className={s.menuLink}>Studio</a>
